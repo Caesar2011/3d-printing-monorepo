@@ -1,5 +1,7 @@
-import type { Vec3 } from "@jscad/modeling/src/maths/types.js"
-import type { Vec } from "@jscad/modeling/src/operations/transforms/index.js"
+export type Vec1 = [number]
+export type Vec2 = [number, number]
+export type Vec3 = [number, number, number]
+export type Vec = Vec1 | Vec2 | Vec3
 
 export type UniqueAxisString = 'x' | 'y' | 'z' | 'xy' | 'xz' | 'yz' | 'xyz'
 export type AxisDefinition = Vec | Vector3 | number

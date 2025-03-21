@@ -1,6 +1,6 @@
-import {AxisRecordDefinition} from "src/index.js";
+import { AxisRecordDefinition } from './index.js'
 
-declare module "react" {
+declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
       cuboid: {
@@ -8,10 +8,10 @@ declare module "react" {
       }
       union: {
         children: JSX.Element[]
-      },
+      }
       subtract: {
         children: JSX.Element[]
-      },
+      }
       intersect: {
         children: JSX.Element[]
       }

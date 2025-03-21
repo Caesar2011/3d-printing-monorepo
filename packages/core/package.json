@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc --project tsconfig.json || exit 0",
     "dev": "tsc-watch --onSuccess \"npm start\" --project tsconfig.json",
-    "start": "node --enable-source-maps dist/index.js"
+    "start": "node --enable-source-maps dist/index.js",
+    "lint:eslint": "eslint . --fix"
   },
   "dependencies": {
     "@jscad/modeling": "^2.12.5",

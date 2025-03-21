@@ -1,15 +1,19 @@
-﻿import React from "react";
-import { render } from "@jsxcad/core";
-import {Shape, ShapeType} from "@jsxcad/core/dist/Shape.js";
-import * as path from "node:path";
-import * as fs from "node:fs";
+﻿import * as path from 'node:path'
+import * as fs from 'node:fs'
+
+import React from 'react'
+import { render } from '@jsxcad/core'
+import { Shape, ShapeType } from '@jsxcad/core/dist/Shape.js'
 import { serialize } from '@jscad/3mf-serializer'
 
-
 const App = () => {
-  return <subtract><cuboid size={4} /><cuboid size={3}></cuboid></subtract>;
-};
-
+  return (
+    <subtract>
+      <cuboid size={4} />
+      <cuboid size={3} />
+    </subtract>
+  )
+}
 
 export enum RenderMethod {
   All,
@@ -37,10 +41,9 @@ export function findProjectRoot(startDir: string): string {
   return currentDir
 }
 
-
-render(App()).then(flatten=> {
+render(App()).then((flatten) => {
   const options: Partial<RenderOptions> = {
-    dev: true
+    dev: true,
   }
 
   console.time('render')
@@ -67,18 +70,15 @@ render(App()).then(flatten=> {
     }
   }
 
-
-
-
   const unspecifiedShapes = flatten.filter((shape) => shape.type === ShapeType.Unspecified)
   check(
-      unspecifiedShapes.length === 0,
-      `The following shapes have an unspecified type: ${unspecifiedShapes.map((s) => s.name || '<unnamed>').join(', ')}`,
+    unspecifiedShapes.length === 0,
+    `The following shapes have an unspecified type: ${unspecifiedShapes.map((s) => s.name || '<unnamed>').join(', ')}`,
   )
 
   check(
-      flatten.every((shape) => shape.name !== ''),
-      'One or more shapes have an empty name',
+    flatten.every((shape) => shape.name !== ''),
+    'One or more shapes have an empty name',
   )
 
   const nameCounts = new Map<string, number>()
@@ -90,8 +90,8 @@ render(App()).then(flatten=> {
 
   const mf3Data = serialize({ compress: true }, ...flatten)[0]
   const filePath = path.isAbsolute(opts.filePath)
-      ? opts.filePath
-      : path.join(findProjectRoot(import.meta.dirname), opts.filePath)
+    ? opts.filePath
+    : path.join(findProjectRoot(import.meta.dirname), opts.filePath)
   fs.writeFileSync(filePath, Buffer.from(mf3Data))
 
   console.timeEnd('render')

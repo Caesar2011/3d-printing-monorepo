@@ -20,14 +20,14 @@ const compat = new FlatCompat({
 
 export default [
   ...fixupConfigRules(
-    compat.extends(
-      'eslint:recommended',
-      'plugin:@typescript-eslint/recommended',
-      'plugin:import/errors',
-      'plugin:import/warnings',
-      'plugin:import/typescript',
-      'prettier',
-    ),
+      compat.extends(
+          'eslint:recommended',
+          'plugin:@typescript-eslint/recommended',
+          'plugin:import/errors',
+          'plugin:import/warnings',
+          'plugin:import/typescript',
+          'prettier',
+      ),
   ),
   {
     plugins: {
@@ -60,6 +60,11 @@ export default [
         },
       ],
 
+      'import/no-unresolved': [
+        'error',
+        { ignore: ['\\.js$'] },
+      ],
+
       '@typescript-eslint/explicit-member-accessibility': [
         'error',
         {
@@ -74,7 +79,7 @@ export default [
       '@typescript-eslint/strict-boolean-expressions': ['error'],
       '@typescript-eslint/no-unused-vars': 'off',
       'no-magic-numbers': [
-        'warn',
+        'off',
         {
           ignore: [0, 2],
         },
@@ -99,14 +104,10 @@ export default [
     },
   },
   {
-    files: ['src/shapes/*.ts', 'src/types/Geom.ts'],
+    files: ['packages/core/src/Shape.ts','packages/game/src/jscad-3mf-serializer.d.ts'],
     rules: {
       'no-restricted-imports': 'off',
     },
-  },
-  {
-    files: ['src/**/*.ts', 'src/**/*.tsx'],
-    rules: {},
   },
   {
     // Apply only to TSX files
@@ -148,6 +149,15 @@ export default [
     },
   },
   {
-    ignores: ['**/*.min.js', 'dist', 'eslint.config.mjs', 'jest.config.js', 'jest.config.js', 'src/server.ts', '.idea'],
+    ignores: [
+      '**/*.min.js',
+      'packages/**/dist',
+      '**/node_modules',
+      'eslint.config.mjs',
+      'jest.config.js',
+      'jest.config.js',
+      'src/server.ts',
+      '.idea',
+    ],
   },
 ]

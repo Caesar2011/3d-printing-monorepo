@@ -8,11 +8,12 @@
     "declarationDir": "dist",
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
-  "references": [{
-    "path": "../core"
-  }
+  "references": [
+    {
+      "path": "../core"
+    }
   ],
-  "files": [ "../core/src/jsx.d.ts" ],
+  "files": ["../core/src/jsx.d.ts"],
   "include": ["src"],
   "exclude": ["dist", "node_modules"]
 }

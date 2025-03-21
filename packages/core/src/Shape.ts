@@ -1,10 +1,10 @@
-import {axisOrRecordToVec3, AxisRecordDefinition, UniqueAxisString, V} from "./Vector3.js";
-import type {Color, Geom3, Poly3} from "@jscad/modeling/src/geometries/types.js";
-import type {Mat4} from "@jscad/modeling/src/maths/types.js";
-import type {CylinderOptions, SphereOptions} from "@jscad/modeling/src/primitives/index.js";
+import type { Color, Geom3, Poly3 } from '@jscad/modeling/src/geometries/types.js'
+import type { Mat4 } from '@jscad/modeling/src/maths/types.js'
+import type { CylinderOptions, SphereOptions } from '@jscad/modeling/src/primitives/index.js'
+import jscad from '@jscad/modeling'
 
-import jscad from "@jscad/modeling";
-const {booleans, colors, maths, measurements, primitives, transforms} = jscad
+import { axisOrRecordToVec3, AxisRecordDefinition, UniqueAxisString, V } from './Vector3.js'
+const { booleans, colors, maths, measurements, primitives, transforms } = jscad
 
 export enum ShapeType {
   Unspecified,
@@ -84,20 +84,20 @@ export class Shape implements Geom3 {
 
   public static union(geoms: Shape[]) {
     const first = geoms.at(0)
-    if (!first) throw new Error("Union must contain at least one geom")
+    if (!first) throw new Error('Union must contain at least one geom')
     return new Shape(booleans.union(geoms), first.name, first.type)
   }
 
   public static subtract(geoms: Shape[]) {
-    const first = geoms.at(0);
-    if (!first) throw new Error("Subtract must contain at least one geom");
-    return new Shape(booleans.subtract(...geoms), first.name, first.type);
+    const first = geoms.at(0)
+    if (!first) throw new Error('Subtract must contain at least one geom')
+    return new Shape(booleans.subtract(...geoms), first.name, first.type)
   }
 
   public static intersect(geoms: Shape[]) {
-    const first = geoms.at(0);
-    if (!first) throw new Error("Intersect must contain at least one geom");
-    return new Shape(booleans.intersect(...geoms), first.name, first.type);
+    const first = geoms.at(0)
+    if (!first) throw new Error('Intersect must contain at least one geom')
+    return new Shape(booleans.intersect(...geoms), first.name, first.type)
   }
 
   public static sphere(props: { size: AxisRecordDefinition; segments?: number; center?: AxisRecordDefinition }) {
