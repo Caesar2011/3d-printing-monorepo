@@ -11,6 +11,9 @@ export async function renderComponent(component: React.ReactElement, renderOpts?
     onStart: () => {
       console.timeLog('render', 'onStart')
     },
+    onParsedAst: () => {
+      console.timeLog('render', 'onParsedAst')
+    },
     onRendered: () => {
       console.timeLog('render', 'onRendered')
     },

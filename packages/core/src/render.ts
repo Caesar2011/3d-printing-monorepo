@@ -3,7 +3,7 @@ import { PersistantReconciler } from '@jsxcad/reconciler'
 import type { PrimitiveNode } from './ShapeType.js'
 import { createShape, OperatorNode, RootNode } from './ShapeType.js'
 
-export async function render(element: React.ReactNode) {
+export async function parseAst(element: React.ReactNode) {
   const renderer = PersistantReconciler<PrimitiveNode, OperatorNode, RootNode>(
     createShape,
     (instance) => instance instanceof OperatorNode,
@@ -23,5 +23,5 @@ export async function render(element: React.ReactNode) {
     null,
   )
   await new Promise<void>((resolve) => renderer.updateContainer(element, reactContainer, null, resolve))
-  return container.render()
+  return container
 }

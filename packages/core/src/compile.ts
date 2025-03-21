@@ -6,7 +6,7 @@ import type { ReactElement } from 'react'
 
 import type { Shape } from './Shape.js'
 import { ShapeType } from './Shape.js'
-import { render } from './render.js'
+import { parseAst } from './render.js'
 
 export enum RenderMethod {
   All,
@@ -25,6 +25,7 @@ export type RenderOptions = {
 
 export type RenderCallbacks = {
   onStart?: () => void
+  onParsedAst?: () => void
   onRendered?: () => void
   onChecksDone?: () => void
   onSerialized?: () => void
@@ -64,7 +65,11 @@ export async function compile(root: ReactElement, options: RenderOptions & Rende
   }
   opts.onStart?.()
 
-  const shapes = await render(root)
+  const rootNode = await parseAst(root)
+
+  opts.onParsedAst?.()
+
+  const shapes = rootNode.render()
 
   opts.onRendered?.()
 
