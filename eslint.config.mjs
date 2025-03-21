@@ -101,7 +101,7 @@ export default [
     },
   },
   {
-    files: ['packages/core/src/Shape.ts', 'packages/game/src/jscad-3mf-serializer.d.ts'],
+    files: ['packages/core/src/Shape.ts', 'packages/core/src/jscad-3mf-serializer.d.ts'],
     rules: {
       'no-restricted-imports': 'off',
     },

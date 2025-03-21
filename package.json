@@ -5,6 +5,7 @@
     "packages/*"
   ],
   "scripts": {
+    "watch:reconciler": "nodemon --watch packages/reconciler --ignore packages/reconciler/dist -e * --delay 50ms --exec \"npm run build --workspace=@jsxcad/reconciler\"",
     "watch:core": "nodemon --watch packages/core --ignore packages/core/dist -e * --delay 50ms --exec \"npm run build --workspace=@jsxcad/core\"",
     "watch:game": "nodemon --watch packages/game --ignore packages/game/dist -e * --delay 50ms --exec \"npm run build --workspace=@jsxcad/game\"",
     "start": "nodemon --watch packages/core/dist --watch packages/game/dist -e * --delay 500ms --exec \"npm start --workspace=@jsxcad/game\"",
