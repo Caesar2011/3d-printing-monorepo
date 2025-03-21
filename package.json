@@ -1,0 +1,22 @@
+{
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "watch:core": "nodemon --watch packages/core --ignore packages/core/dist -e * --delay 50ms --exec \"npm run build --workspace=@jsxcad/core\"",
+    "watch:game": "nodemon --watch packages/game --ignore packages/game/dist -e * --delay 50ms --exec \"npm run build --workspace=@jsxcad/game\"",
+    "start": "nodemon --watch packages/core/dist --watch packages/game/dist -e * --delay 500ms --exec \"npm start --workspace=@jsxcad/game\"",
+    "serve": "nodemon --watch packages/core/dist/server.js -e * --delay 500ms --exec \"npm run serve --workspace=@jsxcad/game\"",
+    "dev": "cross-env FORCE_COLOR=1 npm-run-all --parallel -l watch:core watch:game start serve"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.12",
+    "cross-env": "^7.0.3",
+    "nodemon": "^3.1.9",
+    "npm-run-all": "^4.1.5"
+  },
+  "dependencies": {
+  }
+}

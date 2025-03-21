@@ -1,0 +1,84 @@
+﻿<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Online 3D Viewer</title>
+  <style>
+    /* Optional: Definiere globale Styles, z. B. zum Entfernen von Margin und Padding */
+    body,
+    html {
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+<!-- DIV-Element für den Viewer:
+ - Die Klasse muss "online_3d_viewer" lauten.
+ - Das "model"-Attribut verweist hier auf "output.stl" (dein Modell im public-Ordner).
+ - Du kannst per style die gewünschte Breite/Höhe angeben. -->
+<div class="online_3d_viewer" style="width: 800px; height: 800px" model="output.3mf"></div>
+
+<!-- Einbinden der Online3DViewer Library -->
+<script src="o3dv.min.js"></script>
+
+<!-- Nach dem Laden der Seite alle Viewer initialisieren -->
+<script>
+  window.addEventListener('load', () => {
+    // Diese Funktion sucht alle Elemente mit der Klasse "online_3d_viewer"
+    // und initialisiert sie automatisch mit den in den Attributen angegebenen Parametern.
+    document.getElementsByClassName('online_3d_viewer')[0].style.width = document.body.clientWidth + 'px'
+    document.getElementsByClassName('online_3d_viewer')[0].style.height = window.innerHeight + 'px'
+    console.log(document.getElementsByClassName('online_3d_viewer')[0].style.height)
+    OV.Init3DViewerElements()
+  })
+</script>
+
+<!-- Skript zum regelmäßigen Abfragen des Last-Modified-Headers -->
+<script>
+  let lastModified
+
+  async function checkForModelUpdate() {
+    console.log('Neue Abfrage für Modell-Update')
+    try {
+      // HEAD-Anfrage an output.stl; cache: 'no-store' stellt sicher, dass kein veralteter Wert geliefert wird
+      const response = await fetch('output.3mf', { method: 'HEAD', cache: 'no-store' })
+      if (!response.ok) {
+        console.error('Fehler beim Abrufen des HEAD von output.3mf')
+        setTimeout(checkForModelUpdate, 1000)
+        return
+      }
+      const newLastModified = response.headers.get('Last-Modified')
+      if (!lastModified) {
+        console.log('Kein lastModified gesetzt. Initialisiere...')
+        // Beim ersten Abruf den Wert speichern
+        lastModified = newLastModified
+      } else if (newLastModified !== lastModified) {
+        console.log('Modell wurde aktualisiert. Lade Seite neu...')
+        // Option 1: Wenn dein Viewer eine Methode zum Neuladen des Modells hat, verwende diese
+        // viewer.loadModel();  // Beispiel: Falls OV.EmbeddedViewer eine solche Methode bereitstellt.
+        // Option 2: Neuladen der gesamten Seite:
+        //location.reload();
+        const parent = document.getElementsByClassName('online_3d_viewer').item(0)
+        while (parent.firstChild) {
+          parent.removeChild(parent.firstChild)
+        }
+
+        OV.Init3DViewerElements()
+        //OV.Init3DViewerFromUrlList(document.getElementsByClassName("online_3d_viewer").item(0), ["output.stl"]);
+        lastModified = newLastModified
+        //return;
+      } else {
+        console.log('Modell nicht aktualisiert.')
+      }
+    } catch (err) {
+      console.error('Fehler beim Prüfen auf Updates: ', err)
+    }
+    setTimeout(checkForModelUpdate, 1000)
+  }
+
+  // Prüfe alle 5 Sekunden (1000ms) auf Updates
+  setTimeout(checkForModelUpdate, 1000)
+</script>
+</body>
+</html>
