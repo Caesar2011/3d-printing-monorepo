@@ -11,7 +11,6 @@ const MyCtxProvider: FC<PropsWithChildren<{ newNumber: number }>> = ({ newNumber
 
 const App = memo(() => {
   const me = useContext(MyCtx)
-  console.log('ENTERED APP', me)
   return (
     <subtract>
       <cuboid size={me} />

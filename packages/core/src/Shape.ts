@@ -21,7 +21,7 @@ export class Shape implements Geom3 {
   public readonly transforms: Mat4 = maths.mat4.create()
   public readonly color?: Color
 
-  private constructor(
+  constructor(
     Shape: Geom3,
     public readonly name: string = 'part',
     public readonly type: ShapeType = ShapeType.Unspecified,
@@ -43,26 +43,26 @@ export class Shape implements Geom3 {
     return new Shape(colors.colorize(color, this), this.name, this.type)
   }
 
-  public translate(axis: AxisRecordDefinition) {
-    const vec = axisOrRecordToVec3(axis)
-    return new Shape(transforms.translate(vec, this), this.name, this.type)
+  public translate(opts: { by?: AxisRecordDefinition; fromOrigin?: UniqueAxisString }) {
+    let origin = V()
+    if (opts.fromOrigin) {
+      const box = V(measurements.measureBoundingBox(this)[0])
+      origin = origin.a({ [opts.fromOrigin]: box.m(-1) })
+    }
+    const vec = V(opts.by).a(origin)
+    return new Shape(transforms.translate(vec.v, this), this.name, this.type)
   }
 
-  public toOrigin(axis: UniqueAxisString = 'xyz') {
-    const box = V(measurements.measureBoundingBox(this)[0])
-    return this.translate({ [axis]: box.m(-1) })
-  }
-
-  public center(opts?: { axes?: [boolean, boolean, boolean]; relativeTo?: AxisRecordDefinition }) {
+  public center(opts: { axes?: [boolean, boolean, boolean]; relativeTo?: AxisRecordDefinition }) {
     const centerOpts = {
-      ...(opts?.relativeTo === undefined ? {} : { relativeTo: axisOrRecordToVec3(opts.relativeTo) }),
-      ...(opts?.axes === undefined ? {} : { axes: opts.axes }),
+      ...(opts.relativeTo === undefined ? {} : { relativeTo: axisOrRecordToVec3(opts.relativeTo) }),
+      ...(opts.axes === undefined ? {} : { axes: opts.axes }),
     }
     return new Shape(transforms.center(centerOpts, this), this.name, this.type)
   }
 
-  public scale(axis: AxisRecordDefinition) {
-    const vec = axisOrRecordToVec3(axis)
+  public scale(opts: { by: AxisRecordDefinition }) {
+    const vec = axisOrRecordToVec3(opts.by)
     return new Shape(transforms.scale(vec, this), this.name, this.type)
   }
 
@@ -74,13 +74,13 @@ export class Shape implements Geom3 {
     return new Shape(transforms.mirror(mirrorOpts, this), this.name, this.type)
   }
 
-  public rotate(axis: AxisRecordDefinition) {
-    const vec = axisOrRecordToVec3(axis)
+  public rotate(opts: { by: AxisRecordDefinition }) {
+    const vec = axisOrRecordToVec3(opts.by)
     return new Shape(transforms.rotate(vec, this), this.name, this.type)
   }
 
-  public transform(mat4: Mat4) {
-    return new Shape(transforms.transform(mat4, this), this.name, this.type)
+  public transform(opts: { mat4: Mat4 }) {
+    return new Shape(transforms.transform(opts.mat4, this), this.name, this.type)
   }
 
   public static union(geoms: Shape[]) {
@@ -103,18 +103,18 @@ export class Shape implements Geom3 {
 
   public static sphere(props: { size: AxisRecordDefinition; segments?: number; center?: AxisRecordDefinition }) {
     const opts: SphereOptions = { radius: 0.5, segments: props.segments }
-    const shape = new Shape(primitives.sphere(opts)).scale(props.size)
-    return [props.center !== undefined ? shape.translate(props.center) : shape.toOrigin()]
+    const shape = new Shape(primitives.sphere(opts)).scale({ by: props.size })
+    return shape.translate({ by: props.center !== undefined ? props.center : V(props.size).d(2) })
   }
 
   public static cylinder(props: { size: AxisRecordDefinition; segments?: number; center?: AxisRecordDefinition }) {
     const opts: CylinderOptions = { radius: 0.5, height: 1, segments: props.segments }
-    const shape = new Shape(primitives.cylinder(opts)).scale(props.size)
-    return [props.center !== undefined ? shape.translate(props.center) : shape.toOrigin()]
+    const shape = new Shape(primitives.cylinder(opts)).scale({ by: props.size })
+    return shape.translate({ by: props.center !== undefined ? props.center : V(props.size).d(2) })
   }
 
   public static cuboid(props: { size: AxisRecordDefinition; center?: AxisRecordDefinition }) {
-    const shape = new Shape(primitives.cube({ size: 1 })).scale(props.size)
-    return [props.center !== undefined ? shape.translate(props.center) : shape.toOrigin()]
+    const shape = new Shape(primitives.cube({ size: 1 })).scale({ by: props.size })
+    return shape.translate({ by: props.center !== undefined ? props.center : V(props.size).d(2) })
   }
 }

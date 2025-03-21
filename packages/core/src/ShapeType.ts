@@ -1,6 +1,8 @@
+import type { JSX } from 'react'
+
 import { Shape } from './Shape.js'
 
-export abstract class PrimitiveType<T extends object = object> {
+export abstract class PrimitiveNode<T extends object = object> {
   public readonly props: T
   private static cache = new Map<string, Shape[]>()
   constructor(props: unknown) {
@@ -13,16 +15,16 @@ export abstract class PrimitiveType<T extends object = object> {
   protected _id: string | undefined
   public get id() {
     if (this._id === undefined) {
-      this._id = PrimitiveType.hash(JSON.stringify(this.props))
+      this._id = PrimitiveNode.hash(JSON.stringify(this.props))
     }
     return this._id
   }
 
   public render(): Shape[] {
-    let cached = PrimitiveType.cache.get(this.id)
+    let cached = PrimitiveNode.cache.get(this.id)
     if (!cached) {
       cached = this.renderFn(this.renderChildren())
-      PrimitiveType.cache.set(this.id, cached)
+      PrimitiveNode.cache.set(this.id, cached)
     }
     return cached
   }
@@ -32,11 +34,11 @@ export abstract class PrimitiveType<T extends object = object> {
     return undefined
   }
 
-  public clone(props: unknown, keepChildren: boolean): PrimitiveType<T> {
+  public clone(props: unknown, keepChildren: boolean): PrimitiveNode<T> {
     return new (this.getClass())(props)
   }
 
-  public abstract getClass(): new (props: unknown) => PrimitiveType<T>
+  public abstract getClass(): new (props: unknown) => PrimitiveNode<T>
 
   protected arePropsValid(props: unknown): props is T {
     return typeof props === 'object'
@@ -51,10 +53,16 @@ export abstract class PrimitiveType<T extends object = object> {
     // Convert to an unsigned 32-bit integer and then to hex
     return (hash >>> 0).toString(16)
   }
+
+  public renderTree(prefix: string = '', isLastChild = true): void {
+    console.log(
+      `${prefix}${isLastChild ? '└' : '├'}── ${this.getClass().name}${this._id !== undefined ? `(${this._id})` : ''} ${JSON.stringify(this.props)}`,
+    )
+  }
 }
 
-export abstract class OperatorType<T extends object = object> extends PrimitiveType<T> {
-  public readonly children: PrimitiveType[] = []
+export abstract class OperatorNode<T extends object = object> extends PrimitiveNode<T> {
+  public readonly children: PrimitiveNode[] = []
 
   public renderChildren(): Shape[] {
     return this.children.map((child) => child.render()).flat()
@@ -62,36 +70,68 @@ export abstract class OperatorType<T extends object = object> extends PrimitiveT
 
   public get id() {
     if (this._id === undefined) {
-      this._id = PrimitiveType.hash(
+      this._id = PrimitiveNode.hash(
         JSON.stringify(this.props) + '|' + JSON.stringify(this.children.map((child) => child.id)),
       )
     }
     return this._id
   }
 
-  public clone(props: unknown, keepChildren: boolean): OperatorType<T> {
+  public clone(props: unknown, keepChildren: boolean): OperatorNode<T> {
     const instance = new (this.getClass())(props)
     if (keepChildren) {
       instance.children.push(...this.children)
     }
     return instance
   }
-  public abstract getClass(): new (props: unknown) => OperatorType<T>
+  public abstract getClass(): new (props: unknown) => OperatorNode<T>
   public abstract renderFn(children: Shape[]): Shape[]
+
+  public renderTree(prefix: string = '', isLastChild = true): void {
+    super.renderTree(prefix, isLastChild)
+
+    const lastIndex = this.children.length - 1
+    this.children.forEach((child, index) => {
+      const isLast = index === lastIndex
+      const newPrefix = prefix + (isLastChild ? '    ' : '│   ')
+
+      child.renderTree(newPrefix, isLast)
+    })
+  }
 }
 
 type CuboidProps = Parameters<typeof Shape.cuboid>[0]
-export class CuboidNode extends PrimitiveType<CuboidProps> {
-  public getClass(): new (props: unknown) => PrimitiveType<CuboidProps> {
+export class CuboidNode extends PrimitiveNode<CuboidProps> {
+  public getClass(): new (props: unknown) => PrimitiveNode<CuboidProps> {
     return CuboidNode
   }
   public renderFn(): Shape[] {
-    return Shape.cuboid(this.props)
+    return [Shape.cuboid(this.props)]
   }
 }
 
-export class UnionNode extends OperatorType {
-  public getClass(): new (props: unknown) => OperatorType {
+type SphereProps = Parameters<typeof Shape.sphere>[0]
+export class SphereNode extends PrimitiveNode<SphereProps> {
+  public getClass(): new (props: unknown) => PrimitiveNode<SphereProps> {
+    return SphereNode
+  }
+  public renderFn(): Shape[] {
+    return [Shape.sphere(this.props)]
+  }
+}
+
+type CylinderProps = Parameters<typeof Shape.cylinder>[0]
+export class CylinderNode extends PrimitiveNode<CylinderProps> {
+  public getClass(): new (props: unknown) => PrimitiveNode<CylinderProps> {
+    return CylinderNode
+  }
+  public renderFn(): Shape[] {
+    return [Shape.cylinder(this.props)]
+  }
+}
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+export class UnionNode extends OperatorNode<{}> {
+  public getClass(): new (props: unknown) => OperatorNode<{}> {
     return UnionNode
   }
   public renderFn(children: Shape[]): Shape[] {
@@ -99,8 +139,8 @@ export class UnionNode extends OperatorType {
   }
 }
 
-export class SubtractNode extends OperatorType {
-  public getClass(): new (props: unknown) => OperatorType {
+export class SubtractNode extends OperatorNode<{}> {
+  public getClass(): new (props: unknown) => OperatorNode<{}> {
     return SubtractNode
   }
   public renderFn(children: Shape[]): Shape[] {
@@ -108,20 +148,81 @@ export class SubtractNode extends OperatorType {
   }
 }
 
-export class IntersectNode extends OperatorType {
-  public getClass(): new (props: unknown) => OperatorType {
+export class IntersectNode extends OperatorNode<{}> {
+  public getClass(): new (props: unknown) => OperatorNode<{}> {
     return IntersectNode
   }
   public renderFn(children: Shape[]): Shape[] {
     return [Shape.intersect(children)]
   }
 }
+/* eslint-enable @typescript-eslint/no-empty-object-type */
 
-export class RootNode extends OperatorType {
+type TranslateProps = Parameters<InstanceType<typeof Shape>['translate']>[0]
+export class TranslateNode extends OperatorNode<TranslateProps> {
+  public getClass(): new (props: unknown) => OperatorNode<TranslateProps> {
+    return TranslateNode
+  }
+  public renderFn(children: Shape[]): Shape[] {
+    return children.map((shape) => shape.translate(this.props))
+  }
+}
+
+type MirrorProps = Parameters<InstanceType<typeof Shape>['mirror']>[0]
+export class MirrorNode extends OperatorNode<MirrorProps> {
+  public getClass(): new (props: unknown) => OperatorNode<MirrorProps> {
+    return MirrorNode
+  }
+  public renderFn(children: Shape[]): Shape[] {
+    return children.map((shape) => shape.mirror(this.props))
+  }
+}
+
+type CenterProps = Parameters<InstanceType<typeof Shape>['center']>[0]
+export class CenterNode extends OperatorNode<CenterProps> {
+  public getClass(): new (props: unknown) => OperatorNode<CenterProps> {
+    return CenterNode
+  }
+  public renderFn(children: Shape[]): Shape[] {
+    return children.map((shape) => shape.center(this.props))
+  }
+}
+
+type RotateProps = Parameters<InstanceType<typeof Shape>['rotate']>[0]
+export class RotateNode extends OperatorNode<RotateProps> {
+  public getClass(): new (props: unknown) => OperatorNode<RotateProps> {
+    return RotateNode
+  }
+  public renderFn(children: Shape[]): Shape[] {
+    return children.map((shape) => shape.rotate(this.props))
+  }
+}
+
+type ScaleProps = Parameters<InstanceType<typeof Shape>['scale']>[0]
+export class ScaleNode extends OperatorNode<ScaleProps> {
+  public getClass(): new (props: unknown) => OperatorNode<ScaleProps> {
+    return ScaleNode
+  }
+  public renderFn(children: Shape[]): Shape[] {
+    return children.map((shape) => shape.scale(this.props))
+  }
+}
+
+type TransformProps = Parameters<InstanceType<typeof Shape>['transform']>[0]
+export class TransformNode extends OperatorNode<TransformProps> {
+  public getClass(): new (props: unknown) => OperatorNode<TransformProps> {
+    return TransformNode
+  }
+  public renderFn(children: Shape[]): Shape[] {
+    return children.map((shape) => shape.transform(this.props))
+  }
+}
+
+export class RootNode extends OperatorNode {
   constructor() {
     super({})
   }
-  public getClass(): { new (props: unknown): OperatorType } {
+  public getClass(): { new (props: unknown): OperatorNode } {
     return RootNode
   }
 
@@ -130,25 +231,60 @@ export class RootNode extends OperatorType {
   }
 }
 
-// ============================================================================
-// Type Definitions
-// ============================================================================
-export type Instance = PrimitiveType
-export type Container = RootNode
-// ============================================================================
-// Intrinsic Element Handling
-// ============================================================================
-export function createShape(type: string, props: unknown): Instance {
-  switch (type) {
-    case 'cuboid':
-      return new CuboidNode(props)
-    case 'union':
-      return new UnionNode(props)
-    case 'subtract':
-      return new SubtractNode(props)
-    case 'intersect':
-      return new IntersectNode(props)
-    default:
-      throw new Error(`Unknown intrinsic element ${type}`)
+export const ShapeMap = {
+  // primitives
+  cuboid: CuboidNode,
+  sphere: SphereNode,
+  cylinder: CylinderNode,
+} as const
+
+export const ShapeMapBooleans = {
+  // booleans
+  union: UnionNode,
+  subtract: SubtractNode,
+  intersect: IntersectNode,
+  // transforms
+  translate: UnionNode,
+  mirror: MirrorNode,
+  scale: ScaleNode,
+  rotate: RotateNode,
+  center: CenterNode,
+  transform: TransformNode,
+} as const
+
+export const ShapeMapTransforms = {
+  // booleans
+  union: UnionNode,
+  subtract: SubtractNode,
+  intersect: IntersectNode,
+  // transforms
+  translate: UnionNode,
+  mirror: MirrorNode,
+  scale: ScaleNode,
+  rotate: RotateNode,
+  center: CenterNode,
+  transform: TransformNode,
+} as const
+
+type TShapeMap = typeof ShapeMap
+type TShapeMapBooleans = typeof ShapeMapBooleans
+type TShapeMapTransforms = typeof ShapeMapTransforms
+export type TProps = { [k in keyof TShapeMap]: InstanceType<TShapeMap[k]>['props'] } & {
+  [k in keyof TShapeMapBooleans]: InstanceType<TShapeMapBooleans[k]>['props'] & { children: JSX.Element[] }
+} & {
+  [k in keyof TShapeMapTransforms]: InstanceType<TShapeMapTransforms[k]>['props'] & {
+    children: JSX.Element[] | JSX.Element
   }
+}
+
+export function createShape(type: string, props: unknown): PrimitiveNode {
+  const cls =
+    (ShapeMap as Record<string, { new (props: unknown): PrimitiveNode } | undefined>)[type] ??
+    (ShapeMapBooleans as Record<string, { new (props: unknown): PrimitiveNode } | undefined>)[type] ??
+    (ShapeMapTransforms as Record<string, { new (props: unknown): PrimitiveNode } | undefined>)[type] ??
+    undefined
+  if (cls) {
+    return new cls(props)
+  }
+  throw new Error(`Unknown intrinsic element ${type}`)
 }

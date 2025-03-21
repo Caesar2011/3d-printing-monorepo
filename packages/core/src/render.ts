@@ -1,12 +1,12 @@
 import { PersistantReconciler } from '@jsxcad/reconciler'
 
-import type { Instance, Container } from './ShapeType.js'
-import { createShape, OperatorType, RootNode } from './ShapeType.js'
+import type { PrimitiveNode } from './ShapeType.js'
+import { createShape, OperatorNode, RootNode } from './ShapeType.js'
 
 export async function render(element: React.ReactNode) {
-  const renderer = PersistantReconciler<Instance, OperatorType, Container>(
+  const renderer = PersistantReconciler<PrimitiveNode, OperatorNode, RootNode>(
     createShape,
-    (instance) => instance instanceof OperatorType,
+    (instance) => instance instanceof OperatorNode,
   )
 
   const container = new RootNode()
@@ -23,6 +23,6 @@ export async function render(element: React.ReactNode) {
     null,
   )
   await new Promise<void>((resolve) => renderer.updateContainer(element, reactContainer, null, resolve))
-  console.dir(container, { depth: Infinity })
+  container.renderTree()
   return container.render()
 }

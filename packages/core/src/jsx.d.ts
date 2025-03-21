@@ -1,20 +1,12 @@
-import type { AxisRecordDefinition } from './index.js'
+import type { TProps } from './ShapeType.js'
+
+type Children = {
+  children: JSX.Element[]
+}
 
 declare module 'react' {
   namespace JSX {
-    interface IntrinsicElements {
-      cuboid: {
-        size: AxisRecordDefinition
-      }
-      union: {
-        children: JSX.Element[]
-      }
-      subtract: {
-        children: JSX.Element[]
-      }
-      intersect: {
-        children: JSX.Element[]
-      }
-    }
+    // eslint-disable-next-line
+    interface IntrinsicElements extends TProps {}
   }
 }
