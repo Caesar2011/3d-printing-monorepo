@@ -1,11 +1,13 @@
-﻿import ReactReconciler, { HostConfig } from 'react-reconciler'
+﻿import type { HostConfig } from 'react-reconciler';
+import ReactReconciler from 'react-reconciler'
 import { DefaultEventPriority } from 'react-reconciler/constants.js'
 
+import type {
+  PrimitiveType} from './ShapeType.js';
 import {
   CuboidNode,
   IntersectNode,
   OperatorType,
-  PrimitiveType,
   RootNode,
   SubtractNode,
   UnionNode,

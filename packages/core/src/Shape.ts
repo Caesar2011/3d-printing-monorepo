@@ -3,7 +3,8 @@ import type { Mat4 } from '@jscad/modeling/src/maths/types.js'
 import type { CylinderOptions, SphereOptions } from '@jscad/modeling/src/primitives/index.js'
 import jscad from '@jscad/modeling'
 
-import { axisOrRecordToVec3, AxisRecordDefinition, UniqueAxisString, V } from './Vector3.js'
+import type { AxisRecordDefinition, UniqueAxisString } from './Vector3.js'
+import { axisOrRecordToVec3, V } from './Vector3.js'
 const { booleans, colors, maths, measurements, primitives, transforms } = jscad
 
 export enum ShapeType {

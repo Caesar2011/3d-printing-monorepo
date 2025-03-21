@@ -1,5 +1,5 @@
 declare module '@jscad/3mf-serializer' {
-  import { Geom3 } from '@jscad/modeling/src/geometries/geom3'
+  import type { Geom3 } from '@jscad/modeling/src/geometries/geom3'
   /**
    * MIME-Type for 3MF files.
    */

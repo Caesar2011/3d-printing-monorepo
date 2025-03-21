@@ -3,7 +3,8 @@ import * as fs from 'node:fs'
 
 import React from 'react'
 import { render } from '@jsxcad/core'
-import { Shape, ShapeType } from '@jsxcad/core/dist/Shape.js'
+import type { Shape} from '@jsxcad/core/dist/Shape.js';
+import { ShapeType } from '@jsxcad/core/dist/Shape.js'
 import { serialize } from '@jscad/3mf-serializer'
 
 const App = () => {

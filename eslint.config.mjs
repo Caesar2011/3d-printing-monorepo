@@ -20,14 +20,14 @@ const compat = new FlatCompat({
 
 export default [
   ...fixupConfigRules(
-      compat.extends(
-          'eslint:recommended',
-          'plugin:@typescript-eslint/recommended',
-          'plugin:import/errors',
-          'plugin:import/warnings',
-          'plugin:import/typescript',
-          'prettier',
-      ),
+    compat.extends(
+      'eslint:recommended',
+      'plugin:@typescript-eslint/recommended',
+      'plugin:import/errors',
+      'plugin:import/warnings',
+      'plugin:import/typescript',
+      'prettier',
+    ),
   ),
   {
     plugins: {
@@ -60,11 +60,8 @@ export default [
         },
       ],
 
-      'import/no-unresolved': [
-        'error',
-        { ignore: ['\\.js$'] },
-      ],
-
+      'import/no-unresolved': ['error', { ignore: ['\\.js$'] }],
+      '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/explicit-member-accessibility': [
         'error',
         {
@@ -104,7 +101,7 @@ export default [
     },
   },
   {
-    files: ['packages/core/src/Shape.ts','packages/game/src/jscad-3mf-serializer.d.ts'],
+    files: ['packages/core/src/Shape.ts', 'packages/game/src/jscad-3mf-serializer.d.ts'],
     rules: {
       'no-restricted-imports': 'off',
     },

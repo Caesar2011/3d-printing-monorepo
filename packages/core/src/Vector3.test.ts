@@ -1,6 +1,7 @@
 import { describe, expect, test } from '@jest/globals'
 
-import { axisOrRecordToVec3, axisToVec3, RecordDefinition, Vector3 } from './Vector3.js'
+import type { RecordDefinition} from './Vector3.js';
+import { axisOrRecordToVec3, axisToVec3, Vector3 } from './Vector3.js'
 
 interface TestCase {
   input: Parameters<typeof axisToVec3>[0]

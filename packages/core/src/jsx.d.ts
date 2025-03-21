@@ -1,4 +1,4 @@
-import { AxisRecordDefinition } from './index.js'
+import type { AxisRecordDefinition } from './index.js'
 
 declare module 'react' {
   namespace JSX {
