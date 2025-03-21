@@ -1,5 +1,6 @@
 import type { JSX } from 'react'
 
+import type { ShapeProperties } from './Shape.js'
 import { Shape } from './Shape.js'
 
 export abstract class PrimitiveNode<T extends object = object> {
@@ -129,34 +130,32 @@ export class CylinderNode extends PrimitiveNode<CylinderProps> {
     return [Shape.cylinder(this.props)]
   }
 }
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-export class UnionNode extends OperatorNode<{}> {
-  public getClass(): new (props: unknown) => OperatorNode<{}> {
+export class UnionNode extends OperatorNode<ShapeProperties> {
+  public getClass(): new (props: unknown) => OperatorNode<ShapeProperties> {
     return UnionNode
   }
   public renderFn(children: Shape[]): Shape[] {
-    return [Shape.union(children)]
+    return [Shape.union(children, this.props)]
   }
 }
 
-export class SubtractNode extends OperatorNode<{}> {
-  public getClass(): new (props: unknown) => OperatorNode<{}> {
+export class SubtractNode extends OperatorNode<ShapeProperties> {
+  public getClass(): new (props: unknown) => OperatorNode<ShapeProperties> {
     return SubtractNode
   }
   public renderFn(children: Shape[]): Shape[] {
-    return [Shape.subtract(children)]
+    return [Shape.subtract(children, this.props)]
   }
 }
 
-export class IntersectNode extends OperatorNode<{}> {
-  public getClass(): new (props: unknown) => OperatorNode<{}> {
+export class IntersectNode extends OperatorNode<ShapeProperties> {
+  public getClass(): new (props: unknown) => OperatorNode<ShapeProperties> {
     return IntersectNode
   }
   public renderFn(children: Shape[]): Shape[] {
-    return [Shape.intersect(children)]
+    return [Shape.intersect(children, this.props)]
   }
 }
-/* eslint-enable @typescript-eslint/no-empty-object-type */
 
 type TranslateProps = Parameters<InstanceType<typeof Shape>['translate']>[0]
 export class TranslateNode extends OperatorNode<TranslateProps> {
@@ -243,22 +242,11 @@ export const ShapeMapBooleans = {
   union: UnionNode,
   subtract: SubtractNode,
   intersect: IntersectNode,
-  // transforms
-  translate: UnionNode,
-  mirror: MirrorNode,
-  scale: ScaleNode,
-  rotate: RotateNode,
-  center: CenterNode,
-  transform: TransformNode,
 } as const
 
 export const ShapeMapTransforms = {
-  // booleans
-  union: UnionNode,
-  subtract: SubtractNode,
-  intersect: IntersectNode,
   // transforms
-  translate: UnionNode,
+  translate: TranslateNode,
   mirror: MirrorNode,
   scale: ScaleNode,
   rotate: RotateNode,
@@ -270,7 +258,9 @@ type TShapeMap = typeof ShapeMap
 type TShapeMapBooleans = typeof ShapeMapBooleans
 type TShapeMapTransforms = typeof ShapeMapTransforms
 export type TProps = { [k in keyof TShapeMap]: InstanceType<TShapeMap[k]>['props'] } & {
-  [k in keyof TShapeMapBooleans]: InstanceType<TShapeMapBooleans[k]>['props'] & { children: JSX.Element[] }
+  [k in keyof TShapeMapBooleans]: InstanceType<TShapeMapBooleans[k]>['props'] & {
+    children: JSX.Element[] | JSX.Element
+  }
 } & {
   [k in keyof TShapeMapTransforms]: InstanceType<TShapeMapTransforms[k]>['props'] & {
     children: JSX.Element[] | JSX.Element

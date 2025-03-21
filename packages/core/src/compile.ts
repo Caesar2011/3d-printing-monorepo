@@ -1,10 +1,12 @@
-import fs from 'node:fs'
+import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import { serialize } from '@jscad/3mf-serializer'
+import type { ReactElement } from 'react'
 
 import type { Shape } from './Shape.js'
 import { ShapeType } from './Shape.js'
+import { render } from './render.js'
 
 export enum RenderMethod {
   All,
@@ -21,22 +23,38 @@ export type RenderOptions = {
   repeat?: number
 }
 
-export function findProjectRoot(startDir: string): string {
+export type RenderCallbacks = {
+  onStart?: () => void
+  onRendered?: () => void
+  onChecksDone?: () => void
+  onSerialized?: () => void
+  onSaved?: (filePath: string) => void
+}
+
+export async function findProjectRoot(startDir: string): Promise<string> {
   let currentDir = startDir
-  while (!fs.existsSync(path.join(currentDir, 'package.json'))) {
+
+  while (true) {
+    const packagePath = path.join(currentDir, 'package.json')
+    const isPackageJsonPresent = await fs.access(packagePath, fs.constants.R_OK).then(
+      () => true,
+      () => false,
+    )
+
+    if (isPackageJsonPresent) {
+      return currentDir
+    }
+
     const parentDir = path.dirname(currentDir)
     if (parentDir === currentDir) {
       throw new Error('No package.json found in the directory tree.')
     }
     currentDir = parentDir
   }
-  return currentDir
 }
 
-export function compile(shapes: Shape[], options: RenderOptions) {
-  console.time('render')
-
-  const opts: Required<RenderOptions> = {
+export async function compile(root: ReactElement, options: RenderOptions & RenderCallbacks) {
+  const opts: Required<RenderOptions> & RenderCallbacks = {
     filePath: 'public/output.3mf',
     method: RenderMethod.All,
     filter: () => true,
@@ -44,6 +62,11 @@ export function compile(shapes: Shape[], options: RenderOptions) {
     repeat: 1,
     ...options,
   }
+  opts.onStart?.()
+
+  const shapes = await render(root)
+
+  opts.onRendered?.()
 
   if (opts.dev) console.warn('Dev mode is enabled!')
   if (opts.repeat !== 1) console.warn(`Repeat is set to ${opts.repeat}!`)
@@ -76,12 +99,16 @@ export function compile(shapes: Shape[], options: RenderOptions) {
   const duplicateNames = [...nameCounts.entries()].filter(([, count]) => count > 1).map(([name]) => name)
   check(duplicateNames.length === 0, `Shape names must be unique, but found duplicates: ${duplicateNames.join(', ')}`)
 
+  opts.onChecksDone?.()
+
   const mf3Data = serialize({ compress: true }, ...shapes)[0]
+
+  opts.onSerialized?.()
+
   const filePath = path.isAbsolute(opts.filePath)
     ? opts.filePath
-    : path.join(findProjectRoot(opts.fileDir), opts.filePath)
-  fs.writeFileSync(filePath, Buffer.from(mf3Data))
+    : path.join(await findProjectRoot(opts.fileDir), opts.filePath)
+  await fs.writeFile(filePath, Buffer.from(mf3Data))
 
-  console.timeEnd('render')
-  console.log(`Rendered to '${filePath}'`)
+  opts.onSaved?.(filePath)
 }

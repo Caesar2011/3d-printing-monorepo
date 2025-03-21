@@ -1,34 +1,29 @@
-﻿import type { FC, PropsWithChildren } from 'react'
-import { memo, createContext, useContext } from 'react'
-import { compile } from '@jsxcad/core/dist/compile.js'
-import { render } from '@jsxcad/core'
+﻿import { memo } from 'react'
+import { ShapeType } from '@jsxcad/core/dist/Shape.js'
+import { V } from '@jsxcad/core'
 
-const MyCtx = createContext(4)
-
-const MyCtxProvider: FC<PropsWithChildren<{ newNumber: number }>> = ({ newNumber, children }) => {
-  return <MyCtx.Provider value={newNumber}>{children}</MyCtx.Provider>
-}
+import { Cuboid } from './Cuboid.js'
+import { renderComponent } from './render-component.js'
+import { Colors } from './colors.js'
+import { HexGrid } from './HexGrid.js'
 
 const App = memo(() => {
-  const me = useContext(MyCtx)
+  const dim = V({ x: 150, y: 200, z: 2 })
   return (
-    <subtract>
-      <cuboid size={me} />
-      <cuboid size={3} />
-    </subtract>
+    <>
+      <HexGrid size={dim} hexInnerDiameter={10} hexWidth={1} center={true} />
+      <subtract name={'outer'} type={ShapeType.Technical} color={Colors.BLUE_2}>
+        <translate by={{ xy: -0.1 }}>
+          <Cuboid size={dim.a({ xy: 0.2 })} />
+        </translate>
+        <Cuboid size={dim} />
+      </subtract>
+    </>
   )
 })
 
 const Root = () => {
-  return (
-    <>
-      <MyCtxProvider newNumber={10}>
-        <App />
-        <App />
-      </MyCtxProvider>
-      <App />
-    </>
-  )
+  return <App />
 }
 
-;(async () => compile(await render(<Root />), { fileDir: import.meta.dirname, dev: true }))()
+renderComponent(<Root />).catch(console.error)

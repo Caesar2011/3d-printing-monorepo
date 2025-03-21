@@ -23,6 +23,5 @@ export async function render(element: React.ReactNode) {
     null,
   )
   await new Promise<void>((resolve) => renderer.updateContainer(element, reactContainer, null, resolve))
-  container.renderTree()
   return container.render()
 }
