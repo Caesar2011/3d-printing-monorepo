@@ -65,7 +65,7 @@ export const HexGrid: FC<HexGridProps> = ({ size, offset, center, hexInnerDiamet
         <union>
           {range(rows + 1).flatMap((y) =>
             range(columns + 1).map((x) => (
-              <translate by={{ x: x * columnSpacing + (y % 2) * evenOffset, y: y * rowSpacing }}>
+              <translate by={{ x: x * columnSpacing + (y % 2) * evenOffset, y: y * rowSpacing }} key={`${x}-${y}`}>
                 <Hex hexInnerDiameter={hexInnerDiameter} hexWidth={hexWidth} height={renderDim.z} />
               </translate>
             )),

@@ -29,90 +29,95 @@ export class Shape implements Geom3 {
     this.polygons = Shape.polygons
     this.transforms = Shape.transforms
     this.color = Shape.color ?? props.color
-    this.name = props.name ?? 'shape'
     this.type = props.type ?? ShapeType.Unspecified
+    this.name =
+      props.name !== undefined && props.name !== ''
+        ? props.name
+        : this.type !== ShapeType.Unspecified
+          ? ShapeType[this.type]
+          : ''
   }
 
-  public getProps(): ShapeProperties {
-    return {
-      color: this.color,
-      name: this.name,
-      type: this.type,
-    }
+  private mergeProps(newProps: ShapeProperties): ShapeProperties {
+    return Shape.mergeProps(this, newProps)
+  }
+
+  private static mergeProps(oldProps: ShapeProperties, newProps: ShapeProperties): ShapeProperties {
+    const name =
+      newProps.name !== undefined && newProps.name !== '' && oldProps.name !== undefined && oldProps.name !== ''
+        ? { name: `${newProps.name}-${oldProps.name}` }
+        : undefined
+    return { ...oldProps, ...newProps, ...name }
   }
 
   public set(props: ShapeProperties): Shape {
-    if (props.color) {
-      return new Shape(colors.colorize(props.color, this), { ...this.getProps(), ...props })
-    } else {
-      return new Shape(this, { ...this.getProps(), ...props })
-    }
+    return new Shape(this, this.mergeProps(props))
   }
 
-  public translate(opts: { by?: AxisRecordDefinition; fromOrigin?: UniqueAxisString }) {
+  public translate(props: { by?: AxisRecordDefinition; fromOrigin?: UniqueAxisString } & ShapeProperties) {
     let origin = V()
-    if (opts.fromOrigin) {
+    if (props.fromOrigin) {
       const box = V(measurements.measureBoundingBox(this)[0])
-      origin = origin.a({ [opts.fromOrigin]: box.m(-1) })
+      origin = origin.a({ [props.fromOrigin]: box.m(-1) })
     }
-    const vec = V(opts.by).a(origin)
-    return new Shape(transforms.translate(vec.v, this), this.getProps())
+    const vec = V(props.by).a(origin)
+    return new Shape(transforms.translate(vec.v, this), this.mergeProps(props))
   }
 
-  public center(opts: { axes?: [boolean, boolean, boolean]; relativeTo?: AxisRecordDefinition }) {
+  public center(props: { axes?: [boolean, boolean, boolean]; relativeTo?: AxisRecordDefinition } & ShapeProperties) {
     const centerOpts = {
-      ...(opts.relativeTo === undefined ? {} : { relativeTo: axisOrRecordToVec3(opts.relativeTo) }),
-      ...(opts.axes === undefined ? {} : { axes: opts.axes }),
+      ...(props.relativeTo === undefined ? {} : { relativeTo: axisOrRecordToVec3(props.relativeTo) }),
+      ...(props.axes === undefined ? {} : { axes: props.axes }),
     }
-    return new Shape(transforms.center(centerOpts, this), this.getProps())
+    return new Shape(transforms.center(centerOpts, this), this.mergeProps(props))
   }
 
-  public scale(opts: { by: AxisRecordDefinition }) {
-    const vec = axisOrRecordToVec3(opts.by)
-    return new Shape(transforms.scale(vec, this), this.getProps())
+  public scale(props: { by: AxisRecordDefinition } & ShapeProperties) {
+    const vec = axisOrRecordToVec3(props.by)
+    return new Shape(transforms.scale(vec, this), this.mergeProps(props))
   }
 
-  public mirror(opts: { origin?: AxisRecordDefinition; normal?: AxisRecordDefinition }) {
+  public mirror(props: { origin?: AxisRecordDefinition; normal?: AxisRecordDefinition } & ShapeProperties) {
     const mirrorOpts = {
-      ...(opts.origin === undefined ? {} : { origin: axisOrRecordToVec3(opts.origin) }),
-      ...(opts.normal === undefined ? {} : { normal: axisOrRecordToVec3(opts.normal) }),
+      ...(props.origin === undefined ? {} : { origin: axisOrRecordToVec3(props.origin) }),
+      ...(props.normal === undefined ? {} : { normal: axisOrRecordToVec3(props.normal) }),
     }
-    return new Shape(transforms.mirror(mirrorOpts, this), this.getProps())
+    return new Shape(transforms.mirror(mirrorOpts, this), this.mergeProps(props))
   }
 
-  public rotate(opts: { by: AxisRecordDefinition; center?: AxisRecordDefinition }) {
-    const vec = axisOrRecordToVec3(opts.by)
-    if (opts.center !== undefined) {
-      const center = axisOrRecordToVec3(opts.center)
+  public rotate(props: { by: AxisRecordDefinition; center?: AxisRecordDefinition } & ShapeProperties) {
+    const vec = axisOrRecordToVec3(props.by)
+    if (props.center !== undefined) {
+      const center = axisOrRecordToVec3(props.center)
       const centerRev = V(center).m(-1).v
       return new Shape(
         transforms.translate(center, transforms.rotate(vec, transforms.translate(centerRev, this))),
-        this.getProps(),
+        this.mergeProps(props),
       )
     }
-    return new Shape(transforms.rotate(vec, this), this.getProps())
+    return new Shape(transforms.rotate(vec, this), this.mergeProps(props))
   }
 
-  public transform(opts: { mat4: Mat4 }) {
-    return new Shape(transforms.transform(opts.mat4, this), this.getProps())
+  public transform(props: { mat4: Mat4 } & ShapeProperties) {
+    return new Shape(transforms.transform(props.mat4, this), this.mergeProps(props))
   }
 
   public static union(geoms: Shape[], props: ShapeProperties) {
     const first = geoms.at(0)
     if (!first) throw new Error('Union must contain at least one geom')
-    return new Shape(booleans.union(geoms), { ...first.getProps(), ...props })
+    return new Shape(booleans.union(geoms), Shape.mergeProps(first, props))
   }
 
   public static subtract(geoms: Shape[], props: ShapeProperties) {
     const first = geoms.at(0)
     if (!first) throw new Error('Subtract must contain at least one geom')
-    return new Shape(booleans.subtract(...geoms), { ...first.getProps(), ...props })
+    return new Shape(booleans.subtract(...geoms), Shape.mergeProps(first, props))
   }
 
   public static intersect(geoms: Shape[], props: ShapeProperties) {
     const first = geoms.at(0)
     if (!first) throw new Error('Intersect must contain at least one geom')
-    return new Shape(booleans.intersect(...geoms), { ...first.getProps(), ...props })
+    return new Shape(booleans.intersect(...geoms), Shape.mergeProps(first, props))
   }
 
   public static sphere(

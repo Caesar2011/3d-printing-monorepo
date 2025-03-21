@@ -1,4 +1,4 @@
-import type { JSX } from 'react'
+import type { JSX, Key } from 'react'
 
 import type { ShapeProperties } from './Shape.js'
 import { Shape } from './Shape.js'
@@ -217,6 +217,16 @@ export class TransformNode extends OperatorNode<TransformProps> {
   }
 }
 
+type EntityProps = Parameters<InstanceType<typeof Shape>['set']>[0]
+export class EntityNode extends OperatorNode<EntityProps> {
+  public getClass(): new (props: unknown) => OperatorNode<EntityProps> {
+    return EntityNode
+  }
+  public renderFn(children: Shape[]): Shape[] {
+    return children.map((shape) => shape.set(this.props))
+  }
+}
+
 export class RootNode extends OperatorNode {
   constructor() {
     super({})
@@ -252,18 +262,25 @@ export const ShapeMapTransforms = {
   rotate: RotateNode,
   center: CenterNode,
   transform: TransformNode,
+  entity: EntityNode,
 } as const
 
 type TShapeMap = typeof ShapeMap
 type TShapeMapBooleans = typeof ShapeMapBooleans
 type TShapeMapTransforms = typeof ShapeMapTransforms
-export type TProps = { [k in keyof TShapeMap]: InstanceType<TShapeMap[k]>['props'] } & {
+export type TProps = {
+  [k in keyof TShapeMap]: InstanceType<TShapeMap[k]>['props'] & {
+    key?: Key | null | undefined
+  }
+} & {
   [k in keyof TShapeMapBooleans]: InstanceType<TShapeMapBooleans[k]>['props'] & {
     children: JSX.Element[] | JSX.Element
+    key?: Key | null | undefined
   }
 } & {
   [k in keyof TShapeMapTransforms]: InstanceType<TShapeMapTransforms[k]>['props'] & {
     children: JSX.Element[] | JSX.Element
+    key?: Key | null | undefined
   }
 }
 
