@@ -1,10 +1,7 @@
-﻿import { memo } from 'react'
+import { memo } from 'react'
 import { ShapeType, V } from '@jsxcad/core'
+import { HexGrid, Cuboid, Colors, renderComponent } from '@jsxcad/game'
 
-import { Cuboid } from './primitives/Cuboid.js'
-import { renderComponent } from './utils/render-component.js'
-import { Colors } from './utils/colors.js'
-import { HexGrid } from './primitives/HexGrid.js'
 import { logger } from './logger.js'
 
 const App = memo(() => {
@@ -12,7 +9,7 @@ const App = memo(() => {
   return (
     <entity name={'app'}>
       <entity name={'hex'}>
-        <HexGrid size={dim} hexInnerDiameter={10} hexWidth={1.1} center={true} />
+        <HexGrid size={dim} hexInnerDiameter={10} hexWidth={1} center={true} />
       </entity>
       <subtract name={'outer'} type={ShapeType.Technical} color={Colors.BLUE_2}>
         <translate by={{ xy: -0.1 }}>

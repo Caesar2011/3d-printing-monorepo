@@ -5,9 +5,7 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "build": "tsc --project tsconfig.json",
-    "dev": "tsc-watch --onSuccess \"npm start\" --project tsconfig.json",
-    "lint": "prettier --write . && eslint . --fix"
+    "build": "tsc --project tsconfig.json"
   },
   "dependencies": {
     "winston": "^3.17.0",
