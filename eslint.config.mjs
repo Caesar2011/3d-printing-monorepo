@@ -51,6 +51,7 @@ export default [
 
     rules: {
       'unused-imports/no-unused-imports': 'error',
+      'no-console': ['error', { allow: ['table'] }],
 
       'import/order': [
         'error',

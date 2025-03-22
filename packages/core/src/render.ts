@@ -2,6 +2,7 @@ import { PersistantReconciler } from '@jsxcad/reconciler'
 
 import type { PrimitiveNode } from './ShapeType.js'
 import { createShape, OperatorNode, RootNode } from './ShapeType.js'
+import { logger } from './logger.js'
 
 export async function parseAst(element: React.ReactNode) {
   const renderer = PersistantReconciler<PrimitiveNode, OperatorNode, RootNode>(
@@ -18,7 +19,7 @@ export async function parseAst(element: React.ReactNode) {
     null,
     'player',
     (recoverableError: Error) => {
-      console.error(recoverableError)
+      logger.error(recoverableError)
     },
     null,
   )

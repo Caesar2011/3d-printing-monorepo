@@ -1,31 +1,32 @@
-import type { RenderOptions } from '@jsxcad/core/dist/compile.js'
-import { compile } from '@jsxcad/core'
+import { compile, type RenderOptions } from '@jsxcad/core'
+
+import { logger } from './logger.js'
 
 export async function renderComponent(component: React.ReactElement, renderOpts?: Partial<RenderOptions>) {
-  console.time('render')
-  console.timeLog('render')
+  const profiler = logger.startTimer()
+  logger.debug('Rendering component')
   await compile(component, {
     fileDir: import.meta.dirname,
     dev: true,
     ...renderOpts,
     onStart: () => {
-      console.timeLog('render', 'onStart')
+      logger.debug('render onStart (' + Math.round(Date.now() - profiler.start.valueOf()) + 'ms)')
     },
     onParsedAst: () => {
-      console.timeLog('render', 'onParsedAst')
+      logger.debug('render onParsedAst (' + Math.round(Date.now() - profiler.start.valueOf()) + 'ms)')
     },
     onRendered: () => {
-      console.timeLog('render', 'onRendered')
+      logger.debug('render onRendered (' + Math.round(Date.now() - profiler.start.valueOf()) + 'ms)')
     },
     onChecksDone: () => {
-      console.timeLog('render', 'onChecksDone')
+      logger.debug('render onChecksDone (' + Math.round(Date.now() - profiler.start.valueOf()) + 'ms)')
     },
     onSerialized: () => {
-      console.timeLog('render', 'onSerialized')
+      logger.debug('render onSerialized (' + Math.round(Date.now() - profiler.start.valueOf()) + 'ms)')
     },
     onSaved: (filePath) => {
-      console.timeLog('render', 'onSaved', filePath)
+      logger.debug('render onSaved to  (' + Math.round(Date.now() - profiler.start.valueOf()) + 'ms)', { filePath })
     },
   })
-  console.timeEnd('render')
+  profiler.done()
 }

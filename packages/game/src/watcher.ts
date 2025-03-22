@@ -1,11 +1,12 @@
-import { findProjectRoot } from '@jsxcad/core'
+import { findProjectRoot } from '@jsxcad/utils'
 import type { RenderOptions } from '@jsxcad/core'
 
 import { renderComponent } from './render-component.js'
+import { logger } from './logger.js'
 
 export async function watcher(onWatchedExecution: () => void) {
   if (process.env.WITHIN_WATCHER == null) {
-    process.chdir(await findProjectRoot(module.path))
+    process.chdir(findProjectRoot(module.path))
     // Dynamically import required modules.
     const { spawn } = await import('child_process')
     const { TscWatchClient } = await import('tsc-watch')
@@ -14,21 +15,21 @@ export async function watcher(onWatchedExecution: () => void) {
     const watch = new TscWatchClient()
 
     watch.on('started', () => {
-      console.log('Compilation started')
+      logger.debug('Compilation started')
       // Kill any existing child process before restarting.
       if (child) {
-        console.log('Killing existing process...')
+        logger.debug('Killing existing process...')
         child.kill()
         child = null
       }
     })
 
     watch.on('first_success', () => {
-      console.log('First success!')
+      logger.debug('First success!')
     })
 
     watch.on('success', () => {
-      console.log('Restarting child process...')
+      logger.debug('Restarting child process...')
       // Spawn a new process using the current executable and arguments.
       child = spawn(process.execPath, process.argv, {
         stdio: 'inherit', // Attached to the same terminal

@@ -1,5 +1,5 @@
 {
-  "name": "@jsxcad/game",
+  "name": "@jsxcad/utils",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -7,20 +7,13 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "dev": "tsc-watch --onSuccess \"npm start\" --project tsconfig.json",
-    "start": "node --enable-source-maps dist/index.js",
-    "serve": "node --enable-source-maps dist/server.js"
+    "lint": "prettier --write . && eslint . --fix"
   },
   "dependencies": {
-    "@jsxcad/core": "*",
-    "@jsxcad/utils": "*",
-    "express": "^4.21.2",
-    "react": "^19.0.0",
     "winston": "^3.17.0",
     "winston-console-format": "^1.0.8"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
-    "jest": "^29.7.0",
     "tsc-watch": "^6.2.1",
     "tsx": "^3.12.7"
   }

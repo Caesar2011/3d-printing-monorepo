@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@jsxcad/reconciler": "*",
+    "@jsxcad/utils": "*",
     "@jscad/modeling": "^2.12.5"
   },
   "devDependencies": {

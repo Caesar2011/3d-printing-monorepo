@@ -3,10 +3,12 @@ import path from 'node:path'
 
 import { serialize } from '@jscad/3mf-serializer'
 import type { ReactElement } from 'react'
+import { findProjectRoot } from '@jsxcad/utils'
 
 import type { Shape } from './Shape.js'
 import { ShapeType } from './Shape.js'
 import { parseAst } from './render.js'
+import { logger } from './logger.js'
 
 export enum RenderMethod {
   All,
@@ -32,28 +34,6 @@ export type RenderCallbacks = {
   onSaved?: (filePath: string) => void
 }
 
-export async function findProjectRoot(startDir: string): Promise<string> {
-  let currentDir = startDir
-
-  while (true) {
-    const packagePath = path.join(currentDir, 'package.json')
-    const isPackageJsonPresent = await fs.access(packagePath, fs.constants.R_OK).then(
-      () => true,
-      () => false,
-    )
-
-    if (isPackageJsonPresent) {
-      return currentDir
-    }
-
-    const parentDir = path.dirname(currentDir)
-    if (parentDir === currentDir) {
-      throw new Error('No package.json found in the directory tree.')
-    }
-    currentDir = parentDir
-  }
-}
-
 export async function compile(root: ReactElement, options: RenderOptions & RenderCallbacks) {
   const opts: Required<RenderOptions> & RenderCallbacks = {
     filePath: 'public/output.3mf',
@@ -73,28 +53,28 @@ export async function compile(root: ReactElement, options: RenderOptions & Rende
 
   opts.onRendered?.()
 
-  if (opts.dev) console.warn('Dev mode is enabled!')
-  if (opts.repeat !== 1) console.warn(`Repeat is set to ${opts.repeat}!`)
+  if (opts.dev) logger.warn('Dev mode is enabled!')
+  if (opts.repeat !== 1) logger.warn(`Repeat is set to ${opts.repeat}!`)
 
-  const check = (condition: boolean, message: string): void => {
+  const check = (condition: boolean, message: string, meta: object): void => {
     if (!condition) {
       if (opts.dev) {
-        console.warn(`\x1b[33mWarning: ${message}\x1b[0m`)
+        logger.warn(message, meta)
       } else {
-        throw new Error(`Render error: ${message}`)
+        throw new Error(`Render error: ${message}`, { cause: meta })
       }
     }
   }
 
   const unspecifiedShapes = shapes.filter((shape) => shape.type === ShapeType.Unspecified)
-  check(
-    unspecifiedShapes.length === 0,
-    `The following shapes have an unspecified type: ${unspecifiedShapes.map((s) => s.name || '<unnamed>').join(', ')}`,
-  )
+  check(unspecifiedShapes.length === 0, `Some shapes have an unspecified type`, {
+    shapes: unspecifiedShapes.map((s) => s.name || '<unnamed>'),
+  })
 
   check(
     shapes.every((shape) => shape.name !== ''),
     'One or more shapes have an empty name',
+    {},
   )
 
   const nameCounts = new Map<string, number>()
@@ -102,7 +82,7 @@ export async function compile(root: ReactElement, options: RenderOptions & Rende
     nameCounts.set(shape.name, (nameCounts.get(shape.name) ?? 0) + 1)
   }
   const duplicateNames = [...nameCounts.entries()].filter(([, count]) => count > 1).map(([name]) => name)
-  check(duplicateNames.length === 0, `Shape names must be unique, but found duplicates: ${duplicateNames.join(', ')}`)
+  check(duplicateNames.length === 0, `Shape names must be unique, but found duplicates!`, { shapes: duplicateNames })
 
   opts.onChecksDone?.()
 
@@ -112,7 +92,7 @@ export async function compile(root: ReactElement, options: RenderOptions & Rende
 
   const filePath = path.isAbsolute(opts.filePath)
     ? opts.filePath
-    : path.join(await findProjectRoot(opts.fileDir), opts.filePath)
+    : path.join(findProjectRoot(opts.fileDir), opts.filePath)
   await fs.writeFile(filePath, Buffer.from(mf3Data))
 
   opts.onSaved?.(filePath)

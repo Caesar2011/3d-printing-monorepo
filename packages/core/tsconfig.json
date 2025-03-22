@@ -8,7 +8,7 @@
     "tsBuildInfoFile": "dist/.tsbuildinfo",
     "stripInternal": true
   },
-  "references": [{ "path": "../reconciler" }],
+  "references": [{ "path": "../reconciler" }, { "path": "../utils" }],
   "include": ["src"],
   "exclude": ["dist", "node_modules"]
 }
