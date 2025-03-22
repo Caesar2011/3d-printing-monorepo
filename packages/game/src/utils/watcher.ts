@@ -1,8 +1,9 @@
 import { findProjectRoot } from '@jsxcad/utils'
 import type { RenderOptions } from '@jsxcad/core'
 
+import { logger } from '../logger.js'
+
 import { renderComponent } from './render-component.js'
-import { logger } from './logger.js'
 
 export async function watcher(onWatchedExecution: () => void) {
   if (process.env.WITHIN_WATCHER == null) {

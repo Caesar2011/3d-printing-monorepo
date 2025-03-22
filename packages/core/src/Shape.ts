@@ -5,7 +5,7 @@ import jscad from '@jscad/modeling'
 
 import type { AxisRecordDefinition, UniqueAxisString } from './Vector3.js'
 import { axisOrRecordToVec3, V } from './Vector3.js'
-const { booleans, colors, maths, measurements, primitives, transforms } = jscad
+const { booleans, maths, measurements, primitives, transforms } = jscad
 
 export enum ShapeType {
   Unspecified,

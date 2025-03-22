@@ -1,13 +1,14 @@
 import type { AxisRecordDefinition } from '@jsxcad/core'
-import { V } from '@jsxcad/core'
+import { V, ShapeType } from '@jsxcad/core'
 import type { FC } from 'react'
-import { ShapeType } from '@jsxcad/core/dist/Shape.js'
+import { range } from '@jsxcad/utils'
 
-import { Cylinder } from './Cylinder.js'
+import { Colors } from '../utils/colors.js'
+import { devComponentWatcher } from '../utils/watcher.js'
+import { logger } from '../logger.js'
+
 import { Cuboid } from './Cuboid.js'
-import { range } from './utils.js'
-import { Colors } from './colors.js'
-import { devComponentWatcher } from './watcher.js'
+import { Cylinder } from './Cylinder.js'
 
 export interface HexGridProps {
   size: AxisRecordDefinition
@@ -34,7 +35,11 @@ const Hex: FC<{ hexInnerDiameter: number; hexWidth: number; height: number }> = 
 
 export const HexGrid: FC<HexGridProps> = ({ size, offset, center, hexInnerDiameter, hexWidth }) => {
   // todo: fix hex width mit math calculations
-  console.assert(offset === undefined || center === undefined)
+  if (offset !== undefined && center !== undefined) {
+    const errorMessage = `Only offset or center, but not both can be specified in HexGrid`
+    logger.crit(errorMessage)
+    throw new Error(errorMessage) // Preserve behavior by throwing an error
+  }
 
   const rowSpacing = (hexInnerDiameter / 4) * Math.sqrt(3) + hexWidth / 2
   const columnSpacing = hexInnerDiameter * 1.5 + hexWidth

@@ -1,11 +1,11 @@
 ﻿import { memo } from 'react'
-import { ShapeType } from '@jsxcad/core/dist/Shape.js'
-import { V } from '@jsxcad/core'
+import { ShapeType, V } from '@jsxcad/core'
 
-import { Cuboid } from './Cuboid.js'
-import { renderComponent } from './render-component.js'
-import { Colors } from './colors.js'
-import { HexGrid } from './HexGrid.js'
+import { Cuboid } from './primitives/Cuboid.js'
+import { renderComponent } from './utils/render-component.js'
+import { Colors } from './utils/colors.js'
+import { HexGrid } from './primitives/HexGrid.js'
+import { logger } from './logger.js'
 
 const App = memo(() => {
   const dim = V({ x: 200, y: 100, z: 2 })
@@ -28,4 +28,4 @@ const Root = () => {
   return <App />
 }
 
-renderComponent(<Root />).catch(console.error)
+renderComponent(<Root />).catch(logger.error)

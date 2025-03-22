@@ -1,6 +1,6 @@
 import { compile, type RenderOptions } from '@jsxcad/core'
 
-import { logger } from './logger.js'
+import { logger } from '../logger.js'
 
 export async function renderComponent(component: React.ReactElement, renderOpts?: Partial<RenderOptions>) {
   const profiler = logger.startTimer()
