@@ -25,7 +25,7 @@ export async function renderComponent(component: React.ReactElement, renderOpts?
       logger.debug('render onSerialized (' + Math.round(Date.now() - profiler.start.valueOf()) + 'ms)')
     },
     onSaved: (filePath) => {
-      logger.debug('render onSaved to  (' + Math.round(Date.now() - profiler.start.valueOf()) + 'ms)', { filePath })
+      logger.debug('render onSaved (' + Math.round(Date.now() - profiler.start.valueOf()) + 'ms)', { filePath })
     },
   })
   profiler.done()

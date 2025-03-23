@@ -1,4 +1,5 @@
 ﻿export { Vector3, AxisRecordDefinition, V } from './Vector3.js'
 export { parseAst } from './render.js'
-export { compile, RenderOptions } from './compile.js'
+export { compile } from './compile/compile.js'
 export { ShapeType } from './Shape.js'
+export { RenderOptions } from './compile/types.js'

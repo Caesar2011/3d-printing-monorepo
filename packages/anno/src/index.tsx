@@ -9,7 +9,7 @@ const App = memo(() => {
   return (
     <entity name={'app'}>
       <entity name={'hex'}>
-        <HexGrid size={dim} hexInnerDiameter={10} hexWidth={1} center={true} />
+        <HexGrid size={dim} hexInnerDiameter={10} hexWidth={1.2} center={true} />
       </entity>
       <subtract name={'outer'} type={ShapeType.Technical} color={Colors.BLUE_2}>
         <translate by={{ xy: -0.1 }}>

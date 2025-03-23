@@ -5,34 +5,13 @@ import { serialize } from '@jscad/3mf-serializer'
 import type { ReactElement } from 'react'
 import { findProjectRoot } from '@jsxcad/utils'
 
-import type { Shape } from './Shape.js'
-import { ShapeType } from './Shape.js'
-import { parseAst } from './render.js'
-import { logger } from './logger.js'
+import { ShapeType } from '../Shape.js'
+import { parseAst } from '../render.js'
+import { logger } from '../logger.js'
 
-export enum RenderMethod {
-  All,
-  NoContent,
-  Flat,
-}
-
-export type RenderOptions = {
-  fileDir: string
-  filePath?: string
-  method?: RenderMethod
-  filter?: (s: Shape) => boolean
-  dev?: boolean
-  repeat?: number
-}
-
-export type RenderCallbacks = {
-  onStart?: () => void
-  onParsedAst?: () => void
-  onRendered?: () => void
-  onChecksDone?: () => void
-  onSerialized?: () => void
-  onSaved?: (filePath: string) => void
-}
+import type { RenderCallbacks, RenderOptions } from './types.js'
+import { RenderMethod } from './types.js'
+import { RenderContextProvider } from './RenderContext.js'
 
 export async function compile(root: ReactElement, options: RenderOptions & RenderCallbacks) {
   const opts: Required<RenderOptions> & RenderCallbacks = {
@@ -40,12 +19,11 @@ export async function compile(root: ReactElement, options: RenderOptions & Rende
     method: RenderMethod.All,
     filter: () => true,
     dev: false,
-    repeat: 1,
     ...options,
   }
   opts.onStart?.()
 
-  const rootNode = await parseAst(root)
+  const rootNode = await parseAst(<RenderContextProvider {...opts}>{root}</RenderContextProvider>)
 
   opts.onParsedAst?.()
 
@@ -54,7 +32,6 @@ export async function compile(root: ReactElement, options: RenderOptions & Rende
   opts.onRendered?.()
 
   if (opts.dev) logger.warn('Dev mode is enabled!')
-  if (opts.repeat !== 1) logger.warn(`Repeat is set to ${opts.repeat}!`)
 
   const check = (condition: boolean, message: string, meta: object): void => {
     if (!condition) {
