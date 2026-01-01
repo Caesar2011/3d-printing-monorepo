@@ -10,7 +10,7 @@ export type ShapeContextType = ShapeSpecs
 
 const DEFAULT_VALUES: ShapeContextType = {
   wall: 1.5,
-  floor: 1.5,
+  floor: 2,
   tolerance: {
     magnet: {
       diameter: {

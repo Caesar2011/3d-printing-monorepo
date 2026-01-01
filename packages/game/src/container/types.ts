@@ -13,18 +13,23 @@ export enum CutoutGridType {
   HEX,
 }
 
-type Cutout<Size extends number = number, Border extends number = number> = {
+export type Cutout<Radius extends number = number, Size extends number = number, Border extends number = number> = {
   type?: CutoutGridType
   border?: Border
-  size?: Size
+  borderRadius?: Radius | null
+  gridSize?: Size
   strokeWidth?: number
   offset?: AxisRecordDefinition
   center?: boolean
 }
 
-export type ContainerOpts<CutoutSize extends number = number, CutoutBorder extends number = number> = {
+export type ContainerOpts<
+  Radius extends number = number,
+  CutoutSize extends number = number,
+  CutoutBorder extends number = number,
+> = {
   radius: number
-  cutout: Cutout<CutoutSize, CutoutBorder>
+  cutout: Cutout<Radius, CutoutSize, CutoutBorder>
   edges: Edge
   gripWidth: number
 }
@@ -38,8 +43,12 @@ export type ContainerProps<
   lap?: Lap
   radius?: Radius
   cutout?: {
-    bottom?: Cutout<CutoutSize, CutoutBorder>
-    side?: Cutout<CutoutSize, CutoutBorder>
+    bottom?: Cutout<Radius, CutoutSize, CutoutBorder>
+    side?: Cutout<Radius, CutoutSize, CutoutBorder>
+    front?: Cutout<Radius, CutoutSize, CutoutBorder>
+    left?: Cutout<Radius, CutoutSize, CutoutBorder>
+    back?: Cutout<Radius, CutoutSize, CutoutBorder>
+    right?: Cutout<Radius, CutoutSize, CutoutBorder>
   }
   edges?: Edge
 }

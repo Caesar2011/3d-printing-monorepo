@@ -2,6 +2,7 @@ import type { JSX, Key } from 'react'
 
 import type { ShapeProperties } from './Shape.js'
 import { Shape } from './Shape.js'
+import { logger } from './logger.js'
 
 export abstract class PrimitiveNode<T extends object = object> {
   public readonly props: T
@@ -56,7 +57,7 @@ export abstract class PrimitiveNode<T extends object = object> {
   }
 
   public renderTree(prefix: string = '', isLastChild = true): void {
-    console.log(
+    logger.debug(
       `${prefix}${isLastChild ? '└' : '├'}── ${this.getClass().name}${this._id !== undefined ? `(${this._id})` : ''} ${JSON.stringify(this.props)}`,
     )
   }

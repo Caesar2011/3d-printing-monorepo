@@ -1,0 +1,21 @@
+{
+  "name": "@jsxcad/anno",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "dev": "tsc-watch --onSuccess \"npm start\" --project tsconfig.json",
+    "start": "node --enable-source-maps dist/index.js"
+  },
+  "dependencies": {
+    "@jsxcad/game": "*",
+    "@jsxcad/core": "*",
+    "@jsxcad/utils": "*"
+  },
+  "devDependencies": {
+    "tsc-watch": "^6.2.1",
+    "tsx": "^3.12.7"
+  }
+}

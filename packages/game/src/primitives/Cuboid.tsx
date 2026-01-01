@@ -29,7 +29,7 @@ export const Cuboid: FC<{ size: AxisRecordDefinition; radius?: number; edges?: E
   const cuboid = <cuboid size={size} />
 
   // No filleting? Return the base cuboid.
-  if (radius <= 0) return cuboid
+  if (radius <= 0 || edges === Edge.NONE) return cuboid
 
   // Validate the fillet parameters
   validateFilletParameters(radius, dim, edges)

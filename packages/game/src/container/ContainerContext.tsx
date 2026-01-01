@@ -16,8 +16,9 @@ const DEFAULT_VALUES: ContainerContextType = {
   gripWidth: 0,
   cutout: {
     border: 15,
+    borderRadius: null,
     type: CutoutGridType.HEX,
-    size: 3,
+    gridSize: 3,
     strokeWidth: 2,
     offset: {},
     center: false,
