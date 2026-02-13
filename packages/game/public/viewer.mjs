@@ -31,6 +31,7 @@ const state = {
 
 let embeddedViewer = null
 let lastCamera = null
+let initialCamera = null
 let ws = null
 let wsReconnectTimer = null
 
@@ -78,6 +79,14 @@ function saveCamera() {
   if (!v) return
   try {
     lastCamera = v.GetCamera().Clone()
+  } catch (_) {}
+}
+
+function captureInitialCamera() {
+  const v = getViewer()
+  if (!v || initialCamera) return
+  try {
+    initialCamera = v.GetCamera().Clone()
   } catch (_) {}
 }
 
@@ -189,6 +198,7 @@ function displayJsonScene(scene, isInitial) {
       }
       applyViewerSettings(v)
       state.modelLoaded = true
+      captureInitialCamera()
       setStatus(isInitial ? 'Model loaded' : 'Scene updated')
     },
   })
@@ -218,6 +228,7 @@ function createViewer() {
       setStatus('Model loaded (3MF)')
       const v = getViewer()
       if (v) applyViewerSettings(v)
+      captureInitialCamera()
     },
     onModelLoadFailed() {
       setStatus('3MF load failed')
@@ -324,6 +335,7 @@ function connectWebSocket() {
 }
 
 // ── View presets ───────────────────────────────────────────────────────
+// Presets are in Y-up viewer space (model rotated from Z-up → Y-up).
 
 function setViewPreset(eyeX, eyeY, eyeZ, upX, upY, upZ) {
   if (!state.modelLoaded) return
@@ -336,6 +348,17 @@ function setViewPreset(eyeX, eyeY, eyeZ, upX, upY, upZ) {
   const eye = new OV.Coord3D(c.x + eyeX * d, c.y + eyeY * d, c.z + eyeZ * d)
   v.SetCamera(new OV.Camera(eye, c, new OV.Coord3D(upX, upY, upZ), 45))
   v.FitSphereToWindow(s, true)
+}
+
+function restoreHomeView() {
+  if (!state.modelLoaded) return
+  const v = getViewer()
+  const s = getBoundingSphere()
+  if (!v || !s) return
+  if (initialCamera) {
+    v.SetCamera(initialCamera.Clone())
+    v.FitSphereToWindow(s, true)
+  }
 }
 
 // ── Button dispatch ────────────────────────────────────────────────────
@@ -388,23 +411,24 @@ const actions = {
   'btn-help'() {
     $('help-panel').classList.toggle('visible')
   },
+  'btn-view-home': restoreHomeView,
   'btn-view-front'() {
-    setViewPreset(0, -1, 0, 0, 0, 1)
+    setViewPreset(0, 0, 1, 0, 1, 0)
   },
   'btn-view-back'() {
-    setViewPreset(0, 1, 0, 0, 0, 1)
-  },
-  'btn-view-top'() {
-    setViewPreset(0, 0, 1, 0, -1, 0)
-  },
-  'btn-view-bottom'() {
     setViewPreset(0, 0, -1, 0, 1, 0)
   },
+  'btn-view-top'() {
+    setViewPreset(0, 1, 0, 0, 0, -1)
+  },
+  'btn-view-bottom'() {
+    setViewPreset(0, -1, 0, 0, 0, 1)
+  },
   'btn-view-right'() {
-    setViewPreset(1, 0, 0, 0, 0, 1)
+    setViewPreset(1, 0, 0, 0, 1, 0)
   },
   'btn-view-left'() {
-    setViewPreset(-1, 0, 0, 0, 0, 1)
+    setViewPreset(-1, 0, 0, 0, 1, 0)
   },
 }
 
@@ -441,6 +465,9 @@ const keyMap = {
   },
   '/'(e) {
     if (e.shiftKey) $('btn-help').click()
+  },
+  0() {
+    $('btn-view-home').click()
   },
   1() {
     $('btn-view-front').click()
