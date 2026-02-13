@@ -189,6 +189,27 @@
       font-family: monospace;
       font-size: 11px;
     }
+
+    #ws-indicator {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 1000;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #888;
+      border: 1px solid var(--toolbar-border);
+      transition: background 0.3s;
+    }
+
+    #ws-indicator.connected {
+      background: #4caf50;
+    }
+
+    #ws-indicator.disconnected {
+      background: #f44336;
+    }
   </style>
 </head>
 <body>
@@ -291,13 +312,14 @@
   <div><kbd>?</kbd> This help</div>
 </div>
 
+<div id="ws-indicator" title="WebSocket status"></div>
 <div id="status">Ready</div>
 <div id="viewer"></div>
 
 <script src="o3dv.min.js"></script>
 <script>
   ;(function () {
-    const MODEL_URL = 'output.3mf'
+    const SCENE_API_URL = '/api/scene'
 
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)')
     let darkMode = prefersDark.matches
@@ -305,6 +327,7 @@
     let projectionMode = 1
     let navigationMode = 1
     let modelLoaded = false
+    let wsConnected = false
 
     function applyThemeUI() {
       document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light')
@@ -320,16 +343,22 @@
       document.getElementById('btn-navmode').setAttribute('data-active', (navigationMode === 2).toString())
     }
 
-    prefersDark.addEventListener('change', (e) => {
+    function updateWsIndicator() {
+      const el = document.getElementById('ws-indicator')
+      el.className = wsConnected ? 'connected' : 'disconnected'
+      el.title = wsConnected ? 'WebSocket: connected (live updates)' : 'WebSocket: disconnected (file polling)'
+    }
+
+    prefersDark.addEventListener('change', function (e) {
       darkMode = e.matches
       applyThemeUI()
-      recreateViewer()
+      applyBackgroundColor()
     })
 
-    document.getElementById('btn-theme').addEventListener('click', () => {
+    document.getElementById('btn-theme').addEventListener('click', function () {
       darkMode = !darkMode
       applyThemeUI()
-      recreateViewer()
+      applyBackgroundColor()
     })
 
     let embeddedViewer = null
@@ -342,69 +371,154 @@
     }
 
     function getEdgeSettings() {
-      const edgeColor = darkMode
+      var edgeColor = darkMode
               ? new OV.RGBColor(100, 100, 100)
               : new OV.RGBColor(50, 50, 50)
       return new OV.EdgeSettings(showEdges, edgeColor, 1)
     }
 
-    /**
-     * Returns the inner Viewer instance directly from the EmbeddedViewer.
-     * Returns null only if embeddedViewer itself is null.
-     */
     function getInnerViewer() {
       if (!embeddedViewer) return null
       return embeddedViewer.GetViewer()
     }
 
-    /**
-     * Returns the bounding sphere of all meshes in the scene, or null if
-     * no model is loaded yet.
-     */
     function getBoundingSphere() {
-      const v = getInnerViewer()
+      var v = getInnerViewer()
       if (!v) return null
-      return v.GetBoundingSphere(function (meshUserData) { return true })
+      return v.GetBoundingSphere(function () { return true })
     }
 
     function saveCamera() {
-      const v = getInnerViewer()
+      var v = getInnerViewer()
       if (!v) return
       try {
         lastCamera = v.GetCamera().Clone()
       } catch (e) {}
     }
 
+    function applyBackgroundColor() {
+      var v = getInnerViewer()
+      if (v) v.SetBackgroundColor(getBackgroundColor())
+    }
+
+    // --- Build OV Model from JSON scene ---
+
+    function jsonSceneToOvModel(scene) {
+      var model = new OV.Model()
+
+      // Apply -90° X rotation on the root node so Z-up becomes Y-up
+      var rootTransformation = new OV.Transformation()
+      var rotMatrix = new OV.Matrix()
+      rotMatrix.CreateRotationAxisAngle(new OV.Coord3D(1, 0, 0), -Math.PI / 2)
+      rootTransformation.SetMatrix(rotMatrix)
+      model.GetRootNode().SetTransformation(rootTransformation)
+
+      for (var m = 0; m < scene.meshes.length; m++) {
+        var jsonMesh = scene.meshes[m]
+        if (jsonMesh.triangles.length === 0) continue
+
+        var material = new OV.PhongMaterial()
+        if (jsonMesh.color) {
+          material.color = new OV.RGBColor(
+                  Math.round(jsonMesh.color[0] * 255),
+                  Math.round(jsonMesh.color[1] * 255),
+                  Math.round(jsonMesh.color[2] * 255)
+          )
+          material.opacity = jsonMesh.color[3]
+        } else {
+          material.color = new OV.RGBColor(200, 200, 200)
+        }
+        var materialIndex = model.AddMaterial(material)
+
+        var mesh = new OV.Mesh()
+        mesh.SetName(jsonMesh.name || '')
+
+        for (var t = 0; t < jsonMesh.triangles.length; t++) {
+          var tri = jsonMesh.triangles[t]
+          var v0 = mesh.AddVertex(new OV.Coord3D(tri.vertices[0].x, tri.vertices[0].y, tri.vertices[0].z))
+          var v1 = mesh.AddVertex(new OV.Coord3D(tri.vertices[1].x, tri.vertices[1].y, tri.vertices[1].z))
+          var v2 = mesh.AddVertex(new OV.Coord3D(tri.vertices[2].x, tri.vertices[2].y, tri.vertices[2].z))
+
+          var ax = tri.vertices[1].x - tri.vertices[0].x
+          var ay = tri.vertices[1].y - tri.vertices[0].y
+          var az = tri.vertices[1].z - tri.vertices[0].z
+          var bx = tri.vertices[2].x - tri.vertices[0].x
+          var by = tri.vertices[2].y - tri.vertices[0].y
+          var bz = tri.vertices[2].z - tri.vertices[0].z
+          var nx = ay * bz - az * by
+          var ny = az * bx - ax * bz
+          var nz = ax * by - ay * bx
+          var len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1
+          var normalIndex = mesh.AddNormal(new OV.Coord3D(nx / len, ny / len, nz / len))
+
+          var triangle = new OV.Triangle(v0, v1, v2)
+          triangle.SetNormals(normalIndex, normalIndex, normalIndex)
+          triangle.SetMaterial(materialIndex)
+          mesh.AddTriangle(triangle)
+        }
+
+        model.AddMeshToRootNode(mesh)
+      }
+
+      return model
+    }
+
+    function convertAndDisplay(scene, isInitialLoad) {
+      if (!embeddedViewer) return
+      var v = getInnerViewer()
+      if (!v) return
+
+      if (!isInitialLoad) saveCamera()
+      setStatus('Building scene…')
+
+      var model = jsonSceneToOvModel(scene)
+
+      OV.FinalizeModel(model, {
+        defaultMaterialColor: new OV.RGBColor(200, 200, 200),
+        defaultLineMaterialColor: new OV.RGBColor(100, 100, 100),
+      })
+
+      var conversionParams = new OV.ModelToThreeConversionParams()
+      var conversionOutput = new OV.ModelToThreeConversionOutput()
+
+      OV.ConvertModelToThreeObject(model, conversionParams, conversionOutput, {
+        onTextureLoaded: function () {},
+        onModelLoaded: function (threeObject) {
+          v.SetMainObject(threeObject)
+
+          var sphere = v.GetBoundingSphere(function () { return true })
+          if (sphere) {
+            v.AdjustClippingPlanesToSphere(sphere)
+            if (!lastCamera) {
+              v.FitSphereToWindow(sphere, false)
+            }
+          }
+
+          if (lastCamera) {
+            v.SetCamera(lastCamera)
+          }
+
+          try { v.SetProjectionMode(projectionMode) } catch (e) {}
+          try { v.SetNavigationMode(navigationMode) } catch (e) {}
+
+          modelLoaded = true
+          setStatus(isInitialLoad ? 'Model loaded' : 'Scene updated (WebSocket)')
+        }
+      })
+    }
+
+    // --- Viewer initialization ---
+
     function createViewer() {
-      const parentDiv = document.getElementById('viewer')
+      var parentDiv = document.getElementById('viewer')
       parentDiv.style.width = window.innerWidth + 'px'
       parentDiv.style.height = window.innerHeight + 'px'
       modelLoaded = false
 
-      const params = {
+      var params = {
         backgroundColor: getBackgroundColor(),
         defaultColor: new OV.RGBColor(200, 200, 200),
         edgeSettings: getEdgeSettings(),
-        onModelLoaded: function () {
-          modelLoaded = true
-          setStatus('Model loaded')
-
-          const v = embeddedViewer.GetViewer()
-
-          // Restore camera position across theme/edge toggles
-          if (lastCamera) {
-            try { v.SetCamera(lastCamera) } catch (e) {}
-          }
-
-          // Apply current projection mode
-          try { v.SetProjectionMode(projectionMode) } catch (e) {}
-
-          // Apply current navigation mode
-          try { v.SetNavigationMode(navigationMode) } catch (e) {}
-        },
-        onModelLoadFailed: function () {
-          setStatus('Model load failed')
-        },
       }
 
       if (lastCamera) {
@@ -412,135 +526,165 @@
       }
 
       embeddedViewer = new OV.EmbeddedViewer(parentDiv, params)
-      embeddedViewer.LoadModelFromUrlList([MODEL_URL])
     }
 
-    function destroyViewer() {
-      if (!embeddedViewer) return
-      saveCamera()
-      embeddedViewer.Destroy()
-      embeddedViewer = null
-      modelLoaded = false
-      document.getElementById('viewer').innerHTML = ''
+    /** Fetches the latest scene from the server and displays it. */
+    function loadInitialScene() {
+      setStatus('Loading scene…')
+      fetch(SCENE_API_URL, { cache: 'no-store' })
+              .then(function (response) {
+                if (!response.ok) {
+                  setStatus('No scene available yet — waiting for WebSocket')
+                  return null
+                }
+                return response.json()
+              })
+              .then(function (scene) {
+                if (scene && scene.version === 1 && Array.isArray(scene.meshes)) {
+                  convertAndDisplay(scene, true)
+                }
+              })
+              .catch(function (err) {
+                console.error('Failed to load initial scene:', err)
+                setStatus('Failed to load scene')
+              })
     }
 
-    function recreateViewer() {
-      destroyViewer()
-      createViewer()
+    // --- WebSocket connection ---
+
+    var ws = null
+    var wsReconnectTimer = null
+
+    function connectWebSocket() {
+      var protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
+      var wsUrl = protocol + '//' + location.host + '/ws'
+
+      ws = new WebSocket(wsUrl)
+
+      ws.onopen = function () {
+        wsConnected = true
+        updateWsIndicator()
+        setStatus('WebSocket connected')
+      }
+
+      ws.onmessage = function (event) {
+        try {
+          var scene = JSON.parse(event.data)
+          if (scene.version === 1 && Array.isArray(scene.meshes)) {
+            convertAndDisplay(scene, false)
+          }
+        } catch (e) {
+          console.error('Failed to parse WebSocket scene:', e)
+        }
+      }
+
+      ws.onclose = function () {
+        wsConnected = false
+        updateWsIndicator()
+        clearTimeout(wsReconnectTimer)
+        wsReconnectTimer = setTimeout(connectWebSocket, 2000)
+      }
+
+      ws.onerror = function () {
+        wsConnected = false
+        updateWsIndicator()
+      }
     }
 
-    function reloadModel() {
-      if (!embeddedViewer) return
-      saveCamera()
-      setStatus('Reloading model…')
-      embeddedViewer.LoadModelFromUrlList([MODEL_URL])
-    }
+    // --- Controls ---
 
-    // --- Fit to view (no reload) -----------------------------------------
-
-    document.getElementById('btn-fit').addEventListener('click', () => {
+    document.getElementById('btn-fit').addEventListener('click', function () {
       if (!modelLoaded) return
-      const v = getInnerViewer()
+      var v = getInnerViewer()
       if (!v) return
-      const sphere = getBoundingSphere()
+      var sphere = getBoundingSphere()
       if (!sphere) return
       v.FitSphereToWindow(sphere, false)
     })
 
-    document.getElementById('btn-fit-anim').addEventListener('click', () => {
+    document.getElementById('btn-fit-anim').addEventListener('click', function () {
       if (!modelLoaded) return
-      const v = getInnerViewer()
+      var v = getInnerViewer()
       if (!v) return
-      const sphere = getBoundingSphere()
+      var sphere = getBoundingSphere()
       if (!sphere) return
       v.FitSphereToWindow(sphere, true)
     })
 
-    // --- Projection toggle (no reload) -----------------------------------
-
-    document.getElementById('btn-projection').addEventListener('click', () => {
+    document.getElementById('btn-projection').addEventListener('click', function () {
       if (!modelLoaded) return
       projectionMode = projectionMode === 1 ? 2 : 1
       updateProjectionUI()
-      const v = getInnerViewer()
+      var v = getInnerViewer()
       if (v) v.SetProjectionMode(projectionMode)
       setStatus(projectionMode === 1 ? 'Perspective' : 'Orthographic')
     })
 
-    // --- Navigation mode toggle (no reload) ------------------------------
-
-    document.getElementById('btn-navmode').addEventListener('click', () => {
+    document.getElementById('btn-navmode').addEventListener('click', function () {
       if (!modelLoaded) return
       navigationMode = navigationMode === 1 ? 2 : 1
       updateNavModeUI()
-      const v = getInnerViewer()
+      var v = getInnerViewer()
       if (v) v.SetNavigationMode(navigationMode)
       setStatus(navigationMode === 1 ? 'Fixed Up Vector' : 'Free Orbit')
     })
 
-    // --- Flip up vector (no reload) --------------------------------------
-
-    document.getElementById('btn-flipup').addEventListener('click', () => {
+    document.getElementById('btn-flipup').addEventListener('click', function () {
       if (!modelLoaded) return
-      const v = getInnerViewer()
+      var v = getInnerViewer()
       if (v) {
         v.FlipUpVector()
         setStatus('Up vector flipped')
       }
     })
 
-    // --- Edges (requires reload due to edge geometry regeneration) --------
-
-    document.getElementById('btn-edges').addEventListener('click', () => {
+    document.getElementById('btn-edges').addEventListener('click', function () {
       showEdges = !showEdges
       document.getElementById('btn-edges').setAttribute('data-active', showEdges.toString())
-      recreateViewer()
+      var v = getInnerViewer()
+      if (v) {
+        v.SetEdgeSettings(getEdgeSettings())
+      }
     })
 
-    // --- Help panel ------------------------------------------------------
-
-    document.getElementById('btn-help').addEventListener('click', () => {
+    document.getElementById('btn-help').addEventListener('click', function () {
       document.getElementById('help-panel').classList.toggle('visible')
     })
 
-    // --- View presets (no reload) ----------------------------------------
-
     function setViewPreset(eyeX, eyeY, eyeZ, upX, upY, upZ) {
       if (!modelLoaded) return
-      const v = getInnerViewer()
+      var v = getInnerViewer()
       if (!v) return
 
-      const sphere = getBoundingSphere()
+      var sphere = getBoundingSphere()
       if (!sphere) return
 
-      const center = new OV.Coord3D(sphere.center.x, sphere.center.y, sphere.center.z)
-      const distance = sphere.radius * 2.5
+      var center = new OV.Coord3D(sphere.center.x, sphere.center.y, sphere.center.z)
+      var distance = sphere.radius * 2.5
 
-      const eye = new OV.Coord3D(
+      var eye = new OV.Coord3D(
               center.x + eyeX * distance,
               center.y + eyeY * distance,
               center.z + eyeZ * distance
       )
-      const up = new OV.Coord3D(upX, upY, upZ)
+      var up = new OV.Coord3D(upX, upY, upZ)
 
-      const newCamera = new OV.Camera(eye, center, up, 45)
+      var newCamera = new OV.Camera(eye, center, up, 45)
       v.SetCamera(newCamera)
       v.FitSphereToWindow(sphere, true)
     }
 
-    document.getElementById('btn-view-front').addEventListener('click',  () => setViewPreset( 0, -1,  0,   0, 0, 1))
-    document.getElementById('btn-view-back').addEventListener('click',   () => setViewPreset( 0,  1,  0,   0, 0, 1))
-    document.getElementById('btn-view-top').addEventListener('click',    () => setViewPreset( 0,  0,  1,   0,-1, 0))
-    document.getElementById('btn-view-bottom').addEventListener('click', () => setViewPreset( 0,  0, -1,   0, 1, 0))
-    document.getElementById('btn-view-right').addEventListener('click',  () => setViewPreset( 1,  0,  0,   0, 0, 1))
-    document.getElementById('btn-view-left').addEventListener('click',   () => setViewPreset(-1,  0,  0,   0, 0, 1))
+    document.getElementById('btn-view-front').addEventListener('click',  function () { setViewPreset( 0, -1,  0,   0, 0, 1) })
+    document.getElementById('btn-view-back').addEventListener('click',   function () { setViewPreset( 0,  1,  0,   0, 0, 1) })
+    document.getElementById('btn-view-top').addEventListener('click',    function () { setViewPreset( 0,  0,  1,   0,-1, 0) })
+    document.getElementById('btn-view-bottom').addEventListener('click', function () { setViewPreset( 0,  0, -1,   0, 1, 0) })
+    document.getElementById('btn-view-right').addEventListener('click',  function () { setViewPreset( 1,  0,  0,   0, 0, 1) })
+    document.getElementById('btn-view-left').addEventListener('click',   function () { setViewPreset(-1,  0,  0,   0, 0, 1) })
 
-    // --- Keyboard shortcuts ----------------------------------------------
-
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', function (e) {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
 
-      const key = e.key.toLowerCase()
+      var key = e.key.toLowerCase()
 
       if (key === 'f' && !e.shiftKey) {
         e.preventDefault()
@@ -587,58 +731,36 @@
       }
     })
 
-    // --- Status ----------------------------------------------------------
+    // --- Status ---
 
-    let statusTimer = null
+    var statusTimer = null
     function setStatus(text) {
-      const el = document.getElementById('status')
+      var el = document.getElementById('status')
       el.textContent = text
       el.classList.add('updating')
       clearTimeout(statusTimer)
-      statusTimer = setTimeout(() => el.classList.remove('updating'), 2000)
+      statusTimer = setTimeout(function () { el.classList.remove('updating') }, 2000)
     }
 
-    // --- Hot reload ------------------------------------------------------
+    // --- Resize ---
 
-    let lastModified = null
-
-    async function checkForModelUpdate() {
-      try {
-        const response = await fetch(MODEL_URL, { method: 'HEAD', cache: 'no-store' })
-        if (!response.ok) {
-          setTimeout(checkForModelUpdate, 1000)
-          return
-        }
-        const newLastModified = response.headers.get('Last-Modified')
-        if (!lastModified) {
-          lastModified = newLastModified
-        } else if (newLastModified !== lastModified) {
-          lastModified = newLastModified
-          reloadModel()
-        }
-      } catch (err) {
-        console.error('Update check failed:', err)
-      }
-      setTimeout(checkForModelUpdate, 1000)
-    }
-
-    // --- Resize ----------------------------------------------------------
-
-    window.addEventListener('resize', () => {
-      const parentDiv = document.getElementById('viewer')
+    window.addEventListener('resize', function () {
+      var parentDiv = document.getElementById('viewer')
       parentDiv.style.width = window.innerWidth + 'px'
       parentDiv.style.height = window.innerHeight + 'px'
       if (embeddedViewer) embeddedViewer.Resize()
     })
 
-    // --- Init ------------------------------------------------------------
+    // --- Init ---
 
     applyThemeUI()
     updateProjectionUI()
     updateNavModeUI()
-    window.addEventListener('load', () => {
+    updateWsIndicator()
+    window.addEventListener('load', function () {
       createViewer()
-      setTimeout(checkForModelUpdate, 2000)
+      loadInitialScene()
+      connectWebSocket()
     })
   })()
 </script>

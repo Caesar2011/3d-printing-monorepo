@@ -9,7 +9,7 @@
     "watch:paleo": "tsc --build packages/paleo --watch",
     "game:anno": "nodemon -q --watch packages/reconciler/dist --watch packages/utils/dist --watch packages/core/dist --watch packages/game/dist --watch packages/anno/dist -e js --delay 500ms --exec \"npm start --workspace=@jsxcad/anno\"",
     "game:paleo": "nodemon -q --watch packages/reconciler/dist --watch packages/utils/dist --watch packages/core/dist --watch packages/game/dist --watch packages/paleo/dist -e js --delay 500ms --exec \"npm start --workspace=@jsxcad/paleo\"",
-    "serve": "nodemon -q --watch packages/game/dist/utils/server.js -e js --delay 500ms --exec \"npm run serve --workspace=@jsxcad/game\"",
+    "serve": "node --enable-source-maps packages/game/dist/utils/server.js",
     "dev": "cross-env FORCE_COLOR=1 npm-run-all --parallel -l watch:anno serve game:anno",
     "dev:paleo": "cross-env FORCE_COLOR=1 npm-run-all --parallel -l watch:paleo serve game:paleo",
     "build": "tsc --build packages/anno packages/paleo",
