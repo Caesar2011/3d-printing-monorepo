@@ -7,3 +7,4 @@ export type { JsonScene, JsonMesh, JsonTriangle, JsonVertex } from './compile/se
 export { ShapeType } from './Shape.js'
 export { RenderOptions } from './compile/types.js'
 export type { TProps } from './ShapeType.js'
+export { validateShapes, createValidator } from './compile/validate-shapes.js'

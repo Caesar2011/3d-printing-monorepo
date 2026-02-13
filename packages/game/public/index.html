@@ -4,273 +4,50 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>3D Viewer</title>
-  <style>
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    :root {
-      --bg: #f0f0f0;
-      --toolbar-bg: rgba(255, 255, 255, 0.85);
-      --toolbar-border: rgba(0, 0, 0, 0.12);
-      --text: #1a1a1a;
-      --btn-bg: rgba(0, 0, 0, 0.06);
-      --btn-hover: rgba(0, 0, 0, 0.12);
-      --btn-active: rgba(0, 0, 0, 0.18);
-    }
-
-    [data-theme='dark'] {
-      --bg: #1a1a1a;
-      --toolbar-bg: rgba(40, 40, 40, 0.9);
-      --toolbar-border: rgba(255, 255, 255, 0.1);
-      --text: #e0e0e0;
-      --btn-bg: rgba(255, 255, 255, 0.08);
-      --btn-hover: rgba(255, 255, 255, 0.15);
-      --btn-active: rgba(255, 255, 255, 0.22);
-    }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      overflow: hidden;
-      height: 100vh;
-      width: 100vw;
-    }
-
-    #viewer {
-      width: 100vw;
-      height: 100vh;
-    }
-
-    #toolbar {
-      position: fixed;
-      top: 12px;
-      left: 12px;
-      z-index: 1000;
-      display: flex;
-      gap: 4px;
-      padding: 4px;
-      background: var(--toolbar-bg);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid var(--toolbar-border);
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      flex-wrap: wrap;
-      max-width: calc(100vw - 24px);
-    }
-
-    #view-toolbar {
-      position: fixed;
-      top: 60px;
-      right: 12px;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      padding: 4px;
-      background: var(--toolbar-bg);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid var(--toolbar-border);
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .toolbar-group {
-      display: flex;
-      gap: 2px;
-    }
-
-    .toolbar-group + .toolbar-group {
-      margin-left: 4px;
-      padding-left: 8px;
-      border-left: 1px solid var(--toolbar-border);
-    }
-
-    .btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      border: none;
-      border-radius: 6px;
-      background: var(--btn-bg);
-      color: var(--text);
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      transition: background 0.15s;
-      user-select: none;
-    }
-
-    .btn:hover {
-      background: var(--btn-hover);
-    }
-
-    .btn:active {
-      background: var(--btn-active);
-    }
-
-    .btn[data-active='true'] {
-      background: var(--btn-active);
-    }
-
-    .btn svg {
-      width: 18px;
-      height: 18px;
-      fill: currentColor;
-    }
-
-    .btn-label {
-      font-size: 11px;
-      font-weight: 700;
-      line-height: 1;
-    }
-
-    #status {
-      position: fixed;
-      bottom: 12px;
-      left: 12px;
-      z-index: 1000;
-      padding: 4px 10px;
-      background: var(--toolbar-bg);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--toolbar-border);
-      border-radius: 6px;
-      font-size: 12px;
-      color: var(--text);
-      opacity: 0.7;
-      transition: opacity 0.3s;
-    }
-
-    #status.updating {
-      opacity: 1;
-    }
-
-    #help-panel {
-      position: fixed;
-      bottom: 40px;
-      right: 12px;
-      z-index: 1000;
-      padding: 10px 14px;
-      background: var(--toolbar-bg);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--toolbar-border);
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      font-size: 11px;
-      line-height: 1.6;
-      display: none;
-      min-width: 180px;
-    }
-
-    #help-panel.visible {
-      display: block;
-    }
-
-    #help-panel h4 {
-      margin-bottom: 4px;
-      font-size: 12px;
-    }
-
-    #help-panel kbd {
-      display: inline-block;
-      padding: 1px 5px;
-      border: 1px solid var(--toolbar-border);
-      border-radius: 3px;
-      background: var(--btn-bg);
-      font-family: monospace;
-      font-size: 11px;
-    }
-
-    #ws-indicator {
-      position: fixed;
-      top: 12px;
-      right: 12px;
-      z-index: 1000;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #888;
-      border: 1px solid var(--toolbar-border);
-      transition: background 0.3s;
-    }
-
-    #ws-indicator.connected {
-      background: #4caf50;
-    }
-
-    #ws-indicator.disconnected {
-      background: #f44336;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<div id="toolbar">
+
+<div id="toolbar" class="toolbar">
   <div class="toolbar-group">
     <button class="btn" id="btn-theme" title="Toggle dark/light mode (T)">
-      <svg id="icon-sun" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 7a5 5 0 100 10 5 5 0 000-10zm0-3a1 1 0 01-1-1V1a1 1 0 112 0v2a1 1 0 01-1 1zm0 18a1 1 0 01-1-1v-2a1 1 0 112 0v2a1 1 0 01-1 1zm9-9h-2a1 1 0 110-2h2a1 1 0 110 2zM6 12a1 1 0 01-1 1H3a1 1 0 110-2h2a1 1 0 011 1zm12.36-5.64a1 1 0 01-.7-.3l-1.42-1.42a1 1 0 111.41-1.41l1.42 1.42a1 1 0 01-.71 1.7zM7.05 18.36a1 1 0 01-.7-.3l-1.42-1.42a1 1 0 111.41-1.41l1.42 1.42a1 1 0 01-.71 1.7zm11.31 0a1 1 0 01-.71-1.71l1.42-1.42a1 1 0 111.41 1.41l-1.42 1.42a1 1 0 01-.7.3zM7.05 7.05a1 1 0 01-.71-.29L4.93 5.34a1 1 0 011.41-1.41L7.76 5.35a1 1 0 01-.71 1.7z" />
-      </svg>
-      <svg id="icon-moon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: none">
-        <path d="M21.64 13A9 9 0 0111 2.36 10 10 0 1021.64 13z" />
-      </svg>
+      <svg id="icon-sun" viewBox="0 0 24 24"><path d="M12 7a5 5 0 100 10 5 5 0 000-10zm0-3a1 1 0 01-1-1V1a1 1 0 112 0v2a1 1 0 01-1 1zm0 18a1 1 0 01-1-1v-2a1 1 0 112 0v2a1 1 0 01-1 1zm9-9h-2a1 1 0 110-2h2a1 1 0 110 2zM6 12a1 1 0 01-1 1H3a1 1 0 110-2h2a1 1 0 011 1zm12.36-5.64a1 1 0 01-.7-.3l-1.42-1.42a1 1 0 111.41-1.41l1.42 1.42a1 1 0 01-.71 1.7zM7.05 18.36a1 1 0 01-.7-.3l-1.42-1.42a1 1 0 111.41-1.41l1.42 1.42a1 1 0 01-.71 1.7zm11.31 0a1 1 0 01-.71-1.71l1.42-1.42a1 1 0 111.41 1.41l-1.42 1.42a1 1 0 01-.7.3zM7.05 7.05a1 1 0 01-.71-.29L4.93 5.34a1 1 0 011.41-1.41L7.76 5.35a1 1 0 01-.71 1.7z"/></svg>
+      <svg id="icon-moon" viewBox="0 0 24 24" style="display:none"><path d="M21.64 13A9 9 0 0111 2.36 10 10 0 1021.64 13z"/></svg>
     </button>
   </div>
-
   <div class="toolbar-group">
     <button class="btn" id="btn-fit" title="Fit model to view (F)">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zM3 15h2v4h4v2H3v-6zm16 0h2v6h-6v-2h4v-4z" />
-      </svg>
+      <svg viewBox="0 0 24 24"><path d="M3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zM3 15h2v4h4v2H3v-6zm16 0h2v6h-6v-2h4v-4z"/></svg>
     </button>
-    <button class="btn" id="btn-fit-anim" title="Fit model (animated) (Shift+F)">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zM3 15h2v4h4v2H3v-6zm16 0h2v6h-6v-2h4v-4z" />
-        <circle cx="12" cy="12" r="3" />
-      </svg>
+    <button class="btn" id="btn-fit-anim" title="Fit model animated (Shift+F)">
+      <svg viewBox="0 0 24 24"><path d="M3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zM3 15h2v4h4v2H3v-6zm16 0h2v6h-6v-2h4v-4z"/><circle cx="12" cy="12" r="3"/></svg>
     </button>
   </div>
-
   <div class="toolbar-group">
-    <button class="btn" id="btn-projection" title="Toggle Perspective / Orthographic (P)">
+    <button class="btn" id="btn-projection" title="Perspective / Orthographic (P)">
       <span class="btn-label" id="proj-label">P</span>
     </button>
   </div>
-
   <div class="toolbar-group">
-    <button class="btn" id="btn-navmode" title="Toggle Fixed Up / Free Orbit (O)" data-active="false">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-        <path d="M12 6l-4 4h3v4h2v-4h3z"/>
-      </svg>
+    <button class="btn" id="btn-navmode" title="Fixed Up / Free Orbit (O)" data-active="false">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path d="M12 6l-4 4h3v4h2v-4h3z"/></svg>
     </button>
   </div>
-
   <div class="toolbar-group">
     <button class="btn" id="btn-flipup" title="Flip up vector (U)">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M7 14l5-5 5 5H7z"/>
-        <path d="M7 18l5-5 5 5H7z" opacity="0.4"/>
-      </svg>
+      <svg viewBox="0 0 24 24"><path d="M7 14l5-5 5 5H7z"/><path d="M7 18l5-5 5 5H7z" opacity="0.4"/></svg>
     </button>
   </div>
-
   <div class="toolbar-group">
     <button class="btn" id="btn-edges" title="Toggle edges (E)" data-active="false">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M3 3h18v18H3V3zm2 2v14h14V5H5z" fill-rule="evenodd" />
-      </svg>
+      <svg viewBox="0 0 24 24"><path d="M3 3h18v18H3V3zm2 2v14h14V5H5z" fill-rule="evenodd"/></svg>
     </button>
   </div>
-
+  <div class="toolbar-group">
+    <button class="btn" id="btn-mode" title="Toggle WebSocket / 3MF mode (M)" data-active="false">
+      <span class="btn-label" id="mode-label">WS</span>
+    </button>
+  </div>
   <div class="toolbar-group">
     <button class="btn" id="btn-help" title="Keyboard shortcuts (?)">
       <span class="btn-label">?</span>
@@ -278,25 +55,13 @@
   </div>
 </div>
 
-<div id="view-toolbar">
-  <button class="btn" id="btn-view-front" title="Front view (1)">
-    <span class="btn-label">F</span>
-  </button>
-  <button class="btn" id="btn-view-back" title="Back view (2)">
-    <span class="btn-label">Bk</span>
-  </button>
-  <button class="btn" id="btn-view-top" title="Top view (3)">
-    <span class="btn-label">T</span>
-  </button>
-  <button class="btn" id="btn-view-bottom" title="Bottom view (4)">
-    <span class="btn-label">Bt</span>
-  </button>
-  <button class="btn" id="btn-view-right" title="Right view (5)">
-    <span class="btn-label">R</span>
-  </button>
-  <button class="btn" id="btn-view-left" title="Left view (6)">
-    <span class="btn-label">L</span>
-  </button>
+<div id="view-toolbar" class="toolbar">
+  <button class="btn" id="btn-view-front" title="Front view (1)"><span class="btn-label">F</span></button>
+  <button class="btn" id="btn-view-back" title="Back view (2)"><span class="btn-label">Bk</span></button>
+  <button class="btn" id="btn-view-top" title="Top view (3)"><span class="btn-label">T</span></button>
+  <button class="btn" id="btn-view-bottom" title="Bottom view (4)"><span class="btn-label">Bt</span></button>
+  <button class="btn" id="btn-view-right" title="Right view (5)"><span class="btn-label">R</span></button>
+  <button class="btn" id="btn-view-left" title="Left view (6)"><span class="btn-label">L</span></button>
 </div>
 
 <div id="help-panel">
@@ -307,462 +72,18 @@
   <div><kbd>O</kbd> Orbit mode</div>
   <div><kbd>U</kbd> Flip up vector</div>
   <div><kbd>E</kbd> Toggle edges</div>
+  <div><kbd>M</kbd> Toggle WS / 3MF mode</div>
   <div><kbd>T</kbd> Toggle theme</div>
   <div><kbd>1-6</kbd> View presets</div>
   <div><kbd>?</kbd> This help</div>
 </div>
 
-<div id="ws-indicator" title="WebSocket status"></div>
+<div id="ws-indicator" class="indicator" title="WebSocket status"></div>
+<div id="mode-indicator" class="indicator" title="Render mode"></div>
 <div id="status">Ready</div>
 <div id="viewer"></div>
 
 <script src="o3dv.min.js"></script>
-<script>
-  ;(function () {
-    const SCENE_API_URL = '/api/scene'
-
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)')
-    let darkMode = prefersDark.matches
-    let showEdges = false
-    let projectionMode = 1
-    let navigationMode = 1
-    let modelLoaded = false
-    let wsConnected = false
-
-    function applyThemeUI() {
-      document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light')
-      document.getElementById('icon-sun').style.display = darkMode ? 'none' : 'block'
-      document.getElementById('icon-moon').style.display = darkMode ? 'block' : 'none'
-    }
-
-    function updateProjectionUI() {
-      document.getElementById('proj-label').textContent = projectionMode === 1 ? 'P' : 'O'
-    }
-
-    function updateNavModeUI() {
-      document.getElementById('btn-navmode').setAttribute('data-active', (navigationMode === 2).toString())
-    }
-
-    function updateWsIndicator() {
-      const el = document.getElementById('ws-indicator')
-      el.className = wsConnected ? 'connected' : 'disconnected'
-      el.title = wsConnected ? 'WebSocket: connected (live updates)' : 'WebSocket: disconnected (file polling)'
-    }
-
-    prefersDark.addEventListener('change', function (e) {
-      darkMode = e.matches
-      applyThemeUI()
-      applyBackgroundColor()
-    })
-
-    document.getElementById('btn-theme').addEventListener('click', function () {
-      darkMode = !darkMode
-      applyThemeUI()
-      applyBackgroundColor()
-    })
-
-    let embeddedViewer = null
-    let lastCamera = null
-
-    function getBackgroundColor() {
-      return darkMode
-              ? new OV.RGBAColor(42, 42, 42, 255)
-              : new OV.RGBAColor(240, 240, 240, 255)
-    }
-
-    function getEdgeSettings() {
-      var edgeColor = darkMode
-              ? new OV.RGBColor(100, 100, 100)
-              : new OV.RGBColor(50, 50, 50)
-      return new OV.EdgeSettings(showEdges, edgeColor, 1)
-    }
-
-    function getInnerViewer() {
-      if (!embeddedViewer) return null
-      return embeddedViewer.GetViewer()
-    }
-
-    function getBoundingSphere() {
-      var v = getInnerViewer()
-      if (!v) return null
-      return v.GetBoundingSphere(function () { return true })
-    }
-
-    function saveCamera() {
-      var v = getInnerViewer()
-      if (!v) return
-      try {
-        lastCamera = v.GetCamera().Clone()
-      } catch (e) {}
-    }
-
-    function applyBackgroundColor() {
-      var v = getInnerViewer()
-      if (v) v.SetBackgroundColor(getBackgroundColor())
-    }
-
-    // --- Build OV Model from JSON scene ---
-
-    function jsonSceneToOvModel(scene) {
-      var model = new OV.Model()
-
-      // Apply -90° X rotation on the root node so Z-up becomes Y-up
-      var rootTransformation = new OV.Transformation()
-      var rotMatrix = new OV.Matrix()
-      rotMatrix.CreateRotationAxisAngle(new OV.Coord3D(1, 0, 0), -Math.PI / 2)
-      rootTransformation.SetMatrix(rotMatrix)
-      model.GetRootNode().SetTransformation(rootTransformation)
-
-      for (var m = 0; m < scene.meshes.length; m++) {
-        var jsonMesh = scene.meshes[m]
-        if (jsonMesh.triangles.length === 0) continue
-
-        var material = new OV.PhongMaterial()
-        if (jsonMesh.color) {
-          material.color = new OV.RGBColor(
-                  Math.round(jsonMesh.color[0] * 255),
-                  Math.round(jsonMesh.color[1] * 255),
-                  Math.round(jsonMesh.color[2] * 255)
-          )
-          material.opacity = jsonMesh.color[3]
-        } else {
-          material.color = new OV.RGBColor(200, 200, 200)
-        }
-        var materialIndex = model.AddMaterial(material)
-
-        var mesh = new OV.Mesh()
-        mesh.SetName(jsonMesh.name || '')
-
-        for (var t = 0; t < jsonMesh.triangles.length; t++) {
-          var tri = jsonMesh.triangles[t]
-          var v0 = mesh.AddVertex(new OV.Coord3D(tri.vertices[0].x, tri.vertices[0].y, tri.vertices[0].z))
-          var v1 = mesh.AddVertex(new OV.Coord3D(tri.vertices[1].x, tri.vertices[1].y, tri.vertices[1].z))
-          var v2 = mesh.AddVertex(new OV.Coord3D(tri.vertices[2].x, tri.vertices[2].y, tri.vertices[2].z))
-
-          var ax = tri.vertices[1].x - tri.vertices[0].x
-          var ay = tri.vertices[1].y - tri.vertices[0].y
-          var az = tri.vertices[1].z - tri.vertices[0].z
-          var bx = tri.vertices[2].x - tri.vertices[0].x
-          var by = tri.vertices[2].y - tri.vertices[0].y
-          var bz = tri.vertices[2].z - tri.vertices[0].z
-          var nx = ay * bz - az * by
-          var ny = az * bx - ax * bz
-          var nz = ax * by - ay * bx
-          var len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1
-          var normalIndex = mesh.AddNormal(new OV.Coord3D(nx / len, ny / len, nz / len))
-
-          var triangle = new OV.Triangle(v0, v1, v2)
-          triangle.SetNormals(normalIndex, normalIndex, normalIndex)
-          triangle.SetMaterial(materialIndex)
-          mesh.AddTriangle(triangle)
-        }
-
-        model.AddMeshToRootNode(mesh)
-      }
-
-      return model
-    }
-
-    function convertAndDisplay(scene, isInitialLoad) {
-      if (!embeddedViewer) return
-      var v = getInnerViewer()
-      if (!v) return
-
-      if (!isInitialLoad) saveCamera()
-      setStatus('Building scene…')
-
-      var model = jsonSceneToOvModel(scene)
-
-      OV.FinalizeModel(model, {
-        defaultMaterialColor: new OV.RGBColor(200, 200, 200),
-        defaultLineMaterialColor: new OV.RGBColor(100, 100, 100),
-      })
-
-      var conversionParams = new OV.ModelToThreeConversionParams()
-      var conversionOutput = new OV.ModelToThreeConversionOutput()
-
-      OV.ConvertModelToThreeObject(model, conversionParams, conversionOutput, {
-        onTextureLoaded: function () {},
-        onModelLoaded: function (threeObject) {
-          v.SetMainObject(threeObject)
-
-          var sphere = v.GetBoundingSphere(function () { return true })
-          if (sphere) {
-            v.AdjustClippingPlanesToSphere(sphere)
-            if (!lastCamera) {
-              v.FitSphereToWindow(sphere, false)
-            }
-          }
-
-          if (lastCamera) {
-            v.SetCamera(lastCamera)
-          }
-
-          try { v.SetProjectionMode(projectionMode) } catch (e) {}
-          try { v.SetNavigationMode(navigationMode) } catch (e) {}
-
-          modelLoaded = true
-          setStatus(isInitialLoad ? 'Model loaded' : 'Scene updated (WebSocket)')
-        }
-      })
-    }
-
-    // --- Viewer initialization ---
-
-    function createViewer() {
-      var parentDiv = document.getElementById('viewer')
-      parentDiv.style.width = window.innerWidth + 'px'
-      parentDiv.style.height = window.innerHeight + 'px'
-      modelLoaded = false
-
-      var params = {
-        backgroundColor: getBackgroundColor(),
-        defaultColor: new OV.RGBColor(200, 200, 200),
-        edgeSettings: getEdgeSettings(),
-      }
-
-      if (lastCamera) {
-        params.camera = lastCamera
-      }
-
-      embeddedViewer = new OV.EmbeddedViewer(parentDiv, params)
-    }
-
-    /** Fetches the latest scene from the server and displays it. */
-    function loadInitialScene() {
-      setStatus('Loading scene…')
-      fetch(SCENE_API_URL, { cache: 'no-store' })
-              .then(function (response) {
-                if (!response.ok) {
-                  setStatus('No scene available yet — waiting for WebSocket')
-                  return null
-                }
-                return response.json()
-              })
-              .then(function (scene) {
-                if (scene && scene.version === 1 && Array.isArray(scene.meshes)) {
-                  convertAndDisplay(scene, true)
-                }
-              })
-              .catch(function (err) {
-                console.error('Failed to load initial scene:', err)
-                setStatus('Failed to load scene')
-              })
-    }
-
-    // --- WebSocket connection ---
-
-    var ws = null
-    var wsReconnectTimer = null
-
-    function connectWebSocket() {
-      var protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
-      var wsUrl = protocol + '//' + location.host + '/ws'
-
-      ws = new WebSocket(wsUrl)
-
-      ws.onopen = function () {
-        wsConnected = true
-        updateWsIndicator()
-        setStatus('WebSocket connected')
-      }
-
-      ws.onmessage = function (event) {
-        try {
-          var scene = JSON.parse(event.data)
-          if (scene.version === 1 && Array.isArray(scene.meshes)) {
-            convertAndDisplay(scene, false)
-          }
-        } catch (e) {
-          console.error('Failed to parse WebSocket scene:', e)
-        }
-      }
-
-      ws.onclose = function () {
-        wsConnected = false
-        updateWsIndicator()
-        clearTimeout(wsReconnectTimer)
-        wsReconnectTimer = setTimeout(connectWebSocket, 2000)
-      }
-
-      ws.onerror = function () {
-        wsConnected = false
-        updateWsIndicator()
-      }
-    }
-
-    // --- Controls ---
-
-    document.getElementById('btn-fit').addEventListener('click', function () {
-      if (!modelLoaded) return
-      var v = getInnerViewer()
-      if (!v) return
-      var sphere = getBoundingSphere()
-      if (!sphere) return
-      v.FitSphereToWindow(sphere, false)
-    })
-
-    document.getElementById('btn-fit-anim').addEventListener('click', function () {
-      if (!modelLoaded) return
-      var v = getInnerViewer()
-      if (!v) return
-      var sphere = getBoundingSphere()
-      if (!sphere) return
-      v.FitSphereToWindow(sphere, true)
-    })
-
-    document.getElementById('btn-projection').addEventListener('click', function () {
-      if (!modelLoaded) return
-      projectionMode = projectionMode === 1 ? 2 : 1
-      updateProjectionUI()
-      var v = getInnerViewer()
-      if (v) v.SetProjectionMode(projectionMode)
-      setStatus(projectionMode === 1 ? 'Perspective' : 'Orthographic')
-    })
-
-    document.getElementById('btn-navmode').addEventListener('click', function () {
-      if (!modelLoaded) return
-      navigationMode = navigationMode === 1 ? 2 : 1
-      updateNavModeUI()
-      var v = getInnerViewer()
-      if (v) v.SetNavigationMode(navigationMode)
-      setStatus(navigationMode === 1 ? 'Fixed Up Vector' : 'Free Orbit')
-    })
-
-    document.getElementById('btn-flipup').addEventListener('click', function () {
-      if (!modelLoaded) return
-      var v = getInnerViewer()
-      if (v) {
-        v.FlipUpVector()
-        setStatus('Up vector flipped')
-      }
-    })
-
-    document.getElementById('btn-edges').addEventListener('click', function () {
-      showEdges = !showEdges
-      document.getElementById('btn-edges').setAttribute('data-active', showEdges.toString())
-      var v = getInnerViewer()
-      if (v) {
-        v.SetEdgeSettings(getEdgeSettings())
-      }
-    })
-
-    document.getElementById('btn-help').addEventListener('click', function () {
-      document.getElementById('help-panel').classList.toggle('visible')
-    })
-
-    function setViewPreset(eyeX, eyeY, eyeZ, upX, upY, upZ) {
-      if (!modelLoaded) return
-      var v = getInnerViewer()
-      if (!v) return
-
-      var sphere = getBoundingSphere()
-      if (!sphere) return
-
-      var center = new OV.Coord3D(sphere.center.x, sphere.center.y, sphere.center.z)
-      var distance = sphere.radius * 2.5
-
-      var eye = new OV.Coord3D(
-              center.x + eyeX * distance,
-              center.y + eyeY * distance,
-              center.z + eyeZ * distance
-      )
-      var up = new OV.Coord3D(upX, upY, upZ)
-
-      var newCamera = new OV.Camera(eye, center, up, 45)
-      v.SetCamera(newCamera)
-      v.FitSphereToWindow(sphere, true)
-    }
-
-    document.getElementById('btn-view-front').addEventListener('click',  function () { setViewPreset( 0, -1,  0,   0, 0, 1) })
-    document.getElementById('btn-view-back').addEventListener('click',   function () { setViewPreset( 0,  1,  0,   0, 0, 1) })
-    document.getElementById('btn-view-top').addEventListener('click',    function () { setViewPreset( 0,  0,  1,   0,-1, 0) })
-    document.getElementById('btn-view-bottom').addEventListener('click', function () { setViewPreset( 0,  0, -1,   0, 1, 0) })
-    document.getElementById('btn-view-right').addEventListener('click',  function () { setViewPreset( 1,  0,  0,   0, 0, 1) })
-    document.getElementById('btn-view-left').addEventListener('click',   function () { setViewPreset(-1,  0,  0,   0, 0, 1) })
-
-    document.addEventListener('keydown', function (e) {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
-
-      var key = e.key.toLowerCase()
-
-      if (key === 'f' && !e.shiftKey) {
-        e.preventDefault()
-        document.getElementById('btn-fit').click()
-      } else if (key === 'f' && e.shiftKey) {
-        e.preventDefault()
-        document.getElementById('btn-fit-anim').click()
-      } else if (key === 'p') {
-        e.preventDefault()
-        document.getElementById('btn-projection').click()
-      } else if (key === 'o') {
-        e.preventDefault()
-        document.getElementById('btn-navmode').click()
-      } else if (key === 'u') {
-        e.preventDefault()
-        document.getElementById('btn-flipup').click()
-      } else if (key === 'e') {
-        e.preventDefault()
-        document.getElementById('btn-edges').click()
-      } else if (key === 't') {
-        e.preventDefault()
-        document.getElementById('btn-theme').click()
-      } else if (key === '?' || (key === '/' && e.shiftKey)) {
-        e.preventDefault()
-        document.getElementById('btn-help').click()
-      } else if (key === '1') {
-        e.preventDefault()
-        document.getElementById('btn-view-front').click()
-      } else if (key === '2') {
-        e.preventDefault()
-        document.getElementById('btn-view-back').click()
-      } else if (key === '3') {
-        e.preventDefault()
-        document.getElementById('btn-view-top').click()
-      } else if (key === '4') {
-        e.preventDefault()
-        document.getElementById('btn-view-bottom').click()
-      } else if (key === '5') {
-        e.preventDefault()
-        document.getElementById('btn-view-right').click()
-      } else if (key === '6') {
-        e.preventDefault()
-        document.getElementById('btn-view-left').click()
-      }
-    })
-
-    // --- Status ---
-
-    var statusTimer = null
-    function setStatus(text) {
-      var el = document.getElementById('status')
-      el.textContent = text
-      el.classList.add('updating')
-      clearTimeout(statusTimer)
-      statusTimer = setTimeout(function () { el.classList.remove('updating') }, 2000)
-    }
-
-    // --- Resize ---
-
-    window.addEventListener('resize', function () {
-      var parentDiv = document.getElementById('viewer')
-      parentDiv.style.width = window.innerWidth + 'px'
-      parentDiv.style.height = window.innerHeight + 'px'
-      if (embeddedViewer) embeddedViewer.Resize()
-    })
-
-    // --- Init ---
-
-    applyThemeUI()
-    updateProjectionUI()
-    updateNavModeUI()
-    updateWsIndicator()
-    window.addEventListener('load', function () {
-      createViewer()
-      loadInitialScene()
-      connectWebSocket()
-    })
-  })()
-</script>
+<script type="module" src="viewer.mjs"></script>
 </body>
 </html>

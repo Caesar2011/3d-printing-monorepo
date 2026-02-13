@@ -37,7 +37,7 @@ const App = memo(() => {
           </translate>
 
           {/* Container split into 3 columns, left column further split into 2 rows */}
-          <translate by={{ x: 200 }}>
+          <translate by={{ x: 300 }}>
             <entity name={'complex-split'} type={ShapeType.Part} color={Colors.ORANGE_2}>
               <Container
                 size={V({ x: 120, y: 80, z: 40 })}

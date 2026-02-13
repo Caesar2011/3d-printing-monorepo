@@ -1,5 +1,6 @@
 import jscad from '@jscad/modeling'
-import type { Geom3 } from '@jscad/modeling/src/geometries/types.js'
+
+import type { Shape } from '../Shape.js'
 
 const { geom3 } = jscad.geometries
 
@@ -24,18 +25,14 @@ export interface JsonScene {
   meshes: JsonMesh[]
 }
 
-/**
- * Converts JSCAD Geom3 shapes into a JSON scene descriptor.
- * Each shape becomes a mesh with triangulated polygons.
- */
-export function serializeToJson(shapes: Geom3[]): JsonScene {
+/** Converts Shape instances into a JSON scene descriptor with triangulated polygons. */
+export function serializeToJson(shapes: Shape[]): JsonScene {
   const meshes: JsonMesh[] = shapes.map((shape) => {
     const polygons = geom3.toPolygons(shape)
     const triangles: JsonTriangle[] = []
 
     for (const polygon of polygons) {
       const verts = polygon.vertices
-      // Fan-triangulate polygons with more than 3 vertices
       for (let i = 1; i < verts.length - 1; i++) {
         triangles.push({
           vertices: [
@@ -52,7 +49,7 @@ export function serializeToJson(shapes: Geom3[]): JsonScene {
       : null
 
     return {
-      name: (shape as unknown as { name: string }).name ?? '',
+      name: shape.name,
       color,
       triangles,
     }
