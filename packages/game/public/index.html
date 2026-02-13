@@ -1,84 +1,646 @@
 ﻿<!doctype html>
-<html lang="de">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Online 3D Viewer</title>
-    <style>
-      /* Optional: Definiere globale Styles, z. B. zum Entfernen von Margin und Padding */
-      body,
-      html {
-        margin: 0;
-        padding: 0;
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D Viewer</title>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #f0f0f0;
+      --toolbar-bg: rgba(255, 255, 255, 0.85);
+      --toolbar-border: rgba(0, 0, 0, 0.12);
+      --text: #1a1a1a;
+      --btn-bg: rgba(0, 0, 0, 0.06);
+      --btn-hover: rgba(0, 0, 0, 0.12);
+      --btn-active: rgba(0, 0, 0, 0.18);
+    }
+
+    [data-theme='dark'] {
+      --bg: #1a1a1a;
+      --toolbar-bg: rgba(40, 40, 40, 0.9);
+      --toolbar-border: rgba(255, 255, 255, 0.1);
+      --text: #e0e0e0;
+      --btn-bg: rgba(255, 255, 255, 0.08);
+      --btn-hover: rgba(255, 255, 255, 0.15);
+      --btn-active: rgba(255, 255, 255, 0.22);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    #viewer {
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #toolbar {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 1000;
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      background: var(--toolbar-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--toolbar-border);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      flex-wrap: wrap;
+      max-width: calc(100vw - 24px);
+    }
+
+    #view-toolbar {
+      position: fixed;
+      top: 60px;
+      right: 12px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 4px;
+      background: var(--toolbar-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--toolbar-border);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .toolbar-group {
+      display: flex;
+      gap: 2px;
+    }
+
+    .toolbar-group + .toolbar-group {
+      margin-left: 4px;
+      padding-left: 8px;
+      border-left: 1px solid var(--toolbar-border);
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 6px;
+      background: var(--btn-bg);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background 0.15s;
+      user-select: none;
+    }
+
+    .btn:hover {
+      background: var(--btn-hover);
+    }
+
+    .btn:active {
+      background: var(--btn-active);
+    }
+
+    .btn[data-active='true'] {
+      background: var(--btn-active);
+    }
+
+    .btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .btn-label {
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    #status {
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      z-index: 1000;
+      padding: 4px 10px;
+      background: var(--toolbar-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--toolbar-border);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text);
+      opacity: 0.7;
+      transition: opacity 0.3s;
+    }
+
+    #status.updating {
+      opacity: 1;
+    }
+
+    #help-panel {
+      position: fixed;
+      bottom: 40px;
+      right: 12px;
+      z-index: 1000;
+      padding: 10px 14px;
+      background: var(--toolbar-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--toolbar-border);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      font-size: 11px;
+      line-height: 1.6;
+      display: none;
+      min-width: 180px;
+    }
+
+    #help-panel.visible {
+      display: block;
+    }
+
+    #help-panel h4 {
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+
+    #help-panel kbd {
+      display: inline-block;
+      padding: 1px 5px;
+      border: 1px solid var(--toolbar-border);
+      border-radius: 3px;
+      background: var(--btn-bg);
+      font-family: monospace;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+<div id="toolbar">
+  <div class="toolbar-group">
+    <button class="btn" id="btn-theme" title="Toggle dark/light mode (T)">
+      <svg id="icon-sun" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 7a5 5 0 100 10 5 5 0 000-10zm0-3a1 1 0 01-1-1V1a1 1 0 112 0v2a1 1 0 01-1 1zm0 18a1 1 0 01-1-1v-2a1 1 0 112 0v2a1 1 0 01-1 1zm9-9h-2a1 1 0 110-2h2a1 1 0 110 2zM6 12a1 1 0 01-1 1H3a1 1 0 110-2h2a1 1 0 011 1zm12.36-5.64a1 1 0 01-.7-.3l-1.42-1.42a1 1 0 111.41-1.41l1.42 1.42a1 1 0 01-.71 1.7zM7.05 18.36a1 1 0 01-.7-.3l-1.42-1.42a1 1 0 111.41-1.41l1.42 1.42a1 1 0 01-.71 1.7zm11.31 0a1 1 0 01-.71-1.71l1.42-1.42a1 1 0 111.41 1.41l-1.42 1.42a1 1 0 01-.7.3zM7.05 7.05a1 1 0 01-.71-.29L4.93 5.34a1 1 0 011.41-1.41L7.76 5.35a1 1 0 01-.71 1.7z" />
+      </svg>
+      <svg id="icon-moon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: none">
+        <path d="M21.64 13A9 9 0 0111 2.36 10 10 0 1021.64 13z" />
+      </svg>
+    </button>
+  </div>
+
+  <div class="toolbar-group">
+    <button class="btn" id="btn-fit" title="Fit model to view (F)">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zM3 15h2v4h4v2H3v-6zm16 0h2v6h-6v-2h4v-4z" />
+      </svg>
+    </button>
+    <button class="btn" id="btn-fit-anim" title="Fit model (animated) (Shift+F)">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zM3 15h2v4h4v2H3v-6zm16 0h2v6h-6v-2h4v-4z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    </button>
+  </div>
+
+  <div class="toolbar-group">
+    <button class="btn" id="btn-projection" title="Toggle Perspective / Orthographic (P)">
+      <span class="btn-label" id="proj-label">P</span>
+    </button>
+  </div>
+
+  <div class="toolbar-group">
+    <button class="btn" id="btn-navmode" title="Toggle Fixed Up / Free Orbit (O)" data-active="false">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+        <path d="M12 6l-4 4h3v4h2v-4h3z"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="toolbar-group">
+    <button class="btn" id="btn-flipup" title="Flip up vector (U)">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7 14l5-5 5 5H7z"/>
+        <path d="M7 18l5-5 5 5H7z" opacity="0.4"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="toolbar-group">
+    <button class="btn" id="btn-edges" title="Toggle edges (E)" data-active="false">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 3h18v18H3V3zm2 2v14h14V5H5z" fill-rule="evenodd" />
+      </svg>
+    </button>
+  </div>
+
+  <div class="toolbar-group">
+    <button class="btn" id="btn-help" title="Keyboard shortcuts (?)">
+      <span class="btn-label">?</span>
+    </button>
+  </div>
+</div>
+
+<div id="view-toolbar">
+  <button class="btn" id="btn-view-front" title="Front view (1)">
+    <span class="btn-label">F</span>
+  </button>
+  <button class="btn" id="btn-view-back" title="Back view (2)">
+    <span class="btn-label">Bk</span>
+  </button>
+  <button class="btn" id="btn-view-top" title="Top view (3)">
+    <span class="btn-label">T</span>
+  </button>
+  <button class="btn" id="btn-view-bottom" title="Bottom view (4)">
+    <span class="btn-label">Bt</span>
+  </button>
+  <button class="btn" id="btn-view-right" title="Right view (5)">
+    <span class="btn-label">R</span>
+  </button>
+  <button class="btn" id="btn-view-left" title="Left view (6)">
+    <span class="btn-label">L</span>
+  </button>
+</div>
+
+<div id="help-panel">
+  <h4>Keyboard Shortcuts</h4>
+  <div><kbd>F</kbd> Fit to view</div>
+  <div><kbd>Shift+F</kbd> Fit (animated)</div>
+  <div><kbd>P</kbd> Perspective / Ortho</div>
+  <div><kbd>O</kbd> Orbit mode</div>
+  <div><kbd>U</kbd> Flip up vector</div>
+  <div><kbd>E</kbd> Toggle edges</div>
+  <div><kbd>T</kbd> Toggle theme</div>
+  <div><kbd>1-6</kbd> View presets</div>
+  <div><kbd>?</kbd> This help</div>
+</div>
+
+<div id="status">Ready</div>
+<div id="viewer"></div>
+
+<script src="o3dv.min.js"></script>
+<script>
+  ;(function () {
+    const MODEL_URL = 'output.3mf'
+
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)')
+    let darkMode = prefersDark.matches
+    let showEdges = false
+    let projectionMode = 1
+    let navigationMode = 1
+    let modelLoaded = false
+
+    function applyThemeUI() {
+      document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light')
+      document.getElementById('icon-sun').style.display = darkMode ? 'none' : 'block'
+      document.getElementById('icon-moon').style.display = darkMode ? 'block' : 'none'
+    }
+
+    function updateProjectionUI() {
+      document.getElementById('proj-label').textContent = projectionMode === 1 ? 'P' : 'O'
+    }
+
+    function updateNavModeUI() {
+      document.getElementById('btn-navmode').setAttribute('data-active', (navigationMode === 2).toString())
+    }
+
+    prefersDark.addEventListener('change', (e) => {
+      darkMode = e.matches
+      applyThemeUI()
+      recreateViewer()
+    })
+
+    document.getElementById('btn-theme').addEventListener('click', () => {
+      darkMode = !darkMode
+      applyThemeUI()
+      recreateViewer()
+    })
+
+    let embeddedViewer = null
+    let lastCamera = null
+
+    function getBackgroundColor() {
+      return darkMode
+              ? new OV.RGBAColor(42, 42, 42, 255)
+              : new OV.RGBAColor(240, 240, 240, 255)
+    }
+
+    function getEdgeSettings() {
+      const edgeColor = darkMode
+              ? new OV.RGBColor(100, 100, 100)
+              : new OV.RGBColor(50, 50, 50)
+      return new OV.EdgeSettings(showEdges, edgeColor, 1)
+    }
+
+    /**
+     * Returns the inner Viewer instance directly from the EmbeddedViewer.
+     * Returns null only if embeddedViewer itself is null.
+     */
+    function getInnerViewer() {
+      if (!embeddedViewer) return null
+      return embeddedViewer.GetViewer()
+    }
+
+    /**
+     * Returns the bounding sphere of all meshes in the scene, or null if
+     * no model is loaded yet.
+     */
+    function getBoundingSphere() {
+      const v = getInnerViewer()
+      if (!v) return null
+      return v.GetBoundingSphere(function (meshUserData) { return true })
+    }
+
+    function saveCamera() {
+      const v = getInnerViewer()
+      if (!v) return
+      try {
+        lastCamera = v.GetCamera().Clone()
+      } catch (e) {}
+    }
+
+    function createViewer() {
+      const parentDiv = document.getElementById('viewer')
+      parentDiv.style.width = window.innerWidth + 'px'
+      parentDiv.style.height = window.innerHeight + 'px'
+      modelLoaded = false
+
+      const params = {
+        backgroundColor: getBackgroundColor(),
+        defaultColor: new OV.RGBColor(200, 200, 200),
+        edgeSettings: getEdgeSettings(),
+        onModelLoaded: function () {
+          modelLoaded = true
+          setStatus('Model loaded')
+
+          const v = embeddedViewer.GetViewer()
+
+          // Restore camera position across theme/edge toggles
+          if (lastCamera) {
+            try { v.SetCamera(lastCamera) } catch (e) {}
+          }
+
+          // Apply current projection mode
+          try { v.SetProjectionMode(projectionMode) } catch (e) {}
+
+          // Apply current navigation mode
+          try { v.SetNavigationMode(navigationMode) } catch (e) {}
+        },
+        onModelLoadFailed: function () {
+          setStatus('Model load failed')
+        },
       }
-    </style>
-  </head>
-  <body>
-    <!-- DIV-Element für den Viewer:
- - Die Klasse muss "online_3d_viewer" lauten.
- - Das "model"-Attribut verweist hier auf "output.stl" (dein Modell im public-Ordner).
- - Du kannst per style die gewünschte Breite/Höhe angeben. -->
-    <div class="online_3d_viewer" style="width: 800px; height: 800px" model="output.3mf"></div>
 
-    <!-- Einbinden der Online3DViewer Library -->
-    <script src="o3dv.min.js"></script>
+      if (lastCamera) {
+        params.camera = lastCamera
+      }
 
-    <!-- Nach dem Laden der Seite alle Viewer initialisieren -->
-    <script>
-      window.addEventListener('load', () => {
-        // Diese Funktion sucht alle Elemente mit der Klasse "online_3d_viewer"
-        // und initialisiert sie automatisch mit den in den Attributen angegebenen Parametern.
-        document.getElementsByClassName('online_3d_viewer')[0].style.width = document.body.clientWidth + 'px'
-        document.getElementsByClassName('online_3d_viewer')[0].style.height = window.innerHeight + 'px'
-        console.log(document.getElementsByClassName('online_3d_viewer')[0].style.height)
-        OV.Init3DViewerElements()
-      })
-    </script>
+      embeddedViewer = new OV.EmbeddedViewer(parentDiv, params)
+      embeddedViewer.LoadModelFromUrlList([MODEL_URL])
+    }
 
-    <!-- Skript zum regelmäßigen Abfragen des Last-Modified-Headers -->
-    <script>
-      let lastModified
+    function destroyViewer() {
+      if (!embeddedViewer) return
+      saveCamera()
+      embeddedViewer.Destroy()
+      embeddedViewer = null
+      modelLoaded = false
+      document.getElementById('viewer').innerHTML = ''
+    }
 
-      async function checkForModelUpdate() {
-        console.log('Neue Abfrage für Modell-Update')
-        try {
-          // HEAD-Anfrage an output.stl; cache: 'no-store' stellt sicher, dass kein veralteter Wert geliefert wird
-          const response = await fetch('output.3mf', { method: 'HEAD', cache: 'no-store' })
-          if (!response.ok) {
-            console.error('Fehler beim Abrufen des HEAD von output.3mf')
-            setTimeout(checkForModelUpdate, 1000)
-            return
-          }
-          const newLastModified = response.headers.get('Last-Modified')
-          if (!lastModified) {
-            console.log('Kein lastModified gesetzt. Initialisiere...')
-            // Beim ersten Abruf den Wert speichern
-            lastModified = newLastModified
-          } else if (newLastModified !== lastModified) {
-            console.log('Modell wurde aktualisiert. Lade Seite neu...')
-            // Option 1: Wenn dein Viewer eine Methode zum Neuladen des Modells hat, verwende diese
-            // viewer.loadModel();  // Beispiel: Falls OV.EmbeddedViewer eine solche Methode bereitstellt.
-            // Option 2: Neuladen der gesamten Seite:
-            //location.reload();
-            const parent = document.getElementsByClassName('online_3d_viewer').item(0)
-            while (parent.firstChild) {
-              parent.removeChild(parent.firstChild)
-            }
+    function recreateViewer() {
+      destroyViewer()
+      createViewer()
+    }
 
-            OV.Init3DViewerElements()
-            //OV.Init3DViewerFromUrlList(document.getElementsByClassName("online_3d_viewer").item(0), ["output.stl"]);
-            lastModified = newLastModified
-            //return;
-          } else {
-            console.log('Modell nicht aktualisiert.')
-          }
-        } catch (err) {
-          console.error('Fehler beim Prüfen auf Updates: ', err)
+    function reloadModel() {
+      if (!embeddedViewer) return
+      saveCamera()
+      setStatus('Reloading model…')
+      embeddedViewer.LoadModelFromUrlList([MODEL_URL])
+    }
+
+    // --- Fit to view (no reload) -----------------------------------------
+
+    document.getElementById('btn-fit').addEventListener('click', () => {
+      if (!modelLoaded) return
+      const v = getInnerViewer()
+      if (!v) return
+      const sphere = getBoundingSphere()
+      if (!sphere) return
+      v.FitSphereToWindow(sphere, false)
+    })
+
+    document.getElementById('btn-fit-anim').addEventListener('click', () => {
+      if (!modelLoaded) return
+      const v = getInnerViewer()
+      if (!v) return
+      const sphere = getBoundingSphere()
+      if (!sphere) return
+      v.FitSphereToWindow(sphere, true)
+    })
+
+    // --- Projection toggle (no reload) -----------------------------------
+
+    document.getElementById('btn-projection').addEventListener('click', () => {
+      if (!modelLoaded) return
+      projectionMode = projectionMode === 1 ? 2 : 1
+      updateProjectionUI()
+      const v = getInnerViewer()
+      if (v) v.SetProjectionMode(projectionMode)
+      setStatus(projectionMode === 1 ? 'Perspective' : 'Orthographic')
+    })
+
+    // --- Navigation mode toggle (no reload) ------------------------------
+
+    document.getElementById('btn-navmode').addEventListener('click', () => {
+      if (!modelLoaded) return
+      navigationMode = navigationMode === 1 ? 2 : 1
+      updateNavModeUI()
+      const v = getInnerViewer()
+      if (v) v.SetNavigationMode(navigationMode)
+      setStatus(navigationMode === 1 ? 'Fixed Up Vector' : 'Free Orbit')
+    })
+
+    // --- Flip up vector (no reload) --------------------------------------
+
+    document.getElementById('btn-flipup').addEventListener('click', () => {
+      if (!modelLoaded) return
+      const v = getInnerViewer()
+      if (v) {
+        v.FlipUpVector()
+        setStatus('Up vector flipped')
+      }
+    })
+
+    // --- Edges (requires reload due to edge geometry regeneration) --------
+
+    document.getElementById('btn-edges').addEventListener('click', () => {
+      showEdges = !showEdges
+      document.getElementById('btn-edges').setAttribute('data-active', showEdges.toString())
+      recreateViewer()
+    })
+
+    // --- Help panel ------------------------------------------------------
+
+    document.getElementById('btn-help').addEventListener('click', () => {
+      document.getElementById('help-panel').classList.toggle('visible')
+    })
+
+    // --- View presets (no reload) ----------------------------------------
+
+    function setViewPreset(eyeX, eyeY, eyeZ, upX, upY, upZ) {
+      if (!modelLoaded) return
+      const v = getInnerViewer()
+      if (!v) return
+
+      const sphere = getBoundingSphere()
+      if (!sphere) return
+
+      const center = new OV.Coord3D(sphere.center.x, sphere.center.y, sphere.center.z)
+      const distance = sphere.radius * 2.5
+
+      const eye = new OV.Coord3D(
+              center.x + eyeX * distance,
+              center.y + eyeY * distance,
+              center.z + eyeZ * distance
+      )
+      const up = new OV.Coord3D(upX, upY, upZ)
+
+      const newCamera = new OV.Camera(eye, center, up, 45)
+      v.SetCamera(newCamera)
+      v.FitSphereToWindow(sphere, true)
+    }
+
+    document.getElementById('btn-view-front').addEventListener('click',  () => setViewPreset( 0, -1,  0,   0, 0, 1))
+    document.getElementById('btn-view-back').addEventListener('click',   () => setViewPreset( 0,  1,  0,   0, 0, 1))
+    document.getElementById('btn-view-top').addEventListener('click',    () => setViewPreset( 0,  0,  1,   0,-1, 0))
+    document.getElementById('btn-view-bottom').addEventListener('click', () => setViewPreset( 0,  0, -1,   0, 1, 0))
+    document.getElementById('btn-view-right').addEventListener('click',  () => setViewPreset( 1,  0,  0,   0, 0, 1))
+    document.getElementById('btn-view-left').addEventListener('click',   () => setViewPreset(-1,  0,  0,   0, 0, 1))
+
+    // --- Keyboard shortcuts ----------------------------------------------
+
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+
+      const key = e.key.toLowerCase()
+
+      if (key === 'f' && !e.shiftKey) {
+        e.preventDefault()
+        document.getElementById('btn-fit').click()
+      } else if (key === 'f' && e.shiftKey) {
+        e.preventDefault()
+        document.getElementById('btn-fit-anim').click()
+      } else if (key === 'p') {
+        e.preventDefault()
+        document.getElementById('btn-projection').click()
+      } else if (key === 'o') {
+        e.preventDefault()
+        document.getElementById('btn-navmode').click()
+      } else if (key === 'u') {
+        e.preventDefault()
+        document.getElementById('btn-flipup').click()
+      } else if (key === 'e') {
+        e.preventDefault()
+        document.getElementById('btn-edges').click()
+      } else if (key === 't') {
+        e.preventDefault()
+        document.getElementById('btn-theme').click()
+      } else if (key === '?' || (key === '/' && e.shiftKey)) {
+        e.preventDefault()
+        document.getElementById('btn-help').click()
+      } else if (key === '1') {
+        e.preventDefault()
+        document.getElementById('btn-view-front').click()
+      } else if (key === '2') {
+        e.preventDefault()
+        document.getElementById('btn-view-back').click()
+      } else if (key === '3') {
+        e.preventDefault()
+        document.getElementById('btn-view-top').click()
+      } else if (key === '4') {
+        e.preventDefault()
+        document.getElementById('btn-view-bottom').click()
+      } else if (key === '5') {
+        e.preventDefault()
+        document.getElementById('btn-view-right').click()
+      } else if (key === '6') {
+        e.preventDefault()
+        document.getElementById('btn-view-left').click()
+      }
+    })
+
+    // --- Status ----------------------------------------------------------
+
+    let statusTimer = null
+    function setStatus(text) {
+      const el = document.getElementById('status')
+      el.textContent = text
+      el.classList.add('updating')
+      clearTimeout(statusTimer)
+      statusTimer = setTimeout(() => el.classList.remove('updating'), 2000)
+    }
+
+    // --- Hot reload ------------------------------------------------------
+
+    let lastModified = null
+
+    async function checkForModelUpdate() {
+      try {
+        const response = await fetch(MODEL_URL, { method: 'HEAD', cache: 'no-store' })
+        if (!response.ok) {
+          setTimeout(checkForModelUpdate, 1000)
+          return
         }
-        setTimeout(checkForModelUpdate, 1000)
+        const newLastModified = response.headers.get('Last-Modified')
+        if (!lastModified) {
+          lastModified = newLastModified
+        } else if (newLastModified !== lastModified) {
+          lastModified = newLastModified
+          reloadModel()
+        }
+      } catch (err) {
+        console.error('Update check failed:', err)
       }
-
-      // Prüfe alle 5 Sekunden (1000ms) auf Updates
       setTimeout(checkForModelUpdate, 1000)
-    </script>
-  </body>
+    }
+
+    // --- Resize ----------------------------------------------------------
+
+    window.addEventListener('resize', () => {
+      const parentDiv = document.getElementById('viewer')
+      parentDiv.style.width = window.innerWidth + 'px'
+      parentDiv.style.height = window.innerHeight + 'px'
+      if (embeddedViewer) embeddedViewer.Resize()
+    })
+
+    // --- Init ------------------------------------------------------------
+
+    applyThemeUI()
+    updateProjectionUI()
+    updateNavModeUI()
+    window.addEventListener('load', () => {
+      createViewer()
+      setTimeout(checkForModelUpdate, 2000)
+    })
+  })()
+</script>
+</body>
 </html>
