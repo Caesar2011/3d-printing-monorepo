@@ -7,7 +7,8 @@ import { Edge } from '../primitives/Cuboid.js'
 
 import type { CutoutSettings, ContainerProps } from './types.js'
 import type { ResolvedCutout } from './cutout-geometry.js'
-import { computeCutoutPlacements } from './cutout-geometry.js'
+import { computeCellCutoutPlacements } from './cutout-geometry.js'
+import { computeCavityCells } from './cavity-layout.js'
 import { CutoutFace } from './CutoutFace.js'
 import { useContainerContext } from './ContainerContext.js'
 
@@ -26,7 +27,6 @@ function resolveCutouts(
     const faceSettings = cutoutProps[face]
     if (faceSettings === undefined && sideDefaults === undefined) continue
 
-    // Face is requested: merge defaults → side → face-specific
     result[face] = {
       ...defaults,
       ...(sideDefaults ?? {}),
@@ -57,21 +57,32 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
   const innerRadius = Math.max(0, containerRadius - wall)
 
   const resolvedCutouts = resolveCutouts(containerCtx.cutout, options.cutout)
-  const placements = computeCutoutPlacements(dim, wall, floor, containerRadius, containerEdges, resolvedCutouts)
+
+  // Compute cavity cells from divisions
+  const innerOrigin = V([wall, wall, floor])
+  const innerSize = V([dim.x - 2 * wall, dim.y - 2 * wall, dim.z - floor])
+  const cells = computeCavityCells(innerOrigin, innerSize, wall, options.divisions)
+
+  // Compute cutout placements per cell
+  const allCutoutPlacements = cells.flatMap((cell) =>
+    computeCellCutoutPlacements(cell, dim, wall, floor, containerRadius, containerEdges, resolvedCutouts),
+  )
 
   return (
     <subtract>
       {/* Outer shell */}
       <Cuboid size={size} edges={containerEdges} radius={containerRadius} />
 
-      {/* Inner cavity */}
-      <translate by={{ xy: wall, z: floor }}>
-        <Cuboid size={dim.s({ xy: wall * 2, z: floor })} edges={containerEdges & ~Edge.TOP} radius={innerRadius} />
-      </translate>
+      {/* Inner cavities: one per cell */}
+      {cells.map((cell, idx) => (
+        <translate by={cell.offset} key={`cavity-${idx}`}>
+          <Cuboid size={cell.size} edges={containerEdges & ~Edge.TOP} radius={innerRadius} />
+        </translate>
+      ))}
 
-      {/* Cutout holes: subtract each face */}
-      {placements.map((placement, idx) => (
-        <translate by={placement.translation} key={idx}>
+      {/* Cutout holes per cell */}
+      {allCutoutPlacements.map((placement, idx) => (
+        <translate by={placement.translation} key={`cutout-${idx}`}>
           <rotate by={placement.rotation}>
             <CutoutFace size={placement.size} settings={placement.settings} />
           </rotate>

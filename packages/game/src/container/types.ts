@@ -29,11 +29,24 @@ export type ContainerOpts = {
   cutout: CutoutSettings
 }
 
+/**
+ * Recursive subdivision tree.
+ * Splits alternate between X and Y axes automatically.
+ * `at` contains fractional positions (0–1 exclusive) where dividers are placed.
+ * `children` are the resulting sections between dividers (length = at.length + 1).
+ * Each child can optionally be further subdivided (axis flips automatically).
+ */
+export type Division = {
+  at: number[]
+  children?: (Division | null)[]
+}
+
 export type ContainerProps = {
   size: AxisRecordDefinition
   lap?: Lap
   radius?: number
   edges?: Edge
+  divisions?: Division
   cutout?: {
     bottom?: CutoutSettings
     side?: CutoutSettings

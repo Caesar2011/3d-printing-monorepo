@@ -3,14 +3,13 @@ import { ShapeType, V } from '@jsxcad/core'
 import { Colors, DebugAxes, renderComponent } from '@jsxcad/game'
 import { ContainerContextProvider } from '@jsxcad/game/dist/container/ContainerContext.js'
 import { Container } from '@jsxcad/game/dist/container/Container.js'
-import { CutoutType } from '@jsxcad/game/dist/container/types.js'
 
 import { logger } from './logger.js'
 
 const App = memo(() => {
   return (
     <entity name={'app'}>
-      <DebugAxes x={250} y={80} z={50}>
+      <DebugAxes x={350} y={80} z={50}>
         <ContainerContextProvider cutout={{ border: 5, borderRadius: 2 }}>
           {/* Simple container with hex cutouts on all sides and bottom */}
           <entity name={'full-cutout-box'} type={ShapeType.Part} color={Colors.BLUE_2}>
@@ -23,29 +22,36 @@ const App = memo(() => {
             />
           </entity>
 
-          {/* Container with only front and back cutouts, empty (no grid) */}
+          {/* Container split in half along X */}
           <translate by={{ x: 100 }}>
-            <entity name={'front-back-empty'} type={ShapeType.Part} color={Colors.GREEN_2}>
+            <entity name={'split-half'} type={ShapeType.Part} color={Colors.GREEN_2}>
               <Container
                 size={V({ x: 80, y: 60, z: 40 })}
+                divisions={{ at: [0.5] }}
                 cutout={{
-                  front: { type: CutoutType.EMPTY },
-                  back: { type: CutoutType.EMPTY },
+                  side: {},
+                  bottom: {},
                 }}
               />
             </entity>
           </translate>
 
-          {/* Container with hex on sides but custom settings on right */}
+          {/* Container split into 3 columns, left column further split into 2 rows */}
           <translate by={{ x: 200 }}>
-            <entity name={'custom-right'} type={ShapeType.Part} color={Colors.ORANGE_2}>
+            <entity name={'complex-split'} type={ShapeType.Part} color={Colors.ORANGE_2}>
               <Container
-                size={V({ x: 80, y: 60, z: 40 })}
-                radius={6}
+                size={V({ x: 120, y: 80, z: 40 })}
+                divisions={{
+                  at: [0.333, 0.666],
+                  children: [
+                    { at: [0.5] }, // left column: 2 rows
+                    null, // middle column: no split
+                    { at: [0.333, 0.666] }, // right column: 3 rows
+                  ],
+                }}
                 cutout={{
-                  side: { hexInnerDiameter: 6, hexWidth: 1 },
-                  right: { border: 10 },
-                  bottom: { type: CutoutType.EMPTY, border: 8 },
+                  side: {},
+                  bottom: {},
                 }}
               />
             </entity>
