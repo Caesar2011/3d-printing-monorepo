@@ -5,7 +5,7 @@ import jscad from '@jscad/modeling'
 
 import type { AxisRecordDefinition, UniqueAxisString } from './Vector3.js'
 import { axisOrRecordToVec3, V } from './Vector3.js'
-const { booleans, maths, measurements, primitives, transforms } = jscad
+const { booleans, maths, measurements, primitives, transforms, hulls } = jscad
 
 export enum ShapeType {
   Unspecified,
@@ -118,6 +118,12 @@ export class Shape implements Geom3 {
     const first = geoms.at(0)
     if (!first) throw new Error('Intersect must contain at least one geom')
     return new Shape(booleans.intersect(...geoms), Shape.mergeProps(first, props))
+  }
+
+  public static hull(geoms: Shape[], props: ShapeProperties) {
+    const first = geoms.at(0)
+    if (!first) throw new Error('Hull must contain at least one geom')
+    return new Shape(hulls.hull(geoms), Shape.mergeProps(first, props))
   }
 
   public static sphere(

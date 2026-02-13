@@ -143,6 +143,7 @@ export class CylinderNode extends PrimitiveNode<CylinderProps> {
     return [Shape.cylinder(this.props)]
   }
 }
+
 export class UnionNode extends OperatorNode<ShapeProperties> {
   public getClass(): new (props: unknown) => OperatorNode<ShapeProperties> {
     return UnionNode
@@ -167,6 +168,15 @@ export class IntersectNode extends OperatorNode<ShapeProperties> {
   }
   public renderFn(children: Shape[]): Shape[] {
     return [Shape.intersect(children, this.props)]
+  }
+}
+
+export class HullNode extends OperatorNode<ShapeProperties> {
+  public getClass(): new (props: unknown) => OperatorNode<ShapeProperties> {
+    return HullNode
+  }
+  public renderFn(children: Shape[]): Shape[] {
+    return [Shape.hull(children, this.props)]
   }
 }
 
@@ -263,6 +273,7 @@ export const ShapeMapBooleans = {
   union: UnionNode,
   subtract: SubtractNode,
   intersect: IntersectNode,
+  hull: HullNode,
 } as const
 
 export const ShapeMapTransforms = {
