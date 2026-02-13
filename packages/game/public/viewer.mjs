@@ -240,6 +240,10 @@ function createViewer() {
 }
 
 function loadInitialScene() {
+  if (state.renderMode !== 'websocket') {
+    loadFromFile()
+    return
+  }
   setStatus('Loading scene…')
   fetch('/api/scene', { cache: 'no-store' })
     .then((r) => (r.ok ? r.json() : null))
@@ -255,6 +259,25 @@ function loadInitialScene() {
 
 // ── Render mode ────────────────────────────────────────────────────────
 
+function applyModeChange(newMode) {
+  const oldMode = state.renderMode
+  state.renderMode = newMode
+  updateModeUI()
+
+  if (oldMode === newMode) return
+
+  setStatus('Mode: ' + (newMode === '3mf' ? '3MF hot-reload' : 'WebSocket'))
+
+  // When switching to 3mf, try to load the file immediately
+  if (newMode === '3mf') {
+    loadFromFile()
+  }
+  // When switching to websocket, try to load the latest scene from the server
+  if (newMode === 'websocket') {
+    loadInitialScene()
+  }
+}
+
 function updateModeUI() {
   const is3mf = state.renderMode === '3mf'
   $('mode-label').textContent = is3mf ? '3MF' : 'WS'
@@ -265,6 +288,8 @@ function updateModeUI() {
 
 function toggleMode() {
   const newMode = state.renderMode === 'websocket' ? '3mf' : 'websocket'
+
+  // POST to server — the server broadcasts the mode change to all viewers
   fetch('/api/mode', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -272,10 +297,8 @@ function toggleMode() {
   })
     .then((r) => r.json())
     .then((data) => {
-      state.renderMode = data.mode
-      updateModeUI()
-      setStatus('Mode: ' + (data.mode === '3mf' ? '3MF hot-reload' : 'WebSocket'))
-      if (data.mode === '3mf') loadFromFile()
+      // Apply locally; other viewers receive the change via WebSocket
+      applyModeChange(data.mode)
     })
     .catch(() => setStatus('Failed to switch mode'))
 }
@@ -302,19 +325,25 @@ function connectWebSocket() {
     try {
       const msg = JSON.parse(event.data)
 
+      // Server broadcasts mode changes to keep all viewers in sync
       if (msg.type === 'mode') {
-        state.renderMode = msg.mode
-        updateModeUI()
+        applyModeChange(msg.mode)
         return
       }
 
-      if (msg.type === '3mf-updated' && state.renderMode === '3mf') {
-        loadFromFile()
+      // 3MF file was updated — only reload if we're in 3mf mode
+      if (msg.type === '3mf-updated') {
+        if (state.renderMode === '3mf') {
+          loadFromFile()
+        }
         return
       }
 
-      if (msg.version === 1 && Array.isArray(msg.meshes) && state.renderMode === 'websocket') {
-        displayJsonScene(msg, false)
+      // Scene JSON from publisher — only display if we're in websocket mode
+      if (msg.version === 1 && Array.isArray(msg.meshes)) {
+        if (state.renderMode === 'websocket') {
+          displayJsonScene(msg, false)
+        }
       }
     } catch (e) {
       console.error('Failed to parse WebSocket message:', e)
@@ -335,7 +364,6 @@ function connectWebSocket() {
 }
 
 // ── View presets ───────────────────────────────────────────────────────
-// Presets are in Y-up viewer space (model rotated from Z-up → Y-up).
 
 function setViewPreset(eyeX, eyeY, eyeZ, upX, upY, upZ) {
   if (!state.modelLoaded) return
@@ -513,8 +541,20 @@ applyTheme()
 updateModeUI()
 updateWsUI()
 
+// Fetch the current server mode before loading the initial scene
 window.addEventListener('load', () => {
   createViewer()
-  loadInitialScene()
+
+  fetch('/api/mode', { cache: 'no-store' })
+    .then((r) => (r.ok ? r.json() : { mode: 'websocket' }))
+    .then((data) => {
+      state.renderMode = data.mode || 'websocket'
+      updateModeUI()
+      loadInitialScene()
+    })
+    .catch(() => {
+      loadInitialScene()
+    })
+
   connectWebSocket()
 })

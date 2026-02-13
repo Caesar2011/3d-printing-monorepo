@@ -10,16 +10,10 @@ export function PersistantReconciler<
   createShape: (type: string, props: object) => Instance,
   isInstanceChild: (instance: Instance) => instance is InstanceChild,
 ) {
-  // ============================================================================
-  // React Reconciler Host Config
-  // ============================================================================
   const hostConfig = {
     supportsMutation: false,
     supportsPersistence: true,
 
-    // ---------------------------------------------------------------------------
-    // Context methods (not needed for this use case)
-    // ---------------------------------------------------------------------------
     getRootHostContext(_rootContainerInstance: Container) {
       return {}
     },
@@ -27,16 +21,10 @@ export function PersistantReconciler<
       return {}
     },
 
-    // ---------------------------------------------------------------------------
-    // Define how text content is handled
-    // ---------------------------------------------------------------------------
     shouldSetTextContent(_type: string, _props: unknown): boolean {
       return false
     },
 
-    // ---------------------------------------------------------------------------
-    // Instance Creation
-    // ---------------------------------------------------------------------------
     createInstance(
       type: string,
       props: object,
@@ -50,7 +38,7 @@ export function PersistantReconciler<
     },
 
     createTextInstance(
-      text: string,
+      _text: string,
       _rootContainerInstance: Container,
       _hostContext: unknown,
       _internalInstanceHandle: unknown,
@@ -58,9 +46,6 @@ export function PersistantReconciler<
       throw new Error('No text instances allowed')
     },
 
-    // ---------------------------------------------------------------------------
-    // Append Initial Children
-    // ---------------------------------------------------------------------------
     appendInitialChild(parentInstance: Instance, child: Instance) {
       if (isInstanceChild(parentInstance)) {
         parentInstance.children.push(child)
@@ -79,23 +64,17 @@ export function PersistantReconciler<
       return false
     },
 
-    // ---------------------------------------------------------------------------
-    // Prepare Updates with Deep Equality Check
-    // ---------------------------------------------------------------------------
     prepareUpdate(
       _instance: Instance,
       _type: string,
-      oldProps: unknown,
-      newProps: unknown,
+      _oldProps: unknown,
+      _newProps: unknown,
       _rootContainerInstance: Container,
       _hostContext: unknown,
     ): null {
       return null
     },
 
-    // ---------------------------------------------------------------------------
-    // Persistence Mode (Immutable Updates)
-    // ---------------------------------------------------------------------------
     cloneInstance(
       instance: Instance,
       _updatePayload: unknown,
@@ -124,9 +103,6 @@ export function PersistantReconciler<
       container.children.push(...newChildren)
     },
 
-    // ---------------------------------------------------------------------------
-    // Mutation Methods (Disabled in Persistence Mode)
-    // ---------------------------------------------------------------------------
     appendChild(_parentInstance: Instance, _child: Instance) {
       throw new Error('appendChild should not be called in persistence mode')
     },
@@ -162,12 +138,9 @@ export function PersistantReconciler<
       // No operation needed
     },
 
-    // ---------------------------------------------------------------------------
-    // Scheduling (Using Basic Browser Timers)
-    // ---------------------------------------------------------------------------
     noTimeout: -1,
 
-    prepareForCommit(containerInfo: Container): Record<string, unknown> | null {
+    prepareForCommit(_containerInfo: Container): Record<string, unknown> | null {
       return null
     },
 
@@ -175,8 +148,8 @@ export function PersistantReconciler<
       return instance
     },
 
-    resetAfterCommit(containerInfo: Container) {},
-    preparePortalMount(containerInfo: Container) {},
+    resetAfterCommit(_containerInfo: Container) {},
+    preparePortalMount(_containerInfo: Container) {},
     scheduleTimeout: setTimeout,
     cancelTimeout: clearTimeout,
     isPrimaryRenderer: true,
@@ -193,22 +166,22 @@ export function PersistantReconciler<
     getCurrentEventPriority(): ReactReconciler.Lane {
       return DefaultEventPriority
     },
-    getInstanceFromNode(node: unknown): ReactReconciler.Fiber | null | undefined {
+    getInstanceFromNode(_node: unknown): ReactReconciler.Fiber | null | undefined {
       return undefined
     },
     beforeActiveInstanceBlur() {},
     afterActiveInstanceBlur() {},
-    prepareScopeUpdate(scopeInstance: unknown, instance: unknown) {},
-    getInstanceFromScope(scopeInstance: unknown): null | Instance {
+    prepareScopeUpdate(_scopeInstance: unknown, _instance: unknown) {},
+    getInstanceFromScope(_scopeInstance: unknown): null | Instance {
       return null
     },
-    detachDeletedInstance(node: Instance) {},
+    detachDeletedInstance(_node: Instance) {},
     maySuspendCommit() {
       return false
     },
   } satisfies HostConfig<
-    never,
-    never,
+    string,
+    object,
     Container,
     Instance,
     never,
@@ -216,14 +189,11 @@ export function PersistantReconciler<
     never,
     Instance,
     object,
-    never,
+    null,
     Instance[],
-    number,
+    ReturnType<typeof setTimeout>,
     -1
   >
 
-  // ============================================================================
-  // Create the Custom React Renderer
-  // ============================================================================
   return ReactReconciler(hostConfig)
 }

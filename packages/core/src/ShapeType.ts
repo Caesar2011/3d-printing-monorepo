@@ -4,6 +4,8 @@ import type { ShapeProperties } from './Shape.js'
 import { Shape } from './Shape.js'
 import { logger } from './logger.js'
 
+const MAX_CACHE_SIZE = 10_000
+
 export abstract class PrimitiveNode<T extends object = object> {
   public readonly props: T
   private static cache = new Map<string, Shape[]>()
@@ -25,10 +27,19 @@ export abstract class PrimitiveNode<T extends object = object> {
   public render(): Shape[] {
     let cached = PrimitiveNode.cache.get(this.id)
     if (!cached) {
+      if (PrimitiveNode.cache.size >= MAX_CACHE_SIZE) {
+        const firstKey = PrimitiveNode.cache.keys().next().value
+        if (firstKey !== undefined) PrimitiveNode.cache.delete(firstKey)
+      }
       cached = this.renderFn(this.renderChildren())
       PrimitiveNode.cache.set(this.id, cached)
     }
     return cached
+  }
+
+  /** Clears the global render cache. Useful for tests or forced re-renders. */
+  public static clearCache(): void {
+    PrimitiveNode.cache.clear()
   }
 
   public abstract renderFn(children: Shape[] | undefined): Shape[]
@@ -47,19 +58,20 @@ export abstract class PrimitiveNode<T extends object = object> {
   }
 
   protected static hash(str: string): string {
-    let hash = 0x811c9dc5 // FNV offset basis
+    let hash = 0x811c9dc5
     for (let i = 0, len = str.length; i < len; i++) {
       hash ^= str.charCodeAt(i)
-      hash = Math.imul(hash, 0x01000193) // FNV prime
+      hash = Math.imul(hash, 0x01000193)
     }
-    // Convert to an unsigned 32-bit integer and then to hex
     return (hash >>> 0).toString(16)
   }
 
   public renderTree(prefix: string = '', isLastChild = true): void {
-    logger.debug(
-      `${prefix}${isLastChild ? '└' : '├'}── ${this.getClass().name}${this._id !== undefined ? `(${this._id})` : ''} ${JSON.stringify(this.props)}`,
-    )
+    if (logger.isDebugEnabled?.() ?? true) {
+      logger.debug(
+        `${prefix}${isLastChild ? '└' : '├'}── ${this.getClass().name}${this._id !== undefined ? `(${this._id})` : ''} ${JSON.stringify(this.props)}`,
+      )
+    }
   }
 }
 
@@ -242,21 +254,18 @@ export class RootNode extends OperatorNode {
 }
 
 export const ShapeMap = {
-  // primitives
   cuboid: CuboidNode,
   sphere: SphereNode,
   cylinder: CylinderNode,
 } as const
 
 export const ShapeMapBooleans = {
-  // booleans
   union: UnionNode,
   subtract: SubtractNode,
   intersect: IntersectNode,
 } as const
 
 export const ShapeMapTransforms = {
-  // transforms
   translate: TranslateNode,
   mirror: MirrorNode,
   scale: ScaleNode,
@@ -285,14 +294,18 @@ export type TProps = {
   }
 }
 
+type ShapeKey = keyof TShapeMap | keyof TShapeMapBooleans | keyof TShapeMapTransforms
+
+const ALL_SHAPE_CONSTRUCTORS: Record<string, (new (props: unknown) => PrimitiveNode) | undefined> = {
+  ...ShapeMap,
+  ...ShapeMapBooleans,
+  ...ShapeMapTransforms,
+}
+
 export function createShape(type: string, props: unknown): PrimitiveNode {
-  const cls =
-    (ShapeMap as Record<string, { new (props: unknown): PrimitiveNode } | undefined>)[type] ??
-    (ShapeMapBooleans as Record<string, { new (props: unknown): PrimitiveNode } | undefined>)[type] ??
-    (ShapeMapTransforms as Record<string, { new (props: unknown): PrimitiveNode } | undefined>)[type] ??
-    undefined
+  const cls = ALL_SHAPE_CONSTRUCTORS[type]
   if (cls) {
     return new cls(props)
   }
-  throw new Error(`Unknown intrinsic element ${type}`)
+  throw new Error(`Unknown intrinsic element "${type}"`)
 }

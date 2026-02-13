@@ -2,8 +2,8 @@ import WebSocket from 'ws'
 
 import { logger } from '../logger.js'
 
-const WS_URL = 'ws://localhost:3000/ws?role=publisher'
-const MODE_API_URL = 'http://localhost:3000/api/mode'
+const WS_URL = process.env.WS_URL ?? 'ws://localhost:3000/ws?role=publisher'
+const MODE_API_URL = process.env.MODE_API_URL ?? 'http://localhost:3000/api/mode'
 const CONNECT_TIMEOUT_MS = 5000
 const POLL_INTERVAL_MS = 50
 
@@ -70,12 +70,25 @@ export async function publishScene(sceneJson: string): Promise<void> {
   }
 }
 
-/** Queries the server for the current render mode. */
+function isValidRenderMode(data: unknown): data is { mode: 'websocket' | '3mf' } {
+  return (
+    data !== null &&
+    typeof data === 'object' &&
+    'mode' in data &&
+    ((data as Record<string, unknown>).mode === 'websocket' || (data as Record<string, unknown>).mode === '3mf')
+  )
+}
+
+/** Queries the server for the current global render mode. */
 export async function getRenderMode(): Promise<'websocket' | '3mf'> {
   try {
     const res = await fetch(MODE_API_URL)
-    const data = (await res.json()) as { mode: 'websocket' | '3mf' }
-    return data.mode
+    const data: unknown = await res.json()
+    if (isValidRenderMode(data)) {
+      return data.mode
+    }
+    logger.warn('Unexpected render mode response, defaulting to websocket', { data })
+    return 'websocket'
   } catch {
     return 'websocket'
   }

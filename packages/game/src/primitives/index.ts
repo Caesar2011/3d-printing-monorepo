@@ -1,4 +1,4 @@
-export { Cuboid } from './Cuboid.js'
+export { Cuboid, Edge } from './Cuboid.js'
 export { Fillet } from './Fillet.js'
 export { FilletCorner } from './FilletCorner.js'
 export { Sphere } from './Sphere.js'

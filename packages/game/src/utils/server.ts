@@ -13,17 +13,15 @@ type RenderMode = 'websocket' | '3mf'
 interface ServerState {
   latestScene: string | null
   renderMode: RenderMode
-  lastMfModified: number
 }
 
 const state: ServerState = {
   latestScene: null,
   renderMode: 'websocket',
-  lastMfModified: 0,
 }
 
 const app = express()
-const port = 3000
+const port = parseInt(process.env.PORT ?? '3000', 10)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const packageRoot = path.resolve(__dirname, '../..')
@@ -55,12 +53,8 @@ app.post('/api/mode', (req, res) => {
   state.renderMode = mode
   logger.debug(`Render mode changed to: ${mode}`)
 
-  // Notify all viewers of the mode change
-  for (const client of viewers) {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ type: 'mode', mode }))
-    }
-  }
+  // Broadcast mode change to all connected viewers
+  broadcastToViewers(JSON.stringify({ type: 'mode', mode }))
 
   res.json({ mode })
 })
@@ -70,6 +64,14 @@ const wss = new WebSocketServer({ server, path: '/ws' })
 
 const viewers = new Set<WebSocket>()
 const publishers = new Set<WebSocket>()
+
+function broadcastToViewers(message: string): void {
+  for (const client of viewers) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message)
+    }
+  }
+}
 
 wss.on('connection', (ws, req) => {
   const isPublisher = req.url === '/ws?role=publisher'
@@ -81,10 +83,9 @@ wss.on('connection', (ws, req) => {
     ws.on('message', (data) => {
       const message = typeof data === 'string' ? data : data.toString('utf-8')
       state.latestScene = message
-      for (const viewer of viewers) {
-        if (viewer.readyState === WebSocket.OPEN) {
-          viewer.send(message)
-        }
+      // Only forward scene data to viewers in websocket mode
+      if (state.renderMode === 'websocket') {
+        broadcastToViewers(message)
       }
     })
 
@@ -96,7 +97,7 @@ wss.on('connection', (ws, req) => {
     viewers.add(ws)
     logger.debug(`Viewer connected (${viewers.size} total)`)
 
-    // Send current mode on connect
+    // Send current mode on connect so new viewers sync immediately
     ws.send(JSON.stringify({ type: 'mode', mode: state.renderMode }))
 
     ws.on('close', () => {
@@ -106,29 +107,40 @@ wss.on('connection', (ws, req) => {
   }
 })
 
-// Watch 3MF file for changes and notify viewers in 3mf mode
+/** Watches the 3MF file for changes using native fs.watch and notifies viewers. */
 function watchMfFile(): void {
-  const check = (): void => {
-    try {
-      const stat = fs.statSync(mfPath)
-      const mtime = stat.mtimeMs
-      if (mtime > state.lastMfModified) {
-        state.lastMfModified = mtime
-        for (const viewer of viewers) {
-          if (viewer.readyState === WebSocket.OPEN) {
-            viewer.send(JSON.stringify({ type: '3mf-updated', timestamp: mtime }))
+  const dir = path.dirname(mfPath)
+  const basename = path.basename(mfPath)
+
+  try {
+    fs.watch(dir, (eventType, filename) => {
+      if (filename !== basename || state.renderMode !== '3mf') return
+      broadcastToViewers(JSON.stringify({ type: '3mf-updated', timestamp: Date.now() }))
+    })
+    logger.debug(`Watching ${mfPath} for changes`)
+  } catch {
+    logger.warn(`Could not watch ${dir}, falling back to polling`)
+    let lastModified = 0
+    const poll = (): void => {
+      try {
+        const mtime = fs.statSync(mfPath).mtimeMs
+        if (mtime > lastModified) {
+          lastModified = mtime
+          if (state.renderMode === '3mf') {
+            broadcastToViewers(JSON.stringify({ type: '3mf-updated', timestamp: mtime }))
           }
         }
+      } catch {
+        // File doesn't exist yet
       }
-    } catch {
-      // File doesn't exist yet
+      setTimeout(poll, 1000)
     }
-    setTimeout(check, 1000)
+    poll()
   }
-  check()
 }
 
 server.listen(port, () => {
   logger.debug(`Server running at http://localhost:${port}`)
+  logger.debug(`Default render mode: ${state.renderMode}`)
   watchMfFile()
 })

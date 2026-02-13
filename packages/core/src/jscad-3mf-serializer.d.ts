@@ -21,17 +21,18 @@ declare module '@jscad/3mf-serializer' {
      */
     unit?: string
     /**
-     * If true, metadata (z.B. CreationDate) wird in die 3MF-Inhalte eingefügt.
+     * If true, metadata (e.g. CreationDate) is included in the 3MF contents.
      * @default true
      */
     metadata?: boolean
     /**
-     * Default color as RGBA, z.B. [1, 0.627, 0, 1] für JSCAD Orange.
+     * Default color as RGBA, e.g. [1, 0.627, 0, 1] for JSCAD Orange.
      * @default [1, 0.627, 0, 1]
      */
     defaultcolor?: number[]
     /**
-     * Wenn true, wird das Ergebnis als 3MF-Package (ZIP) zurückgegeben, ansonsten als XML-String.
+     * If true, the result is returned as a 3MF package (ZIP).
+     * Otherwise, the result is an XML string.
      * @default true
      */
     compress?: boolean

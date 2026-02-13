@@ -1,22 +1,20 @@
 import type { AxisRecordDefinition } from '@jsxcad/core'
-import { V, ShapeType } from '@jsxcad/core'
+import { V } from '@jsxcad/core'
 import type { FC } from 'react'
 import { range } from '@jsxcad/utils'
-
-import { Colors } from '../utils/colors.js'
-import { devComponentWatcher } from '../utils/watcher.js'
-import { logger } from '../logger.js'
 
 import { Cuboid } from './Cuboid.js'
 import { Cylinder } from './Cylinder.js'
 
-export interface HexGridProps {
+type BaseHexGridProps = {
   size: AxisRecordDefinition
   hexInnerDiameter: number
   hexWidth: number
-  offset?: AxisRecordDefinition
-  center?: boolean
 }
+
+/** Props for HexGrid. Specify either `offset` or `center`, but not both. */
+export type HexGridProps = BaseHexGridProps &
+  ({ offset?: AxisRecordDefinition; center?: never } | { center?: boolean; offset?: never })
 
 const Hex: FC<{ hexInnerDiameter: number; hexWidth: number; height: number }> = ({
   hexInnerDiameter,
@@ -33,23 +31,26 @@ const Hex: FC<{ hexInnerDiameter: number; hexWidth: number; height: number }> = 
   )
 }
 
-export const HexGrid: FC<HexGridProps> = ({ size, offset, center, hexInnerDiameter, hexWidth }) => {
-  // todo: fix hex width mit math calculations
-  if (offset !== undefined && center !== undefined) {
-    const errorMessage = `Only offset or center, but not both can be specified in HexGrid`
-    logger.crit(errorMessage)
-    throw new Error(errorMessage) // Preserve behavior by throwing an error
+export const HexGrid: FC<HexGridProps> = (props) => {
+  const { size, hexInnerDiameter, hexWidth } = props
+
+  // Determine offset from either explicit value or centering calculation
+  let offset: AxisRecordDefinition | undefined
+  if ('center' in props && props.center === true) {
+    offset = {
+      x: ((V(size).x - hexInnerDiameter - hexWidth * 2) % (hexInnerDiameter * 1.5 + hexWidth)) / 2,
+      y:
+        -(
+          (V(size).y - ((hexInnerDiameter / 4) * Math.sqrt(3) + hexWidth / 2) * 2 - hexWidth) %
+          (((hexInnerDiameter / 4) * Math.sqrt(3) + hexWidth / 2) * 2)
+        ) / 2,
+    }
+  } else if ('offset' in props) {
+    offset = props.offset
   }
 
   const rowSpacing = (hexInnerDiameter / 4) * Math.sqrt(3) + hexWidth / 2
   const columnSpacing = hexInnerDiameter * 1.5 + hexWidth
-
-  if (center === true) {
-    offset = {
-      x: ((V(size).x - hexInnerDiameter - hexWidth * 2) % columnSpacing) / 2,
-      y: -((V(size).y - rowSpacing * 2 - hexWidth) % (rowSpacing * 2)) / 2,
-    }
-  }
 
   const offsetV = V(offset)
   const offsetDim = V({
@@ -80,18 +81,3 @@ export const HexGrid: FC<HexGridProps> = ({ size, offset, center, hexInnerDiamet
     </intersect>
   )
 }
-
-devComponentWatcher(import.meta, () => {
-  const dim = V({ x: 100, y: 16, z: 2 })
-  return (
-    <>
-      <HexGrid size={dim} hexInnerDiameter={10} hexWidth={1} center={true} />
-      <subtract name={'outer'} type={ShapeType.Technical} color={Colors.BLUE_2}>
-        <translate by={{ xy: -0.1 }}>
-          <Cuboid size={dim.a({ xy: 0.2 })} />
-        </translate>
-        <Cuboid size={dim} />
-      </subtract>
-    </>
-  )
-})

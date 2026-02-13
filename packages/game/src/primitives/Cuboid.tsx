@@ -5,10 +5,12 @@ import type { FC } from 'react'
 import { Fillet } from './Fillet.js'
 import { FilletCorner } from './FilletCorner.js'
 
+/**
+ * Bitmask enum for selecting which edges of a cuboid receive fillets.
+ *
+ * Layout (12 bits): `[TOP: F,L,B,R] [SIDE: FL,BL,BR,FR] [BOT: F,L,B,R]`
+ */
 export enum Edge {
-  // 1st top: front, left, back, right
-  // 2nd side: front-left, back-left, back-right, front-right
-  // 3rd bot: front, left, back, right
   TOP = 0b1111_0000_0000,
   SIDE = 0b0000_1111_0000,
   BOT = 0b0000_0000_1111,
@@ -28,10 +30,8 @@ export const Cuboid: FC<{ size: AxisRecordDefinition; radius?: number; edges?: E
   const dim = V(size)
   const cuboid = <cuboid size={size} />
 
-  // No filleting? Return the base cuboid.
   if (radius <= 0 || edges === Edge.NONE) return cuboid
 
-  // Validate the fillet parameters
   validateFilletParameters(radius, dim, edges)
 
   return (
@@ -43,41 +43,48 @@ export const Cuboid: FC<{ size: AxisRecordDefinition; radius?: number; edges?: E
   )
 }
 
-const EdgesFillets: FC<{ radius: number; dim: Vector3; edges: Edge }> = ({ radius, dim, edges }) => {
-  const sides: [AxisRecordDefinition, AxisRecordDefinition][] = [
-    0b0000_1000_0000, 0b0000_0100_0000, 0b0000_0010_0000, 0b0000_0001_0000,
-  ]
-    .map((edge, idx) => [edge, idx] as const)
-    .filter(([edge]) => (edge & edges) === edge)
-    .map(([edge, idx]) => [
-      { z: (-Math.PI / 2) * idx },
-      { x: edge & Edge.RIGHT ? dim : 0, y: edge & Edge.BACK ? dim : 0 },
-    ])
-  const tops: [AxisRecordDefinition, AxisRecordDefinition][] = [
-    0b1000_0000_0000, 0b0100_0000_0000, 0b0010_0000_0000, 0b0001_0000_0000,
-  ]
-    .map((edge, idx) => [edge, idx] as const)
-    .filter(([edge]) => (edge & edges) === edge)
-    .map(([edge, idx]) => [
-      { y: Math.PI / 2, z: (-Math.PI / 2) * idx },
-      { x: edge & (Edge.BACK | Edge.RIGHT) ? dim : 0, y: edge & (Edge.LEFT | Edge.BACK) ? dim : 0, z: dim },
-    ])
-  const bottoms: [AxisRecordDefinition, AxisRecordDefinition][] = [
-    0b0000_0000_1000, 0b0000_0000_0100, 0b0000_0000_0010, 0b0000_0000_0001,
-  ]
-    .map((edge, idx) => [edge, idx] as const)
-    .filter(([edge]) => (edge & edges) === edge)
-    .map(([edge, idx]) => [
-      { y: -Math.PI / 2, z: (-Math.PI / 2) * idx },
-      { x: edge & (Edge.FRONT | Edge.RIGHT) ? dim : 0, y: edge & (Edge.RIGHT | Edge.BACK) ? dim : 0 },
-    ])
+// -- Edge fillet placement descriptors --
 
+type EdgePlacement = {
+  bit: number
+  rotation: AxisRecordDefinition
+  translation: (dim: Vector3) => AxisRecordDefinition
+}
+
+// Side vertical edges: FL, BL, BR, FR
+const SIDE_EDGE_PLACEMENTS: EdgePlacement[] = [
+  { bit: 0b0000_1000_0000, rotation: { z: 0 }, translation: () => ({}) },
+  { bit: 0b0000_0100_0000, rotation: { z: -Math.PI / 2 }, translation: (d) => ({ y: d }) },
+  { bit: 0b0000_0010_0000, rotation: { z: -Math.PI }, translation: (d) => ({ x: d, y: d }) },
+  { bit: 0b0000_0001_0000, rotation: { z: (-3 * Math.PI) / 2 }, translation: (d) => ({ x: d }) },
+]
+
+// Top horizontal edges: front, left, back, right
+const TOP_EDGE_PLACEMENTS: EdgePlacement[] = [
+  { bit: 0b1000_0000_0000, rotation: { y: Math.PI / 2, z: 0 }, translation: (d) => ({ z: d }) },
+  { bit: 0b0100_0000_0000, rotation: { y: Math.PI / 2, z: -Math.PI / 2 }, translation: (d) => ({ y: d, z: d }) },
+  { bit: 0b0010_0000_0000, rotation: { y: Math.PI / 2, z: -Math.PI }, translation: (d) => ({ x: d, y: d, z: d }) },
+  { bit: 0b0001_0000_0000, rotation: { y: Math.PI / 2, z: (-3 * Math.PI) / 2 }, translation: (d) => ({ x: d, z: d }) },
+]
+
+// Bottom horizontal edges: front, left, back, right
+const BOT_EDGE_PLACEMENTS: EdgePlacement[] = [
+  { bit: 0b0000_0000_1000, rotation: { y: -Math.PI / 2, z: 0 }, translation: () => ({}) },
+  { bit: 0b0000_0000_0100, rotation: { y: -Math.PI / 2, z: -Math.PI / 2 }, translation: (d) => ({ y: d }) },
+  { bit: 0b0000_0000_0010, rotation: { y: -Math.PI / 2, z: -Math.PI }, translation: (d) => ({ x: d, y: d }) },
+  { bit: 0b0000_0000_0001, rotation: { y: -Math.PI / 2, z: (-3 * Math.PI) / 2 }, translation: (d) => ({ x: d }) },
+]
+
+const ALL_EDGE_PLACEMENTS = [...SIDE_EDGE_PLACEMENTS, ...TOP_EDGE_PLACEMENTS, ...BOT_EDGE_PLACEMENTS]
+
+const EdgesFillets: FC<{ radius: number; dim: Vector3; edges: Edge }> = ({ radius, dim, edges }) => {
   const maxLength = Math.max(...dim.v)
+  const activePlacements = ALL_EDGE_PLACEMENTS.filter(({ bit }) => (bit & edges) === bit)
 
   return (
     <>
-      {[...sides, ...tops, ...bottoms].map(([rotation, translation], idx) => (
-        <translate by={translation} key={idx}>
+      {activePlacements.map(({ bit, rotation, translation }) => (
+        <translate by={translation(dim)} key={`edge-${bit}`}>
           <rotate by={rotation} center={0}>
             <Fillet size={{ xy: radius, z: maxLength }} />
           </rotate>
@@ -87,22 +94,37 @@ const EdgesFillets: FC<{ radius: number; dim: Vector3; edges: Edge }> = ({ radiu
   )
 }
 
+// -- Corner fillet placement descriptors --
+
+type CornerPlacement = {
+  /** Combined bitmask: all three edges meeting at this corner must be active */
+  bits: number
+  rotation: AxisRecordDefinition
+  translation: (dim: Vector3) => AxisRecordDefinition
+}
+
+// Bottom corners: FL, BL, BR, FR
+// Top corners: FL, BL, BR, FR
+const CORNER_PLACEMENTS: CornerPlacement[] = [
+  // Bottom corners
+  { bits: 0b0000_1000_1100, rotation: { z: 0 }, translation: () => ({}) },
+  { bits: 0b0000_0100_0110, rotation: { z: -Math.PI / 2 }, translation: (d) => ({ y: d }) },
+  { bits: 0b0000_0010_0011, rotation: { z: -Math.PI }, translation: (d) => ({ x: d, y: d }) },
+  { bits: 0b0000_0001_1001, rotation: { z: (-3 * Math.PI) / 2 }, translation: (d) => ({ x: d }) },
+  // Top corners
+  { bits: 0b1100_1000_0000, rotation: { y: Math.PI / 2, z: 0 }, translation: (d) => ({ z: d }) },
+  { bits: 0b0110_0100_0000, rotation: { y: Math.PI / 2, z: -Math.PI / 2 }, translation: (d) => ({ y: d, z: d }) },
+  { bits: 0b0011_0010_0000, rotation: { y: Math.PI / 2, z: -Math.PI }, translation: (d) => ({ x: d, y: d, z: d }) },
+  { bits: 0b1001_0001_0000, rotation: { y: Math.PI / 2, z: (-3 * Math.PI) / 2 }, translation: (d) => ({ x: d, z: d }) },
+]
+
 const CornerFillets: FC<{ radius: number; dim: Vector3; edges: Edge }> = ({ radius, dim, edges }) => {
-  const bottoms: [AxisRecordDefinition, AxisRecordDefinition][] = [
-    0b0000_1000_1100, 0b0000_0100_0110, 0b0000_0010_0011, 0b0000_0001_1001, 0b1100_1000_0000, 0b0110_0100_0000,
-    0b0011_0010_0000, 0b1001_0001_0000,
-  ]
-    .map((corner, idx) => [corner, idx] as const)
-    .filter(([corner]) => (corner & edges) === corner)
-    .map(([corner, idx]) => [
-      { y: corner & Edge.TOP ? Math.PI / 2 : 0, z: (-Math.PI / 2) * idx },
-      { x: corner & Edge.RIGHT ? dim : 0, y: corner & Edge.BACK ? dim : 0, z: corner & Edge.TOP ? dim : 0 },
-    ])
+  const activeCorners = CORNER_PLACEMENTS.filter(({ bits }) => (bits & edges) === bits)
 
   return (
     <>
-      {[...bottoms].map(([rotation, translation]) => (
-        <translate by={translation}>
+      {activeCorners.map(({ bits, rotation, translation }) => (
+        <translate by={translation(dim)} key={`corner-${bits}`}>
           <rotate by={rotation} center={0}>
             <FilletCorner size={{ xyz: radius }} />
           </rotate>
@@ -112,7 +134,6 @@ const CornerFillets: FC<{ radius: number; dim: Vector3; edges: Edge }> = ({ radi
   )
 }
 
-/** Validate that the radius is positive and small enough for the given dimensions */
 function validateFilletParameters(radius: number, dim: Vector3, edges: Edge): void {
   if (radius < 0) {
     throw new RangeError('Fillet must be positive!')

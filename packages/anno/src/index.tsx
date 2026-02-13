@@ -1,8 +1,6 @@
 import { memo } from 'react'
 import { ShapeType, V } from '@jsxcad/core'
-import { Colors, DebugAxes, renderComponent } from '@jsxcad/game'
-import { ContainerContextProvider } from '@jsxcad/game/dist/container/ContainerContext.js'
-import { Container } from '@jsxcad/game/dist/container/Container.js'
+import { Colors, DebugAxes, renderComponent, ContainerContextProvider, Container } from '@jsxcad/game'
 
 import { logger } from './logger.js'
 
@@ -25,14 +23,7 @@ const App = memo(() => {
           {/* Container split in half along X */}
           <translate by={{ x: 100 }}>
             <entity name={'split-half'} type={ShapeType.Part} color={Colors.GREEN_2}>
-              <Container
-                size={V({ x: 80, y: 60, z: 40 })}
-                divisions={{ at: [0.5] }}
-                cutout={{
-                  side: {},
-                  bottom: {},
-                }}
-              />
+              <Container size={V({ x: 80, y: 60, z: 40 })} divisions={{ at: [0.5] }} />
             </entity>
           </translate>
 
@@ -43,11 +34,7 @@ const App = memo(() => {
                 size={V({ x: 120, y: 80, z: 40 })}
                 divisions={{
                   at: [0.333, 0.666],
-                  children: [
-                    { at: [0.5] }, // left column: 2 rows
-                    null, // middle column: no split
-                    { at: [0.333, 0.666] }, // right column: 3 rows
-                  ],
+                  children: [{ at: [0.5] }, null, { at: [0.333, 0.666] }],
                 }}
                 cutout={{
                   side: {},

@@ -92,6 +92,10 @@ const axisOrRecordTestCases: AxisOrRecordTestCase[] = [
     description: 'a record with only the xy property should yield [2, 2, 0]',
   },
   {
+    // x=1, xy=2 contributes (2,2,0), xz=3 contributes (3,0,3), xyz=4 contributes (4,4,4)
+    // y=5, yz=6 contributes (0,6,6)
+    // z=7
+    // total: x = 1+2+3+4 = 10, y = 5+2+6+4 = 17, z = 7+3+6+4 = 20
     args: [{ x: 1, xy: 2, xz: 3, xyz: 4, y: 5, yz: 6, z: 7 }],
     expected: [10, 17, 20],
     description: 'a record with multiple properties should yield the sum of components [10, 17, 20]',

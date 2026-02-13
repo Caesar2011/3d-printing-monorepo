@@ -37,7 +37,7 @@ export async function compileToJson(
       filter={opts.filter}
       dev={opts.dev}
       repeat={opts.repeat}
-      filePath=""
+      filePath="__ws_only__"
     >
       {root}
     </RenderContextProvider>,

@@ -2,7 +2,7 @@ import { compile, compileToJson, type RenderOptions } from '@jsxcad/core'
 
 import { logger } from '../logger.js'
 
-import { publishScene } from './ws-publisher.js'
+import { publishScene, getRenderMode } from './ws-publisher.js'
 
 function createTimingCallbacks(startTime: number) {
   const elapsed = () => Math.round(Date.now() - startTime) + 'ms'
@@ -16,53 +16,49 @@ function createTimingCallbacks(startTime: number) {
   }
 }
 
-export interface RenderComponentOptions extends Partial<RenderOptions> {
-  /** When true, skip writing the 3MF file to disk. */
-  skipFile?: boolean
-}
-
-/** Renders a component to WebSocket JSON and optionally to a 3MF file. */
+/** Renders a component according to the current server render mode. */
 export async function renderComponent(
   component: React.ReactElement,
-  renderOpts?: RenderComponentOptions,
+  renderOpts?: Partial<RenderOptions>,
 ): Promise<void> {
   const profiler = logger.startTimer()
-  const { skipFile, ...fileOpts } = renderOpts ?? {}
   logger.debug('Rendering component')
+
+  const mode = await getRenderMode()
+  logger.debug(`Server render mode: ${mode}`)
 
   const callbacks = createTimingCallbacks(profiler.start.valueOf())
 
-  try {
-    await compileToJson(component, {
+  if (mode === '3mf') {
+    // 3MF mode: write file only, no WebSocket push.
+    // Fire and forget — don't block the caller on heavy IO + serialization.
+    compile(component, {
       fileDir: import.meta.dirname,
       dev: true,
-      ...fileOpts,
+      ...renderOpts,
       ...callbacks,
-      onScene: (scene) => {
-        const json = JSON.stringify(scene)
-        publishScene(json)
-        logger.debug(
-          `Published scene via WebSocket (${(json.length / 1024).toFixed(1)} KB, ${scene.meshes.length} meshes)`,
-        )
-      },
+    }).catch((e) => {
+      logger.error('3MF compilation failed', e)
     })
-  } catch (e) {
-    logger.error('WebSocket scene publish failed', e)
-  }
-
-  if (skipFile === true) {
+  } else {
+    // WebSocket mode: compile to JSON and push to viewers. No file IO.
     try {
-      await compile(component, {
+      await compileToJson(component, {
         fileDir: import.meta.dirname,
         dev: true,
-        ...fileOpts,
+        ...renderOpts,
         ...callbacks,
+        onScene: (scene) => {
+          const json = JSON.stringify(scene)
+          publishScene(json)
+          logger.debug(
+            `Published scene via WebSocket (${(json.length / 1024).toFixed(1)} KB, ${scene.meshes.length} meshes)`,
+          )
+        },
       })
     } catch (e) {
-      logger.error('3MF compilation failed', e)
+      logger.error('WebSocket scene compile failed', e)
     }
-  } else {
-    logger.debug('Skipping 3MF file output (WebSocket-only mode)')
   }
 
   profiler.done()

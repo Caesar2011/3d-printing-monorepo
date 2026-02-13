@@ -7,8 +7,7 @@ import { renderComponent } from './render-component.js'
 
 export async function watcher(onWatchedExecution: () => void) {
   if (process.env.WITHIN_WATCHER == null) {
-    process.chdir(findProjectRoot(module.path))
-    // Dynamically import required modules.
+    process.chdir(findProjectRoot(import.meta.dirname))
     const { spawn } = await import('child_process')
     const { TscWatchClient } = await import('tsc-watch')
 
@@ -17,7 +16,6 @@ export async function watcher(onWatchedExecution: () => void) {
 
     watch.on('started', () => {
       logger.debug('Compilation started')
-      // Kill any existing child process before restarting.
       if (child) {
         logger.debug('Killing existing process...')
         child.kill()
@@ -31,20 +29,18 @@ export async function watcher(onWatchedExecution: () => void) {
 
     watch.on('success', () => {
       logger.debug('Restarting child process...')
-      // Spawn a new process using the current executable and arguments.
       child = spawn(process.execPath, process.argv, {
-        stdio: 'inherit', // Attached to the same terminal
+        stdio: 'inherit',
         env: { ...process.env, WITHIN_WATCHER: 'true' },
       })
     })
 
     watch.on('compile_errors', () => {
-      // on error, compilation errors are displayed anyway
+      // Compilation errors are displayed by tsc-watch
     })
 
     watch.start('--project', '.')
   } else {
-    // Process is already being watched, so execute the actual code.
     onWatchedExecution()
   }
 }
