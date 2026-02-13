@@ -3,11 +3,8 @@ import { ShapeType, V } from '@jsxcad/core'
 
 import { Colors } from '../utils/colors.js'
 
-
 const AXIS_THICKNESS = 0.4
-const TICK_MINOR_THICKNESS = 0.6
 const TICK_MINOR_LENGTH = 1
-const TICK_MAJOR_THICKNESS = 0.8
 const TICK_MAJOR_LENGTH = 2
 
 type AxisRange = { min?: number; max?: number }
@@ -36,14 +33,18 @@ const Axis: FC<{
   if (totalLength <= 0) return null
 
   const axisSize =
-    direction === 'x' ? V([totalLength, AXIS_THICKNESS, AXIS_THICKNESS]) :
-      direction === 'y' ? V([AXIS_THICKNESS, totalLength, AXIS_THICKNESS]) :
-        V([AXIS_THICKNESS, AXIS_THICKNESS, totalLength])
+    direction === 'x'
+      ? V([totalLength, AXIS_THICKNESS, AXIS_THICKNESS])
+      : direction === 'y'
+        ? V([AXIS_THICKNESS, totalLength, AXIS_THICKNESS])
+        : V([AXIS_THICKNESS, AXIS_THICKNESS, totalLength])
 
   const axisTranslation =
-    direction === 'x' ? V([offset, -AXIS_THICKNESS / 2, -AXIS_THICKNESS / 2]) :
-      direction === 'y' ? V([-AXIS_THICKNESS / 2, offset, -AXIS_THICKNESS / 2]) :
-        V([-AXIS_THICKNESS / 2, -AXIS_THICKNESS / 2, offset])
+    direction === 'x'
+      ? V([offset, -AXIS_THICKNESS / 2, -AXIS_THICKNESS / 2])
+      : direction === 'y'
+        ? V([-AXIS_THICKNESS / 2, offset, -AXIS_THICKNESS / 2])
+        : V([-AXIS_THICKNESS / 2, -AXIS_THICKNESS / 2, offset])
 
   const ticks: { pos: number; major: boolean }[] = []
   const start = Math.ceil(offset)
@@ -53,23 +54,26 @@ const Axis: FC<{
   }
 
   return (
-    <entity name={`debug-axis-${name}`} type={ShapeType.Technical} color={color}>
+    <union name={`debug-axis-${name}`} type={ShapeType.Technical} color={color}>
       <translate by={axisTranslation}>
         <cuboid size={axisSize} />
       </translate>
       {ticks.map((tick) => {
-        const thickness = tick.major ? TICK_MAJOR_THICKNESS : TICK_MINOR_THICKNESS
         const tickLength = tick.major ? TICK_MAJOR_LENGTH : TICK_MINOR_LENGTH
 
         const tickSize =
-          direction === 'x' ? V([AXIS_THICKNESS, tickLength, tickLength]) :
-            direction === 'y' ? V([tickLength, AXIS_THICKNESS, tickLength]) :
-              V([tickLength, tickLength, AXIS_THICKNESS])
+          direction === 'x'
+            ? V([AXIS_THICKNESS, tickLength, tickLength])
+            : direction === 'y'
+              ? V([tickLength, AXIS_THICKNESS, tickLength])
+              : V([tickLength, tickLength, AXIS_THICKNESS])
 
         const tickTranslation =
-          direction === 'x' ? V([tick.pos - AXIS_THICKNESS / 2, -tickLength / 2, -tickLength / 2]) :
-            direction === 'y' ? V([-tickLength / 2, tick.pos - AXIS_THICKNESS / 2, -tickLength / 2]) :
-              V([-tickLength / 2, -tickLength / 2, tick.pos - AXIS_THICKNESS / 2])
+          direction === 'x'
+            ? V([tick.pos - AXIS_THICKNESS / 2, -tickLength / 2, -tickLength / 2])
+            : direction === 'y'
+              ? V([-tickLength / 2, tick.pos - AXIS_THICKNESS / 2, -tickLength / 2])
+              : V([-tickLength / 2, -tickLength / 2, tick.pos - AXIS_THICKNESS / 2])
 
         return (
           <translate by={tickTranslation} key={`${name}-${tick.pos}`}>
@@ -77,7 +81,7 @@ const Axis: FC<{
           </translate>
         )
       })}
-    </entity>
+    </union>
   )
 }
 

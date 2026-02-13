@@ -5,25 +5,23 @@ import { Cuboid } from '../primitives/index.js'
 import { useShapeContext } from '../shape/ShapeContext.js'
 import { Edge } from '../primitives/Cuboid.js'
 
-import type { CutoutSettings, ContainerProps } from './types.js'
-import type { ResolvedCutout } from './cutout-geometry.js'
+import type { CutoutSettings, ContainerProps, SideFaceName } from './types.js'
+import type { FaceCutoutMap, ResolvedCutout } from './cutout-geometry.js'
 import { computeCellCutoutPlacements } from './cutout-geometry.js'
 import { computeCavityCells } from './cavity-layout.js'
-import { CutoutFace } from './CutoutFace.js'
 import { useContainerContext } from './ContainerContext.js'
+import { CutoutFace } from './CutoutFace.js'
+
+const SIDE_FACES: readonly SideFaceName[] = ['front', 'left', 'back', 'right'] as const
 
 /** Merges cutout settings: context defaults → side shorthand → face-specific overrides */
-function resolveCutouts(
-  defaults: Required<CutoutSettings>,
-  cutoutProps?: ContainerProps['cutout'],
-): Partial<Record<'bottom' | 'front' | 'left' | 'back' | 'right', ResolvedCutout>> {
+function resolveCutouts(defaults: Required<CutoutSettings>, cutoutProps?: ContainerProps['cutout']): FaceCutoutMap {
   if (!cutoutProps) return {}
 
-  const result: Partial<Record<'bottom' | 'front' | 'left' | 'back' | 'right', ResolvedCutout>> = {}
+  const result: FaceCutoutMap = {}
   const sideDefaults = cutoutProps.side
 
-  const faces = ['front', 'left', 'back', 'right'] as const
-  for (const face of faces) {
+  for (const face of SIDE_FACES) {
     const faceSettings = cutoutProps[face]
     if (faceSettings === undefined && sideDefaults === undefined) continue
 
@@ -35,10 +33,7 @@ function resolveCutouts(
   }
 
   if (cutoutProps.bottom !== undefined) {
-    result.bottom = {
-      ...defaults,
-      ...(cutoutProps.bottom ?? {}),
-    } as ResolvedCutout
+    result.bottom = { ...defaults, ...cutoutProps.bottom } as ResolvedCutout
   }
 
   return result
@@ -55,32 +50,26 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
 
   const dim = V(size)
   const innerRadius = Math.max(0, containerRadius - wall)
-
   const resolvedCutouts = resolveCutouts(containerCtx.cutout, options.cutout)
 
-  // Compute cavity cells from divisions
   const innerOrigin = V([wall, wall, floor])
   const innerSize = V([dim.x - 2 * wall, dim.y - 2 * wall, dim.z - floor])
   const cells = computeCavityCells(innerOrigin, innerSize, wall, options.divisions)
 
-  // Compute cutout placements per cell
   const allCutoutPlacements = cells.flatMap((cell) =>
     computeCellCutoutPlacements(cell, dim, wall, floor, containerRadius, containerEdges, resolvedCutouts),
   )
 
   return (
     <subtract>
-      {/* Outer shell */}
       <Cuboid size={size} edges={containerEdges} radius={containerRadius} />
 
-      {/* Inner cavities: one per cell */}
       {cells.map((cell, idx) => (
         <translate by={cell.offset} key={`cavity-${idx}`}>
           <Cuboid size={cell.size} edges={containerEdges & ~Edge.TOP} radius={innerRadius} />
         </translate>
       ))}
 
-      {/* Cutout holes per cell */}
       {allCutoutPlacements.map((placement, idx) => (
         <translate by={placement.translation} key={`cutout-${idx}`}>
           <rotate by={placement.rotation}>

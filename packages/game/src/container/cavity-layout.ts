@@ -4,20 +4,35 @@ import type { Division } from './types.js'
 
 /** A leaf cell: its position and size within the container's inner volume. */
 export type CavityCell = {
-  /** Offset relative to the inner volume origin */
   offset: Vector3
-  /** Size of this cell's cavity */
   size: Vector3
+}
+
+/** Validates a Division node and throws on invalid input. */
+function validateDivision(division: Division): void {
+  const { at, children } = division
+
+  for (const value of at) {
+    if (value <= 0 || value >= 1) {
+      throw new RangeError(`Division position ${value} must be in (0, 1) exclusive`)
+    }
+  }
+
+  const sorted = [...at].sort((a, b) => a - b)
+  for (let i = 1; i < sorted.length; i++) {
+    if (Math.abs(sorted[i] - sorted[i - 1]) < 1e-9) {
+      throw new RangeError(`Duplicate division position: ${sorted[i]}`)
+    }
+  }
+
+  if (children && children.length !== at.length + 1) {
+    throw new RangeError(`Division children length (${children.length}) must equal at.length + 1 (${at.length + 1})`)
+  }
 }
 
 /**
  * Flattens a recursive Division tree into leaf CavityCell entries.
- *
- * The first split is always along X. Each level alternates: X → Y → X → Y …
- * `innerOrigin` is the origin of the available inner rectangle.
- * `innerSize` is the available inner rectangle size.
- * `wall` is the divider thickness (same as container wall).
- * `axis` alternates between 'x' and 'y'.
+ * The first split is along X, then alternates: X → Y → X → Y …
  */
 export function computeCavityCells(
   innerOrigin: Vector3,
@@ -30,19 +45,18 @@ export function computeCavityCells(
     return [{ offset: innerOrigin, size: innerSize }]
   }
 
+  validateDivision(division)
+
   const sorted = [...division.at].sort((a, b) => a - b)
   const sectionCount = sorted.length + 1
   const children = division.children ?? []
   const nextAxis = axis === 'x' ? 'y' : 'x'
 
   const totalAlongAxis = axis === 'x' ? innerSize.x : innerSize.y
-  const dividerCount = sorted.length
-  const totalDividerThickness = dividerCount * wall
+  const totalDividerThickness = sorted.length * wall
   const availableSpace = totalAlongAxis - totalDividerThickness
 
-  // Compute fractional boundaries including 0 and 1
   const boundaries = [0, ...sorted, 1]
-
   const cells: CavityCell[] = []
 
   for (let i = 0; i < sectionCount; i++) {
@@ -52,8 +66,6 @@ export function computeCavityCells(
 
     if (sectionSize <= 0) continue
 
-    // Position along the split axis:
-    // sum of previous sections + previous dividers
     const posAlongAxis = fracStart * availableSpace + i * wall
 
     const sectionOrigin =
@@ -62,9 +74,7 @@ export function computeCavityCells(
         : V([innerOrigin.x, innerOrigin.y + posAlongAxis, innerOrigin.z])
 
     const sectionDim =
-      axis === 'x'
-        ? V([sectionSize, innerSize.y, innerSize.z])
-        : V([innerSize.x, sectionSize, innerSize.z])
+      axis === 'x' ? V([sectionSize, innerSize.y, innerSize.z]) : V([innerSize.x, sectionSize, innerSize.z])
 
     const childDivision = children[i] ?? null
     cells.push(...computeCavityCells(sectionOrigin, sectionDim, wall, childDivision, nextAxis))

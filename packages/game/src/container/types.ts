@@ -13,6 +13,9 @@ export enum CutoutType {
   HEX,
 }
 
+export type SideFaceName = 'front' | 'left' | 'back' | 'right'
+export type FaceName = 'bottom' | SideFaceName
+
 export type CutoutSettings = {
   type?: CutoutType
   border?: number
@@ -33,7 +36,7 @@ export type ContainerOpts = {
  * Recursive subdivision tree.
  * Splits alternate between X and Y axes automatically.
  * `at` contains fractional positions (0–1 exclusive) where dividers are placed.
- * `children` are the resulting sections between dividers (length = at.length + 1).
+ * `children` maps to the sections between dividers (length must equal `at.length + 1`).
  * Each child can optionally be further subdivided (axis flips automatically).
  */
 export type Division = {
@@ -41,18 +44,16 @@ export type Division = {
   children?: (Division | null)[]
 }
 
+export type CutoutConfig = {
+  bottom?: CutoutSettings
+  side?: CutoutSettings
+} & Partial<Record<SideFaceName, CutoutSettings>>
+
 export type ContainerProps = {
   size: AxisRecordDefinition
   lap?: Lap
   radius?: number
   edges?: Edge
   divisions?: Division
-  cutout?: {
-    bottom?: CutoutSettings
-    side?: CutoutSettings
-    front?: CutoutSettings
-    left?: CutoutSettings
-    back?: CutoutSettings
-    right?: CutoutSettings
-  }
+  cutout?: CutoutConfig
 }

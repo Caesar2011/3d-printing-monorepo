@@ -76,8 +76,8 @@ const EdgesFillets: FC<{ radius: number; dim: Vector3; edges: Edge }> = ({ radiu
 
   return (
     <>
-      {[...sides, ...tops, ...bottoms].map(([rotation, translation]) => (
-        <translate by={translation}>
+      {[...sides, ...tops, ...bottoms].map(([rotation, translation], idx) => (
+        <translate by={translation} key={idx}>
           <rotate by={rotation} center={0}>
             <Fillet size={{ xy: radius, z: maxLength }} />
           </rotate>

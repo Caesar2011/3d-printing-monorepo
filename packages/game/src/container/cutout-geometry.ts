@@ -2,35 +2,33 @@ import { V, type Vector3 } from '@jsxcad/core'
 
 import type { Edge } from '../primitives/Cuboid.js'
 
-import type { CutoutSettings } from './types.js'
+import type { CutoutSettings, FaceName, SideFaceName } from './types.js'
 import type { CavityCell } from './cavity-layout.js'
 
 export type ResolvedCutout = Required<CutoutSettings>
+export type FaceCutoutMap = Partial<Record<FaceName, ResolvedCutout>>
 
 export type CutoutPlacement = {
-  /** Size of the cutout slab (x=width along face, y=height along face, z=depth through wall) */
   size: Vector3
-  /** Translation to position the cutout on the container */
   translation: Vector3
-  /** Rotation to orient the cutout on the correct face */
   rotation: Vector3
-  /** The resolved cutout settings */
   settings: ResolvedCutout
 }
 
-// Side edges (vertical) are bits 4-7
+const EPSILON = 0.01
+
+// --- Edge bit constants ---
+
 const SIDE_FL = 0b0000_1000_0000
 const SIDE_BL = 0b0000_0100_0000
 const SIDE_BR = 0b0000_0010_0000
 const SIDE_FR = 0b0000_0001_0000
 
-// Bottom edges are bits 0-3
 const BOT_FRONT = 0b0000_0000_1000
 const BOT_LEFT = 0b0000_0000_0100
 const BOT_BACK = 0b0000_0000_0010
 const BOT_RIGHT = 0b0000_0000_0001
 
-// Top edges are bits 8-11
 const TOP_FRONT = 0b1000_0000_0000
 const TOP_LEFT = 0b0100_0000_0000
 const TOP_BACK = 0b0010_0000_0000
@@ -40,18 +38,9 @@ function has(edges: Edge, bit: number): boolean {
   return (edges & bit) !== 0
 }
 
-type FaceEdgeInsets = {
-  start: number
-  end: number
-  bottom: number
-  top: number
-}
+type FaceEdgeInsets = { start: number; end: number; bottom: number; top: number }
 
-function getFaceEdgeInsets(
-  face: 'bottom' | 'front' | 'left' | 'back' | 'right',
-  edges: Edge,
-  radius: number,
-): FaceEdgeInsets {
+function getFaceEdgeInsets(face: FaceName, edges: Edge, radius: number): FaceEdgeInsets {
   switch (face) {
     case 'bottom':
       return {
@@ -91,35 +80,75 @@ function getFaceEdgeInsets(
   }
 }
 
-/**
- * Determines which outer faces of the container a cavity cell touches.
- * Only faces that are flush with the container wall get cutouts.
- */
-function getCellOuterFaces(
-  cell: CavityCell,
-  containerSize: Vector3,
-  wall: number,
-  floor: number,
-  epsilon = 0.01,
-): Set<'bottom' | 'front' | 'left' | 'back' | 'right'> {
-  const faces = new Set<'bottom' | 'front' | 'left' | 'back' | 'right'>()
-  const cx = containerSize.x
-  const cy = containerSize.y
+// --- Face descriptor table (eliminates switch duplication) ---
 
-  if (Math.abs(cell.offset.x - wall) < epsilon) faces.add('left')
-  if (Math.abs(cell.offset.x + cell.size.x - (cx - wall)) < epsilon) faces.add('right')
-  if (Math.abs(cell.offset.y - wall) < epsilon) faces.add('front')
-  if (Math.abs(cell.offset.y + cell.size.y - (cy - wall)) < epsilon) faces.add('back')
-  // Bottom is always possible for cells at floor level
-  if (Math.abs(cell.offset.z - floor) < epsilon) faces.add('bottom')
+type SideFaceDescriptor = {
+  /** Extracts the face width from the cell size */
+  faceWidth: (cell: CavityCell) => number
+  /** Which outer edge the "start" side aligns to */
+  isAtStart: (cell: CavityCell, containerSize: Vector3, wall: number) => boolean
+  /** Which outer edge the "end" side aligns to */
+  isAtEnd: (cell: CavityCell, containerSize: Vector3, wall: number) => boolean
+  /** Is the cell at the bottom of the container */
+  rotation: Vector3
+  /** Build the cutout slab size from (width, height, depth) */
+  buildSize: (w: number, h: number, depth: number) => Vector3
+  /** Compute translation given cell, container, wall, localStart, localBottom */
+  translate: (cell: CavityCell, cs: Vector3, wall: number, ls: number, lb: number) => Vector3
+}
+
+const SIDE_FACE_DESCRIPTORS: Record<SideFaceName, SideFaceDescriptor> = {
+  front: {
+    faceWidth: (cell) => cell.size.x,
+    isAtStart: (cell, _, wall) => Math.abs(cell.offset.x - wall) < EPSILON,
+    isAtEnd: (cell, cs, wall) => Math.abs(cell.offset.x + cell.size.x - (cs.x - wall)) < EPSILON,
+    rotation: V([Math.PI / 2, 0, 0]),
+    buildSize: (w, h, d) => V([w, h, d]),
+    translate: (cell, _, wall, ls, lb) => V([cell.offset.x + ls, wall, cell.offset.z + lb]),
+  },
+  back: {
+    faceWidth: (cell) => cell.size.x,
+    isAtStart: (cell, cs, wall) => Math.abs(cell.offset.x + cell.size.x - (cs.x - wall)) < EPSILON,
+    isAtEnd: (cell, _, wall) => Math.abs(cell.offset.x - wall) < EPSILON,
+    rotation: V([Math.PI / 2, 0, 0]),
+    buildSize: (w, h, d) => V([w, h, d]),
+    translate: (cell, cs, _, ls, lb) => V([cell.offset.x + ls, cs.y, cell.offset.z + lb]),
+  },
+  left: {
+    faceWidth: (cell) => cell.size.y,
+    isAtStart: (cell, _, wall) => Math.abs(cell.offset.y - wall) < EPSILON,
+    isAtEnd: (cell, cs, wall) => Math.abs(cell.offset.y + cell.size.y - (cs.y - wall)) < EPSILON,
+    rotation: V([0, -Math.PI / 2, 0]),
+    buildSize: (w, h, d) => V([h, w, d]),
+    translate: (cell, _, wall, ls, lb) => V([wall, cell.offset.y + ls, cell.offset.z + lb]),
+  },
+  right: {
+    faceWidth: (cell) => cell.size.y,
+    isAtStart: (cell, _, wall) => Math.abs(cell.offset.y - wall) < EPSILON,
+    isAtEnd: (cell, cs, wall) => Math.abs(cell.offset.y + cell.size.y - (cs.y - wall)) < EPSILON,
+    rotation: V([0, -Math.PI / 2, 0]),
+    buildSize: (w, h, d) => V([h, w, d]),
+    translate: (cell, cs, _, ls, lb) => V([cs.x, cell.offset.y + ls, cell.offset.z + lb]),
+  },
+}
+
+// --- Outer-face detection ---
+
+function getCellOuterFaces(cell: CavityCell, containerSize: Vector3, wall: number, floor: number): Set<FaceName> {
+  const faces = new Set<FaceName>()
+
+  if (Math.abs(cell.offset.x - wall) < EPSILON) faces.add('left')
+  if (Math.abs(cell.offset.x + cell.size.x - (containerSize.x - wall)) < EPSILON) faces.add('right')
+  if (Math.abs(cell.offset.y - wall) < EPSILON) faces.add('front')
+  if (Math.abs(cell.offset.y + cell.size.y - (containerSize.y - wall)) < EPSILON) faces.add('back')
+  if (Math.abs(cell.offset.z - floor) < EPSILON) faces.add('bottom')
 
   return faces
 }
 
-/**
- * Computes cutout placements for a single cavity cell.
- * Only produces cutouts for faces that are on the outer container wall.
- */
+// --- Main placement logic ---
+
+/** Computes cutout placements for a single cavity cell against outer container walls. */
 export function computeCellCutoutPlacements(
   cell: CavityCell,
   containerSize: Vector3,
@@ -127,32 +156,19 @@ export function computeCellCutoutPlacements(
   floor: number,
   radius: number,
   edges: Edge,
-  cutouts: Partial<Record<'bottom' | 'front' | 'left' | 'back' | 'right', ResolvedCutout>>,
+  cutouts: FaceCutoutMap,
 ): CutoutPlacement[] {
   const placements: CutoutPlacement[] = []
   const outerFaces = getCellOuterFaces(cell, containerSize, wall, floor)
 
-  for (const [face, settings] of Object.entries(cutouts) as [
-    'bottom' | 'front' | 'left' | 'back' | 'right',
-    ResolvedCutout,
-  ][]) {
-    // Only cut faces where this cell is against the outer wall
+  for (const [face, settings] of Object.entries(cutouts) as [FaceName, ResolvedCutout][]) {
     if (!outerFaces.has(face)) continue
 
     const border = settings.border
 
     if (face === 'bottom') {
-      const insets = getBottomCellInsets(cell, containerSize, wall, edges, radius)
-      const w = cell.size.x - insets.start - insets.end - 2 * border
-      const h = cell.size.y - insets.bottom - insets.top - 2 * border
-      if (w <= 0 || h <= 0) continue
-
-      placements.push({
-        size: V([w, h, floor]),
-        translation: V([cell.offset.x + insets.start + border, cell.offset.y + insets.bottom + border, 0]),
-        rotation: V(),
-        settings,
-      })
+      const placement = computeBottomCellCutout(cell, containerSize, wall, floor, edges, radius, settings, border)
+      if (placement) placements.push(placement)
     } else {
       const placement = computeSideCellCutout(face, cell, containerSize, wall, floor, radius, edges, settings, border)
       if (placement) placements.push(placement)
@@ -162,26 +178,38 @@ export function computeCellCutoutPlacements(
   return placements
 }
 
-function getBottomCellInsets(
+function computeBottomCellCutout(
   cell: CavityCell,
   containerSize: Vector3,
   wall: number,
+  floor: number,
   edges: Edge,
   radius: number,
-  epsilon = 0.01,
-): FaceEdgeInsets {
+  settings: ResolvedCutout,
+  border: number,
+): CutoutPlacement | null {
   const baseInsets = getFaceEdgeInsets('bottom', edges, radius)
-  // Only apply corner insets when the cell is at the corresponding outer corner
+  const insets: FaceEdgeInsets = {
+    start: Math.abs(cell.offset.x - wall) < EPSILON ? baseInsets.start : 0,
+    end: Math.abs(cell.offset.x + cell.size.x - (containerSize.x - wall)) < EPSILON ? baseInsets.end : 0,
+    bottom: Math.abs(cell.offset.y - wall) < EPSILON ? baseInsets.bottom : 0,
+    top: Math.abs(cell.offset.y + cell.size.y - (containerSize.y - wall)) < EPSILON ? baseInsets.top : 0,
+  }
+
+  const w = cell.size.x - insets.start - insets.end - 2 * border
+  const h = cell.size.y - insets.bottom - insets.top - 2 * border
+  if (w <= 0 || h <= 0) return null
+
   return {
-    start: Math.abs(cell.offset.x - wall) < epsilon ? baseInsets.start : 0,
-    end: Math.abs(cell.offset.x + cell.size.x - (containerSize.x - wall)) < epsilon ? baseInsets.end : 0,
-    bottom: Math.abs(cell.offset.y - wall) < epsilon ? baseInsets.bottom : 0,
-    top: Math.abs(cell.offset.y + cell.size.y - (containerSize.y - wall)) < epsilon ? baseInsets.top : 0,
+    size: V([w, h, floor]),
+    translation: V([cell.offset.x + insets.start + border, cell.offset.y + insets.bottom + border, 0]),
+    rotation: V(),
+    settings,
   }
 }
 
 function computeSideCellCutout(
-  face: 'front' | 'left' | 'back' | 'right',
+  face: SideFaceName,
   cell: CavityCell,
   containerSize: Vector3,
   wall: number,
@@ -191,137 +219,49 @@ function computeSideCellCutout(
   settings: ResolvedCutout,
   border: number,
 ): CutoutPlacement | null {
-  const cx = containerSize.x
-  const cy = containerSize.y
-  const epsilon = 0.01
-
+  const desc = SIDE_FACE_DESCRIPTORS[face]
   const insets = getFaceEdgeInsets(face, edges, radius)
 
-  // Cell-relative face dimensions and whether corner insets apply
-  let faceWidth: number
-  let faceHeight: number
-  let startInset: number
-  let endInset: number
-  let bottomInset: number
-  let topInset: number
+  const isAtStart = desc.isAtStart(cell, containerSize, wall)
+  const isAtEnd = desc.isAtEnd(cell, containerSize, wall)
+  const isAtBottom = Math.abs(cell.offset.z - floor) < EPSILON
 
-  const cellHeight = cell.size.z
-  const isAtBottom = Math.abs(cell.offset.z - floor) < epsilon
+  const startInset = isAtStart ? insets.start : 0
+  const endInset = isAtEnd ? insets.end : 0
+  const bottomInset = isAtBottom ? insets.bottom : 0
+  // Only apply top inset if the container actually has a top edge on this face
+  const topInset = insets.top
 
-  switch (face) {
-    case 'front': {
-      faceWidth = cell.size.x
-      faceHeight = cellHeight
-      const isAtLeft = Math.abs(cell.offset.x - wall) < epsilon
-      const isAtRight = Math.abs(cell.offset.x + cell.size.x - (cx - wall)) < epsilon
-      startInset = isAtLeft ? insets.start : 0
-      endInset = isAtRight ? insets.end : 0
-      bottomInset = isAtBottom ? insets.bottom : 0
-      topInset = insets.top // top is open
-      break
-    }
-    case 'back': {
-      faceWidth = cell.size.x
-      faceHeight = cellHeight
-      const isAtRight = Math.abs(cell.offset.x + cell.size.x - (cx - wall)) < epsilon
-      const isAtLeft = Math.abs(cell.offset.x - wall) < epsilon
-      startInset = isAtRight ? insets.start : 0
-      endInset = isAtLeft ? insets.end : 0
-      bottomInset = isAtBottom ? insets.bottom : 0
-      topInset = insets.top
-      break
-    }
-    case 'left': {
-      faceWidth = cell.size.y
-      faceHeight = cellHeight
-      const isAtFront = Math.abs(cell.offset.y - wall) < epsilon
-      const isAtBack = Math.abs(cell.offset.y + cell.size.y - (cy - wall)) < epsilon
-      startInset = isAtFront ? insets.start : 0
-      endInset = isAtBack ? insets.end : 0
-      bottomInset = isAtBottom ? insets.bottom : 0
-      topInset = insets.top
-      break
-    }
-    case 'right': {
-      faceWidth = cell.size.y
-      faceHeight = cellHeight
-      const isAtFront = Math.abs(cell.offset.y - wall) < epsilon
-      const isAtBack = Math.abs(cell.offset.y + cell.size.y - (cy - wall)) < epsilon
-      startInset = isAtFront ? insets.start : 0
-      endInset = isAtBack ? insets.end : 0
-      bottomInset = isAtBottom ? insets.bottom : 0
-      topInset = insets.top
-      break
-    }
-  }
+  const faceWidth = desc.faceWidth(cell)
+  const faceHeight = cell.size.z
 
   const w = faceWidth - startInset - endInset - 2 * border
   const h = faceHeight - bottomInset - topInset - 2 * border
   if (w <= 0 || h <= 0) return null
 
-  const depth = wall
-
-  const cutoutSize = face === 'front' || face === 'back' ? V([w, h, depth]) : V([h, w, depth])
-
   const localStart = startInset + border
   const localBottom = bottomInset + border
 
-  const translation = computeSideCellTranslation(face, cell, containerSize, wall, localStart, localBottom)
-  const rotation = getSideRotation(face)
-
-  return { size: cutoutSize, translation, rotation, settings }
-}
-
-function getSideRotation(face: 'front' | 'left' | 'back' | 'right'): Vector3 {
-  switch (face) {
-    case 'front':
-      return V([Math.PI / 2, 0, 0])
-    case 'back':
-      return V([Math.PI / 2, 0, 0])
-    case 'left':
-      return V([0, -Math.PI / 2, 0])
-    case 'right':
-      return V([0, -Math.PI / 2, 0])
+  return {
+    size: desc.buildSize(w, h, wall),
+    translation: desc.translate(cell, containerSize, wall, localStart, localBottom),
+    rotation: desc.rotation,
+    settings,
   }
 }
 
-function computeSideCellTranslation(
-  face: 'front' | 'left' | 'back' | 'right',
-  cell: CavityCell,
-  containerSize: Vector3,
-  wall: number,
-  localStart: number,
-  localBottom: number,
-): Vector3 {
-  const cx = containerSize.x
-  const cy = containerSize.y
-
-  switch (face) {
-    case 'front':
-      return V([cell.offset.x + localStart, wall, cell.offset.z + localBottom])
-    case 'back':
-      return V([cell.offset.x + localStart, cy, cell.offset.z + localBottom])
-    case 'left':
-      return V([wall, cell.offset.y + localStart, cell.offset.z + localBottom])
-    case 'right':
-      return V([cx, cell.offset.y + localStart, cell.offset.z + localBottom])
-  }
-}
-
-/**
- * Legacy entry point: computes cutout placements for a single full container (no divisions).
- */
+/** Convenience wrapper for undivided containers. */
 export function computeCutoutPlacements(
   containerSize: Vector3,
   wall: number,
   floor: number,
   radius: number,
   edges: Edge,
-  cutouts: Partial<Record<'bottom' | 'front' | 'left' | 'back' | 'right', ResolvedCutout>>,
+  cutouts: FaceCutoutMap,
 ): CutoutPlacement[] {
-  const innerOrigin = V([wall, wall, floor])
-  const innerSize = V([containerSize.x - 2 * wall, containerSize.y - 2 * wall, containerSize.z - floor])
-
-  const cell: CavityCell = { offset: innerOrigin, size: innerSize }
+  const cell: CavityCell = {
+    offset: V([wall, wall, floor]),
+    size: V([containerSize.x - 2 * wall, containerSize.y - 2 * wall, containerSize.z - floor]),
+  }
   return computeCellCutoutPlacements(cell, containerSize, wall, floor, radius, edges, cutouts)
 }

@@ -17,6 +17,7 @@ const defaultCutout: ResolvedCutout = {
 
 const WALL = 1.5
 const FLOOR = 2
+const SIDE_FL = 0b0000_1000_0000
 
 describe('computeCutoutPlacements', () => {
   describe('bottom cutout', () => {
@@ -29,11 +30,8 @@ describe('computeCutoutPlacements', () => {
       expect(placements).toHaveLength(1)
       const p = placements[0]
 
-      // Width (X): 80 - 2*1.5 - 2*5 = 67
       expect(p.size.x).toBeCloseTo(67)
-      // Height (Y): 60 - 2*1.5 - 2*5 = 47
       expect(p.size.y).toBeCloseTo(47)
-      // Depth (Z): floor
       expect(p.size.z).toBeCloseTo(FLOOR)
     })
 
@@ -44,22 +42,19 @@ describe('computeCutoutPlacements', () => {
       })
 
       const p = placements[0]
-      expect(p.translation.x).toBeCloseTo(WALL + 5) // wall + border
+      expect(p.translation.x).toBeCloseTo(WALL + 5)
       expect(p.translation.y).toBeCloseTo(WALL + 5)
       expect(p.translation.z).toBeCloseTo(0)
     })
 
     test('accounts for corner radius on bottom edges', () => {
       const size = V([80, 60, 40])
-      const radius = 4
-      const placements = computeCutoutPlacements(size, WALL, FLOOR, radius, Edge.ALL, {
+      const placements = computeCutoutPlacements(size, WALL, FLOOR, 4, Edge.ALL, {
         bottom: defaultCutout,
       })
 
       const p = placements[0]
-      // Width: 80 - 2*1.5 - 2*(4+5) = 59
       expect(p.size.x).toBeCloseTo(59)
-      // Height: 60 - 2*1.5 - 2*(4+5) = 39
       expect(p.size.y).toBeCloseTo(39)
     })
 
@@ -91,11 +86,8 @@ describe('computeCutoutPlacements', () => {
       expect(placements).toHaveLength(1)
       const p = placements[0]
 
-      // Face width (along X): 80 - 2*1.5 - 2*5 = 67
       expect(p.size.x).toBeCloseTo(67)
-      // Face height (along Z): 40 - 2 - 2*5 = 28
       expect(p.size.y).toBeCloseTo(28)
-      // Depth = wall
       expect(p.size.z).toBeCloseTo(WALL)
     })
 
@@ -107,7 +99,7 @@ describe('computeCutoutPlacements', () => {
 
       const p = placements[0]
       expect(p.translation.x).toBeCloseTo(WALL + 5)
-      expect(p.translation.y).toBeCloseTo(WALL) // front wall inner surface
+      expect(p.translation.y).toBeCloseTo(WALL)
       expect(p.translation.z).toBeCloseTo(FLOOR + 5)
     })
 
@@ -142,7 +134,7 @@ describe('computeCutoutPlacements', () => {
 
       const p = placements[0]
       expect(p.translation.x).toBeCloseTo(WALL + 5)
-      expect(p.translation.y).toBeCloseTo(60) // back wall inner surface
+      expect(p.translation.y).toBeCloseTo(60)
       expect(p.translation.z).toBeCloseTo(FLOOR + 5)
     })
   })
@@ -155,7 +147,6 @@ describe('computeCutoutPlacements', () => {
       })
 
       const p = placements[0]
-      // Face width (along Y): 60 - 2*1.5 - 2*5 = 47
       expect(p.size.x).toBeCloseTo(28)
       expect(p.size.y).toBeCloseTo(47)
       expect(p.size.z).toBeCloseTo(WALL)
@@ -203,20 +194,15 @@ describe('computeCutoutPlacements', () => {
   describe('asymmetric corner radii', () => {
     test('front face with only front-left edge filleted', () => {
       const size = V([80, 60, 40])
-      const radius = 4
-      // Only front-left side edge
       const edges = SIDE_FL as unknown as Edge
 
-      const placements = computeCutoutPlacements(size, WALL, FLOOR, radius, edges, {
+      const placements = computeCutoutPlacements(size, WALL, FLOOR, 4, edges, {
         front: { ...defaultCutout, border: 0 },
       })
 
       const p = placements[0]
-      // start (left) has radius, end (right) does not
-      // Width: (80 - 2*1.5) - 4 - 0 = 73
       expect(p.size.x).toBeCloseTo(73)
-      // No top/bottom radii
-      expect(p.size.y).toBeCloseTo(38) // 40 - 2
+      expect(p.size.y).toBeCloseTo(38)
     })
   })
 
@@ -248,6 +234,3 @@ describe('computeCutoutPlacements', () => {
     })
   })
 })
-
-// Re-export the bit constants for use in tests
-const SIDE_FL = 0b0000_1000_0000
