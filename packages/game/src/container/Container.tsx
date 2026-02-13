@@ -1,121 +1,82 @@
 import type { FC } from 'react'
-import type { AxisRecordDefinition } from '@jsxcad/core'
 import { V } from '@jsxcad/core'
 
 import { Cuboid } from '../primitives/index.js'
 import { useShapeContext } from '../shape/ShapeContext.js'
 import { Edge } from '../primitives/Cuboid.js'
-import type { DeepRequired } from '../utils/deep-merge.js'
 
-import type { ContainerProps, Cutout as CutoutType } from './types.js'
+import type { CutoutSettings, ContainerProps } from './types.js'
+import type { ResolvedCutout } from './cutout-geometry.js'
+import { computeCutoutPlacements } from './cutout-geometry.js'
+import { CutoutFace } from './CutoutFace.js'
 import { useContainerContext } from './ContainerContext.js'
 
-const CutoutPos = ['bottom', 'front', 'left', 'back', 'right'] as const
-type CutoutTransform = {
-  translation: AxisRecordDefinition
-  rotation: AxisRecordDefinition
-  size: AxisRecordDefinition
-  options: Required<CutoutType>
-}
+/** Merges cutout settings: context defaults → side shorthand → face-specific overrides */
+function resolveCutouts(
+  defaults: Required<CutoutSettings>,
+  cutoutProps?: ContainerProps['cutout'],
+): Partial<Record<'bottom' | 'front' | 'left' | 'back' | 'right', ResolvedCutout>> {
+  if (!cutoutProps) return {}
 
-const Cutout: FC<{
-  size: AxisRecordDefinition
-  opts: Required<CutoutType>
-}> = ({ size, opts, cutoutType }) => {
-  const containerCtx = useContainerContext()
-  const cuboidRadius = opts.borderRadius === null ? containerCtx.radius : opts.borderRadius
+  const result: Partial<Record<'bottom' | 'front' | 'left' | 'back' | 'right', ResolvedCutout>> = {}
+  const sideDefaults = cutoutProps.side
 
-  return (
-    <subtract>
-      <Cuboid size={size} radius={cuboidRadius} edges={Edge.SIDE} />
-    </subtract>
-  )
-}
+  const faces = ['front', 'left', 'back', 'right'] as const
+  for (const face of faces) {
+    const faceSettings = cutoutProps[face]
+    if (faceSettings === undefined && sideDefaults === undefined) continue
 
-const Cutouts: FC = ({
-  size,
-  floor,
-  wall,
-  opts,
-}: {
-  size: AxisRecordDefinition
-  opts: DeepRequired<ContainerProps>['cutout']
-  floor: number
-  wall: number
-}) => {
-  const cutouts: CutoutTransform[] = [
-    ...(opts.bottom
-      ? [
-          {
-            translation: { xy: opts.bottom.border },
-            rotation: 0,
-            size: { xy: V(size).s((opts.bottom?.border ?? 0) * 2), z: floor },
-            options: opts.bottom,
-          },
-        ]
-      : []),
-    ...(opts.cutout.left
-      ? [
-          {
-            translation: { xy: opts.cutout.bottom?.border },
-            rotation: 0,
-            size: { xy: V(size).s((opts.cutout.bottom?.border ?? 0) * 2), z: floor },
-            options: opts.cutout.bottom,
-          },
-        ]
-      : []),
-  ]
+    // Face is requested: merge defaults → side → face-specific
+    result[face] = {
+      ...defaults,
+      ...(sideDefaults ?? {}),
+      ...(faceSettings ?? {}),
+    } as ResolvedCutout
+  }
 
-  return cutouts.map((cutout, idx) => (
-    <translate by={cutout.translation} key={idx}>
-      <rotate by={cutout.rotation}>
-        <Cutout size={cutout.size} opts={cutout.options} />
-      </rotate>
-    </translate>
-  ))
+  if (cutoutProps.bottom !== undefined) {
+    result.bottom = {
+      ...defaults,
+      ...(cutoutProps.bottom ?? {}),
+    } as ResolvedCutout
+  }
+
+  return result
 }
 
 export const Container: FC<ContainerProps> = ({ size, ...options }) => {
   const shapeCtx = useShapeContext()
   const containerCtx = useContainerContext()
-  const opts = {
-    ...shapeCtx,
-    ...containerCtx,
-    ...options,
-    cutout: {
-      bottom: options.cutout?.bottom ? { ...containerCtx.cutout, ...options.cutout.bottom } : undefined,
-      front:
-        options.cutout?.side || options.cutout?.front
-          ? { ...containerCtx.cutout, ...options.cutout.side, ...options.cutout?.front }
-          : undefined,
-      left:
-        options.cutout?.side || options.cutout?.left
-          ? { ...containerCtx.cutout, ...options.cutout.side, ...options.cutout?.left }
-          : undefined,
-      back:
-        options.cutout?.side || options.cutout?.back
-          ? { ...containerCtx.cutout, ...options.cutout.side, ...options.cutout?.back }
-          : undefined,
-      right:
-        options.cutout?.side || options.cutout?.right
-          ? { ...containerCtx.cutout, ...options.cutout.side, ...options.cutout?.right }
-          : undefined,
-    },
-  }
 
-  const innerRadius = Math.max(0, opts.radius - opts.wall)
+  const containerRadius = options.radius ?? containerCtx.radius
+  const containerEdges = options.edges ?? containerCtx.edges
+  const wall = shapeCtx.wall
+  const floor = shapeCtx.floor
+
+  const dim = V(size)
+  const innerRadius = Math.max(0, containerRadius - wall)
+
+  const resolvedCutouts = resolveCutouts(containerCtx.cutout, options.cutout)
+  const placements = computeCutoutPlacements(dim, wall, floor, containerRadius, containerEdges, resolvedCutouts)
+
   return (
     <subtract>
-      <Cuboid size={size} edges={opts.edges} radius={opts.radius} />
-      <translate by={{ xy: opts.wall, z: opts.floor }}>
-        <Cuboid
-          size={V(size).s({ xy: opts.wall * 2, z: opts.floor })}
-          edges={opts.edges & ~Edge.TOP}
-          radius={innerRadius}
-        />
+      {/* Outer shell */}
+      <Cuboid size={size} edges={containerEdges} radius={containerRadius} />
+
+      {/* Inner cavity */}
+      <translate by={{ xy: wall, z: floor }}>
+        <Cuboid size={dim.s({ xy: wall * 2, z: floor })} edges={containerEdges & ~Edge.TOP} radius={innerRadius} />
       </translate>
-      {/* eslint-disable-next-line */}
-      <Cutouts size={size} wall={opts.wall} floor={opts.floor} opts={opts.cutout}></Cutouts>
+
+      {/* Cutout holes: subtract each face */}
+      {placements.map((placement, idx) => (
+        <translate by={placement.translation} key={idx}>
+          <rotate by={placement.rotation}>
+            <CutoutFace size={placement.size} settings={placement.settings} />
+          </rotate>
+        </translate>
+      ))}
     </subtract>
   )
 }

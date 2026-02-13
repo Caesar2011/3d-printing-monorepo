@@ -12,6 +12,7 @@ export type RenderOptions = {
   method?: RenderMethod
   filter?: (s: Shape) => boolean
   dev?: boolean
+  repeat?: number
 }
 export type RenderCallbacks = {
   onStart?: () => void

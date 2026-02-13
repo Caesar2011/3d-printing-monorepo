@@ -1,4 +1,4 @@
-import type { JSX, Key } from 'react'
+import type { Key, ReactNode } from 'react'
 
 import type { ShapeProperties } from './Shape.js'
 import { Shape } from './Shape.js'
@@ -275,12 +275,12 @@ export type TProps = {
   }
 } & {
   [k in keyof TShapeMapBooleans]: InstanceType<TShapeMapBooleans[k]>['props'] & {
-    children: JSX.Element[] | JSX.Element
+    children: ReactNode
     key?: Key | null | undefined
   }
 } & {
   [k in keyof TShapeMapTransforms]: InstanceType<TShapeMapTransforms[k]>['props'] & {
-    children: JSX.Element[] | JSX.Element
+    children: ReactNode
     key?: Key | null | undefined
   }
 }

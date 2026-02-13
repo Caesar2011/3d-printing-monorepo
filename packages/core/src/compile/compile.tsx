@@ -19,6 +19,7 @@ export async function compile(root: ReactElement, options: RenderOptions & Rende
     method: RenderMethod.All,
     filter: () => true,
     dev: false,
+    repeat: 1,
     ...options,
   }
   opts.onStart?.()

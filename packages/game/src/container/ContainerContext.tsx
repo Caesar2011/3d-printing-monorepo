@@ -6,7 +6,7 @@ import type { DeepPartial, DeepRequired } from '../utils/deep-merge.js'
 import { deepMerge } from '../utils/deep-merge.js'
 
 import type { ContainerOpts } from './types.js'
-import { CutoutGridType } from './types.js'
+import { CutoutType } from './types.js'
 
 export type ContainerContextType = DeepRequired<ContainerOpts>
 
@@ -15,13 +15,12 @@ const DEFAULT_VALUES: ContainerContextType = {
   edges: Edge.SIDE,
   gripWidth: 0,
   cutout: {
-    border: 15,
-    borderRadius: null,
-    type: CutoutGridType.HEX,
-    gridSize: 3,
-    strokeWidth: 2,
-    offset: {},
-    center: false,
+    type: CutoutType.HEX,
+    border: 5,
+    borderRadius: 2,
+    hexInnerDiameter: 8,
+    hexWidth: 1.2,
+    center: true,
   },
 }
 

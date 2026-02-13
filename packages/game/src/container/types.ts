@@ -8,47 +8,38 @@ export enum Lap {
   OUTER_HALF,
 }
 
-export enum CutoutGridType {
+export enum CutoutType {
   EMPTY,
   HEX,
 }
 
-export type Cutout<Radius extends number = number, Size extends number = number, Border extends number = number> = {
-  type?: CutoutGridType
-  border?: Border
-  borderRadius?: Radius | null
-  gridSize?: Size
-  strokeWidth?: number
-  offset?: AxisRecordDefinition
+export type CutoutSettings = {
+  type?: CutoutType
+  border?: number
+  borderRadius?: number
+  hexInnerDiameter?: number
+  hexWidth?: number
   center?: boolean
 }
 
-export type ContainerOpts<
-  Radius extends number = number,
-  CutoutSize extends number = number,
-  CutoutBorder extends number = number,
-> = {
+export type ContainerOpts = {
   radius: number
-  cutout: Cutout<Radius, CutoutSize, CutoutBorder>
   edges: Edge
   gripWidth: number
+  cutout: CutoutSettings
 }
 
-export type ContainerProps<
-  Radius extends number = number,
-  CutoutSize extends number = number,
-  CutoutBorder extends number = number,
-> = {
+export type ContainerProps = {
   size: AxisRecordDefinition
   lap?: Lap
-  radius?: Radius
-  cutout?: {
-    bottom?: Cutout<Radius, CutoutSize, CutoutBorder>
-    side?: Cutout<Radius, CutoutSize, CutoutBorder>
-    front?: Cutout<Radius, CutoutSize, CutoutBorder>
-    left?: Cutout<Radius, CutoutSize, CutoutBorder>
-    back?: Cutout<Radius, CutoutSize, CutoutBorder>
-    right?: Cutout<Radius, CutoutSize, CutoutBorder>
-  }
+  radius?: number
   edges?: Edge
+  cutout?: {
+    bottom?: CutoutSettings
+    side?: CutoutSettings
+    front?: CutoutSettings
+    left?: CutoutSettings
+    back?: CutoutSettings
+    right?: CutoutSettings
+  }
 }

@@ -1,4 +1,4 @@
-import type { TProps } from './ShapeType.js'
+import type { TProps } from '@jsxcad/core'
 
 type Children = {
   children: JSX.Element[]

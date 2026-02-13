@@ -5,14 +5,13 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "build": "tsc --project tsconfig.json || exit 0"
+    "build": "tsc --project tsconfig.json"
   },
   "dependencies": {
     "@jsxcad/reconciler": "*",
     "@jsxcad/utils": "*",
-    "@jscad/modeling": "^2.12.5"
+    "@jscad/modeling": "^2.12.5",
+    "@jscad/3mf-serializer": "^2.1.16"
   },
-  "devDependencies": {
-    "jest": "^29.7.0"
-  }
+  "devDependencies": {}
 }
