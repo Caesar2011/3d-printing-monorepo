@@ -562,10 +562,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jscad/io-utils@npm:2.0.32":
+  version: 2.0.32
+  resolution: "@jscad/io-utils@npm:2.0.32"
+  checksum: 10c0/964d099144f458df9151504b7f936b392c6b6cadd307cbbf2f30152acc8c9a00ecdac8ade6160c9fe8a36b320869798452376c5839a33f863746cedf9c012ca9
+  languageName: node
+  linkType: hard
+
 "@jscad/modeling@npm:2.12.7, @jscad/modeling@npm:^2.12.5":
   version: 2.12.7
   resolution: "@jscad/modeling@npm:2.12.7"
   checksum: 10c0/43df0a22a3769b0bebf58c99ab94a10c5549ead2d026518ab5a31f927b937c5a4150b391fc652f844b9e1e88a130cce2c475d4a6341619a61bf766d86aa11a7f
+  languageName: node
+  linkType: hard
+
+"@jscad/svg-deserializer@npm:^2.5.13":
+  version: 2.5.13
+  resolution: "@jscad/svg-deserializer@npm:2.5.13"
+  dependencies:
+    "@jscad/array-utils": "npm:2.1.4"
+    "@jscad/io-utils": "npm:2.0.32"
+    "@jscad/modeling": "npm:2.12.7"
+    saxes: "npm:5.0.1"
+  checksum: 10c0/a983424adad93f8bd4eec4e4a5df77b2917e7e3eac54e45be85e4ad48340d40a727bc14c9a99c041dc6005ded2caab55e19048b756e9b812c9b63b72e270b574
   languageName: node
   linkType: hard
 
@@ -587,6 +606,7 @@ __metadata:
   dependencies:
     "@jscad/3mf-serializer": "npm:^2.1.16"
     "@jscad/modeling": "npm:^2.12.5"
+    "@jscad/svg-deserializer": "npm:^2.5.13"
     "@jsxcad/reconciler": "workspace:*"
     "@jsxcad/utils": "workspace:*"
   languageName: unknown
@@ -5293,6 +5313,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"saxes@npm:5.0.1":
+  version: 5.0.1
+  resolution: "saxes@npm:5.0.1"
+  dependencies:
+    xmlchars: "npm:^2.2.0"
+  checksum: 10c0/b7476c41dbe1c3a89907d2546fecfba234de5e66743ef914cde2603f47b19bed09732ab51b528ad0f98b958369d8be72b6f5af5c9cfad69972a73d061f0b3952
+  languageName: node
+  linkType: hard
+
 "scheduler@npm:^0.25.0":
   version: 0.25.0
   resolution: "scheduler@npm:0.25.0"
@@ -6562,6 +6591,13 @@ __metadata:
     utf-8-validate:
       optional: true
   checksum: 10c0/4741d9b9bc3f9c791880882414f96e36b8b254e34d4b503279d6400d9a4b87a033834856dbdd94ee4b637944df17ea8afc4bce0ff4a1560d2166be8855da5b04
+  languageName: node
+  linkType: hard
+
+"xmlchars@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "xmlchars@npm:2.2.0"
+  checksum: 10c0/b64b535861a6f310c5d9bfa10834cf49127c71922c297da9d4d1b45eeaae40bf9b4363275876088fbe2667e5db028d2cd4f8ee72eed9bede840a67d57dab7593
   languageName: node
   linkType: hard
 

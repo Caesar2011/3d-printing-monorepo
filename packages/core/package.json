@@ -11,6 +11,7 @@
     "@jscad/3mf-serializer": "^2.1.16",
     "@jscad/modeling": "^2.12.5",
     "@jsxcad/reconciler": "workspace:*",
-    "@jsxcad/utils": "workspace:*"
+    "@jsxcad/utils": "workspace:*",
+    "saxes": "^6.0.0"
   }
 }

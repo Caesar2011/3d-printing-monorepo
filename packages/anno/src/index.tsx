@@ -105,6 +105,8 @@ const App = memo(() => {
           </entity>
         </translate>
       </DebugAxes>
+
+      <svgfile file="res/energy1-simple.svg" height={10} />
     </entity>
   )
 })

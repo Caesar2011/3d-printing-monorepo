@@ -144,6 +144,16 @@ export class CylinderNode extends PrimitiveNode<CylinderProps> {
   }
 }
 
+type SvgProps = Parameters<typeof Shape.svgfile>[0]
+export class SvgNode extends PrimitiveNode<SvgProps> {
+  public getClass(): new (props: unknown) => PrimitiveNode<SvgProps> {
+    return SvgNode
+  }
+  public renderFn(): Shape[] {
+    return [Shape.svgfile(this.props)]
+  }
+}
+
 export class UnionNode extends OperatorNode<ShapeProperties> {
   public getClass(): new (props: unknown) => OperatorNode<ShapeProperties> {
     return UnionNode
@@ -267,6 +277,7 @@ export const ShapeMap = {
   cuboid: CuboidNode,
   sphere: SphereNode,
   cylinder: CylinderNode,
+  svgfile: SvgNode,
 } as const
 
 export const ShapeMapBooleans = {
