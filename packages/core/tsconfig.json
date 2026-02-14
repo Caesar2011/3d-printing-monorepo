@@ -7,7 +7,14 @@
     "rootDir": "src",
     "declarationDir": "dist",
     "tsBuildInfoFile": "dist/.tsbuildinfo",
-    "stripInternal": true
+    "stripInternal": true,
+    "baseUrl": ".",
+    "paths": {
+      "@jsxcad/core": ["src"],
+      "@jsxcad/core/*": ["src/*"]
+    }
+    // -------------------------
+
   },
   "references": [{ "path": "../reconciler" }, { "path": "../utils" }],
   "include": ["src"],

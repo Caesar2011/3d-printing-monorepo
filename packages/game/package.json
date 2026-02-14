@@ -5,20 +5,17 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "build": "tsc --project tsconfig.json",
-    "serve": "node --enable-source-maps dist/utils/server.js"
+    "build": "tsc --project tsconfig.json"
   },
   "dependencies": {
-    "@jsxcad/core": "*",
-    "@jsxcad/utils": "*",
-    "express": "^4.21.2",
+    "@jsxcad/core": "workspace:*",
+    "@jsxcad/utils": "workspace:*",
     "react": "^19.0.0",
     "winston": "^3.17.0",
     "winston-console-format": "^1.0.8",
     "ws": "^8.19.0"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
     "@types/ws": "^8.18.1"
   }
 }

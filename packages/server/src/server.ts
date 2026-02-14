@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import express from 'express'
 import { WebSocketServer, WebSocket } from 'ws'
 
-import { logger } from '../logger.js'
+import { logger } from './logger.js'
 
 type RenderMode = 'websocket' | '3mf'
 
@@ -24,7 +24,7 @@ const app = express()
 const port = parseInt(process.env.PORT ?? '3000', 10)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const packageRoot = path.resolve(__dirname, '../..')
+const packageRoot = path.resolve(__dirname, '..')
 const publicDir = path.join(packageRoot, 'public')
 const mfPath = path.join(publicDir, 'output.3mf')
 
@@ -53,7 +53,6 @@ app.post('/api/mode', (req, res) => {
   state.renderMode = mode
   logger.debug(`Render mode changed to: ${mode}`)
 
-  // Broadcast mode change to all connected viewers
   broadcastToViewers(JSON.stringify({ type: 'mode', mode }))
 
   res.json({ mode })
@@ -83,7 +82,6 @@ wss.on('connection', (ws, req) => {
     ws.on('message', (data) => {
       const message = typeof data === 'string' ? data : data.toString('utf-8')
       state.latestScene = message
-      // Only forward scene data to viewers in websocket mode
       if (state.renderMode === 'websocket') {
         broadcastToViewers(message)
       }
@@ -97,7 +95,6 @@ wss.on('connection', (ws, req) => {
     viewers.add(ws)
     logger.debug(`Viewer connected (${viewers.size} total)`)
 
-    // Send current mode on connect so new viewers sync immediately
     ws.send(JSON.stringify({ type: 'mode', mode: state.renderMode }))
 
     ws.on('close', () => {

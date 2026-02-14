@@ -1,0 +1,20 @@
+{
+  "name": "@jsxcad/server",
+  "version": "1.0.0",
+  "main": "dist/server.js",
+  "types": "dist/server.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "serve": "node --enable-source-maps dist/server.js"
+  },
+  "dependencies": {
+    "@jsxcad/utils": "workspace:*",
+    "express": "^4.21.2",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/ws": "^8.18.1"
+  }
+}

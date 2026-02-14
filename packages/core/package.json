@@ -8,10 +8,9 @@
     "build": "tsc --project tsconfig.json"
   },
   "dependencies": {
-    "@jsxcad/reconciler": "*",
-    "@jsxcad/utils": "*",
+    "@jscad/3mf-serializer": "^2.1.16",
     "@jscad/modeling": "^2.12.5",
-    "@jscad/3mf-serializer": "^2.1.16"
-  },
-  "devDependencies": {}
+    "@jsxcad/reconciler": "workspace:*",
+    "@jsxcad/utils": "workspace:*"
+  }
 }

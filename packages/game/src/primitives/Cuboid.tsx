@@ -88,7 +88,7 @@ const EdgesFillets: FC<{ radius: number; dim: Vector3; edges: Edge }> = ({ radiu
 }
 
 const CornerFillets: FC<{ radius: number; dim: Vector3; edges: Edge }> = ({ radius, dim, edges }) => {
-  const bottoms: [AxisRecordDefinition, AxisRecordDefinition][] = [
+  const bottoms: [AxisRecordDefinition, AxisRecordDefinition, number][] = [
     0b0000_1000_1100, 0b0000_0100_0110, 0b0000_0010_0011, 0b0000_0001_1001, 0b1100_1000_0000, 0b0110_0100_0000,
     0b0011_0010_0000, 0b1001_0001_0000,
   ]
@@ -97,12 +97,13 @@ const CornerFillets: FC<{ radius: number; dim: Vector3; edges: Edge }> = ({ radi
     .map(([corner, idx]) => [
       { y: corner & Edge.TOP ? Math.PI / 2 : 0, z: (-Math.PI / 2) * idx },
       { x: corner & Edge.RIGHT ? dim : 0, y: corner & Edge.BACK ? dim : 0, z: corner & Edge.TOP ? dim : 0 },
+      idx,
     ])
 
   return (
     <>
-      {[...bottoms].map(([rotation, translation]) => (
-        <translate by={translation}>
+      {[...bottoms].map(([rotation, translation, idx]) => (
+        <translate by={translation} key={idx}>
           <rotate by={rotation} center={0}>
             <FilletCorner size={{ xyz: radius }} />
           </rotate>

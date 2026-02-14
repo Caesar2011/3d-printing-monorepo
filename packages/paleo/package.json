@@ -6,13 +6,13 @@
   "type": "module",
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "dev": "tsc-watch --onSuccess \"npm start\" --project tsconfig.json",
+    "dev": "tsc-watch --onSuccess \"yarn start\" --project tsconfig.json",
     "start": "node --enable-source-maps dist/index.js"
   },
   "dependencies": {
-    "@jsxcad/game": "*",
-    "@jsxcad/core": "*",
-    "@jsxcad/utils": "*"
+    "@jsxcad/core": "workspace:*",
+    "@jsxcad/game": "workspace:*",
+    "@jsxcad/utils": "workspace:*"
   },
   "devDependencies": {
     "tsc-watch": "^6.2.1",
