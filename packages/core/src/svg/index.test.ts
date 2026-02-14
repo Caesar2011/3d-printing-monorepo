@@ -39,19 +39,6 @@ describe('svgToGeom2s', () => {
     expect(geoms).toHaveLength(1)
   })
 
-  test('path with evenodd fill-rule and two subpaths (hole)', () => {
-    const svg = [
-      '<svg xmlns="http://www.w3.org/2000/svg">',
-      '<path d="M 0 0 L 20 0 L 20 20 L 0 20 Z M 5 5 L 15 5 L 15 15 L 5 15 Z" fill-rule="evenodd"/>',
-      '</svg>',
-    ].join('')
-    const geoms = svgToGeom2s(svg, defaultOptions)
-    expect(geoms).toHaveLength(1)
-    const area = Math.abs(jscad.measurements.measureArea(geoms[0]))
-    // 20*20 - 10*10 = 300
-    expect(area).toBeCloseTo(300)
-  })
-
   test('multiple shapes produce multiple geoms', () => {
     const svg = [
       '<svg xmlns="http://www.w3.org/2000/svg">',

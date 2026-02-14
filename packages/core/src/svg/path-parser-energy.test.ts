@@ -2,7 +2,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import { describe, expect, test } from 'vitest'
-import { logger } from '@jsxcad/core/logger.js'
+
+import { logger } from '../logger.js'
 
 import { deserializeSvg } from './deserializer.js'
 import { parsePath } from './path-parser.js'

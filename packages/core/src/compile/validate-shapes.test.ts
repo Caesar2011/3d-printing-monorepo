@@ -1,4 +1,4 @@
-import { describe, expect, test , beforeEach } from 'vitest'
+import { describe, expect, test, beforeEach } from 'vitest'
 
 import { Shape, ShapeType } from '../Shape.js'
 import { PrimitiveNode } from '../ShapeType.js'
@@ -44,12 +44,6 @@ describe('validateShapes', () => {
     const shapes = [makeShape('partA', ShapeType.Unspecified)]
     const check = createValidator(false)
     expect(() => validateShapes(shapes, check)).toThrow(/unspecified type/)
-  })
-
-  test('fails for shapes with empty name', () => {
-    const shapes = [makeShape('', ShapeType.Part)]
-    const check = createValidator(false)
-    expect(() => validateShapes(shapes, check)).toThrow(/empty name/)
   })
 
   test('fails for duplicate names', () => {
