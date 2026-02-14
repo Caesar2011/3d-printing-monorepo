@@ -23,6 +23,7 @@ const DEFAULT_VALUES: ContainerContextType = {
     center: true,
   },
   cutoutEdges: Edge.NONE,
+  scoopFactor: 1.3,
 }
 
 const ContainerContext = createContext<ContainerContextType>(DEFAULT_VALUES)

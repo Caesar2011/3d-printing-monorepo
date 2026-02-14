@@ -1,4 +1,4 @@
-import type { AxisRecordDefinition } from '@jsxcad/core'
+import type { AxisRecordDefinition, Vector3 } from '@jsxcad/core'
 import { V } from '@jsxcad/core'
 import type { FC } from 'react'
 import { range } from '@jsxcad/utils'
@@ -22,7 +22,7 @@ export const RoundedCylinder: FC<{
   segments?: number
 }> = ({ size, radius = 0, edges = CylinderEdge.ALL, segments }) => {
   const dim = V(size)
-  const cylRadius = dim.x / 2
+  const cylRadius = V({ x: dim.x / 2, y: dim.y / 2 })
   const cylHeight = dim.z
   const resolvedSegments = segments ?? usePrimitiveContext().cylinderSegments
 
@@ -30,13 +30,14 @@ export const RoundedCylinder: FC<{
     return <Cylinder size={size} segments={resolvedSegments} />
   }
 
-  validateFilletRadius(radius, cylRadius, cylHeight)
+  validateFilletRadius(radius, cylRadius.x, cylHeight)
+  validateFilletRadius(radius, cylRadius.y, cylHeight)
 
   const roundBot = (edges & CylinderEdge.BOT) !== 0
   const roundTop = (edges & CylinderEdge.TOP) !== 0
   const coreBottom = roundBot ? radius : 0
   const coreTop = roundTop ? cylHeight - radius : cylHeight
-  const ringRadius = cylRadius - radius
+  const ringRadius = V({ x: cylRadius.x - radius, y: cylRadius.y - radius })
 
   return (
     <PrimitiveContextProvider sphereSegments={resolvedSegments}>
@@ -44,13 +45,13 @@ export const RoundedCylinder: FC<{
         <Cylinder size={size} segments={resolvedSegments} />
         <union>
           <translate by={{ z: coreBottom }}>
-            <Cylinder size={{ xy: dim.x, z: coreTop - coreBottom }} segments={resolvedSegments} />
+            <Cylinder size={{ xy: dim, z: coreTop - coreBottom }} segments={resolvedSegments} />
           </translate>
           {roundBot && (
             <TorusRing
               ringRadius={ringRadius}
-              filletRadius={radius}
               cylRadius={cylRadius}
+              filletRadius={radius}
               z={radius}
               segments={resolvedSegments}
             />
@@ -58,8 +59,8 @@ export const RoundedCylinder: FC<{
           {roundTop && (
             <TorusRing
               ringRadius={ringRadius}
-              filletRadius={radius}
               cylRadius={cylRadius}
+              filletRadius={radius}
               z={cylHeight - radius}
               segments={resolvedSegments}
             />
@@ -71,15 +72,15 @@ export const RoundedCylinder: FC<{
 }
 
 /**
- * A torus approximated by hulling spheres placed around a circle.
+ * A torus approximated by hulling spheres placed around an ellipse.
  *
  * The ring lies in the XY plane at height `z`, centered on the cylinder axis
- * at `(cylRadius, cylRadius)` with the given `ringRadius`.
+ * at `(cylRadius.x, cylRadius.y)` with the given `ringRadius`.
  */
 const TorusRing: FC<{
-  ringRadius: number
+  ringRadius: Vector3
+  cylRadius: Vector3
   filletRadius: number
-  cylRadius: number
   z: number
   segments: number
 }> = ({ ringRadius, filletRadius, cylRadius, z, segments }) => {
@@ -94,8 +95,8 @@ const TorusRing: FC<{
             key={i}
             size={diameter}
             center={{
-              x: cylRadius + ringRadius * Math.cos(angle),
-              y: cylRadius + ringRadius * Math.sin(angle),
+              x: cylRadius.x + ringRadius.x * Math.cos(angle),
+              y: cylRadius.y + ringRadius.y * Math.sin(angle),
               z,
             }}
           />

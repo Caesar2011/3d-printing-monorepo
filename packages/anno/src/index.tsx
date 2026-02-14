@@ -33,7 +33,19 @@ const App = memo(() => {
           {/* Container split in half along X */}
           <translate by={{ x: 100 }}>
             <entity name={'split-half'} type={ShapeType.Part} color={Colors.GREEN_2}>
-              <Container size={V({ x: 80, y: 60, z: 40 })} divisions={{ at: [0.5] }} cutoutEdges={Edge.BOT} />
+              <Container
+                size={V({ x: 80, y: 60, z: 20 })}
+                divisions={{ at: [0.5] }}
+                cutoutEdges={Edge.BOT}
+                scoop={true}
+              />
+            </entity>
+          </translate>
+
+          {/* Container split in half along X */}
+          <translate by={{ x: 100, y: 100 }}>
+            <entity name={'split-tray-x'} type={ShapeType.Part} color={Colors.GREEN_3}>
+              <Container size={V({ x: 80, y: 60, z: 20 })} cutoutEdges={Edge.BOT} scoop={true} />
             </entity>
           </translate>
 

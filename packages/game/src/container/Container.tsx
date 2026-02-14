@@ -11,6 +11,7 @@ import { computeCellCutoutPlacements } from './cutout-geometry.js'
 import { computeCavityCells } from './cavity-layout.js'
 import { useContainerContext } from './ContainerContext.js'
 import { CutoutFace } from './CutoutFace.js'
+import { ScoopedCavity, computeScoopWidth, validateScoopFit } from './scoop-geometry.js'
 
 const SIDE_FACES: readonly SideFaceName[] = ['front', 'left', 'back', 'right'] as const
 
@@ -39,15 +40,30 @@ function resolveCutouts(defaults: Required<CutoutSettings>, cutoutProps?: Contai
   return result
 }
 
+function hasCutouts(cutoutProps?: ContainerProps['cutout']): boolean {
+  if (!cutoutProps) return false
+  return (
+    cutoutProps.bottom !== undefined ||
+    cutoutProps.side !== undefined ||
+    SIDE_FACES.some((face) => cutoutProps[face] !== undefined)
+  )
+}
+
 export const Container: FC<ContainerProps> = ({ size, ...options }) => {
   const shapeCtx = useShapeContext()
   const containerCtx = useContainerContext()
 
+  const scoop = options.scoop ?? false
   const containerRadius = options.radius ?? containerCtx.radius
   const containerEdges = options.edges ?? containerCtx.edges
   const containerCutoutEdges = containerEdges | (options.cutoutEdges ?? containerCtx.cutoutEdges)
   const wall = shapeCtx.wall
   const floor = shapeCtx.floor
+  const scoopFactor = containerCtx.scoopFactor
+
+  if (scoop && hasCutouts(options.cutout)) {
+    throw new Error('Cannot use scoop and cutouts simultaneously. Enable only one of the two.')
+  }
 
   const dim = V(size)
   const innerRadius = Math.max(0, containerRadius - wall)
@@ -57,9 +73,19 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
   const innerSize = V([dim.x - 2 * wall, dim.y - 2 * wall, dim.z - floor])
   const cells = computeCavityCells(innerOrigin, innerSize, wall, options.divisions)
 
-  const allCutoutPlacements = cells.flatMap((cell) =>
-    computeCellCutoutPlacements(cell, dim, wall, floor, containerRadius, containerCutoutEdges, resolvedCutouts),
-  )
+  // Validate scoop fit for all cells up front
+  if (scoop) {
+    const scoopWidth = computeScoopWidth(innerSize.z, scoopFactor)
+    for (const cell of cells) {
+      validateScoopFit(cell, scoopWidth)
+    }
+  }
+
+  const allCutoutPlacements = scoop
+    ? []
+    : cells.flatMap((cell) =>
+        computeCellCutoutPlacements(cell, dim, wall, floor, containerRadius, containerCutoutEdges, resolvedCutouts),
+      )
 
   return (
     <subtract>
@@ -67,7 +93,16 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
 
       {cells.map((cell, idx) => (
         <translate by={cell.offset} key={`cavity-${idx}`}>
-          <Cuboid size={cell.size} edges={containerCutoutEdges & ~Edge.TOP} radius={innerRadius} />
+          {scoop ? (
+            <ScoopedCavity
+              size={cell.size}
+              scoopWidth={computeScoopWidth(cell.size.z, scoopFactor)}
+              radius={innerRadius}
+              edges={containerCutoutEdges & ~Edge.TOP}
+            />
+          ) : (
+            <Cuboid size={cell.size} edges={containerCutoutEdges & ~Edge.TOP} radius={innerRadius} />
+          )}
         </translate>
       ))}
 
