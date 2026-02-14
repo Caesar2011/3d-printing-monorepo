@@ -35,7 +35,7 @@ const App = memo(() => {
             <entity name={'split-half'} type={ShapeType.Part} color={Colors.GREEN_2}>
               <Container
                 size={V({ x: 80, y: 60, z: 20 })}
-                divisions={{ at: [0.5] }}
+                divisions={{ at: [0.5], children: [{ imprintSrc: 'res/energy1-simple.svg' }, {}] }}
                 cutoutEdges={Edge.BOT}
                 scoop={true}
               />
@@ -66,6 +66,7 @@ const App = memo(() => {
               />
             </entity>
           </translate>
+          {/* */}
         </ContainerContextProvider>
 
         {/* --- Rounded Cylinder examples --- */}
@@ -105,8 +106,7 @@ const App = memo(() => {
           </entity>
         </translate>
       </DebugAxes>
-
-      <svgfile file="res/energy1-simple.svg" height={10} />
+      {/* */}
     </entity>
   )
 })

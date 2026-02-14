@@ -6,11 +6,14 @@ import type { Division } from './types.js'
 export type CavityCell = {
   offset: Vector3
   size: Vector3
+  imprintSrc?: string
 }
 
 /** Validates a Division node and throws on invalid input. */
 function validateDivision(division: Division): void {
   const { at, children } = division
+
+  if (at === undefined) return
 
   for (const value of at) {
     if (value <= 0 || value >= 1) {
@@ -41,8 +44,8 @@ export function computeCavityCells(
   division?: Division | null,
   axis: 'x' | 'y' = 'x',
 ): CavityCell[] {
-  if (!division || division.at.length === 0) {
-    return [{ offset: innerOrigin, size: innerSize }]
+  if (!division || !division.at || division.at.length === 0) {
+    return [{ offset: innerOrigin, size: innerSize, imprintSrc: division?.imprintSrc }]
   }
 
   validateDivision(division)

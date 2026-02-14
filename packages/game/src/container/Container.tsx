@@ -11,7 +11,13 @@ import { computeCellCutoutPlacements } from './cutout-geometry.js'
 import { computeCavityCells } from './cavity-layout.js'
 import { useContainerContext } from './ContainerContext.js'
 import { CutoutFace } from './CutoutFace.js'
-import { ScoopedCavity, computeScoopWidth, validateScoopFit } from './scoop-geometry.js'
+import {
+  ScoopedCavity,
+  computeScoopWidth,
+  validateScoopFit,
+  determineScoopAxis,
+  validateImprintBottom,
+} from './scoop-geometry.js'
 
 const SIDE_FACES: readonly SideFaceName[] = ['front', 'left', 'back', 'right'] as const
 
@@ -60,6 +66,7 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
   const wall = shapeCtx.wall
   const floor = shapeCtx.floor
   const scoopFactor = containerCtx.scoopFactor
+  const maxImprintSize = V(options.maxImprintSize ?? containerCtx.maxImprintSize)
 
   if (scoop && hasCutouts(options.cutout)) {
     throw new Error('Cannot use scoop and cutouts simultaneously. Enable only one of the two.')
@@ -81,6 +88,10 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
     }
   }
 
+  for (const cell of cells) {
+    validateImprintBottom(cell, resolvedCutouts.bottom === undefined)
+  }
+
   const allCutoutPlacements = scoop
     ? []
     : cells.flatMap((cell) =>
@@ -91,20 +102,36 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
     <subtract>
       <Cuboid size={size} edges={containerEdges} radius={containerRadius} />
 
-      {cells.map((cell, idx) => (
-        <translate by={cell.offset} key={`cavity-${idx}`}>
-          {scoop ? (
-            <ScoopedCavity
-              size={cell.size}
-              scoopWidth={computeScoopWidth(cell.size.z, scoopFactor)}
-              radius={innerRadius}
-              edges={containerCutoutEdges & ~Edge.TOP}
-            />
-          ) : (
-            <Cuboid size={cell.size} edges={containerCutoutEdges & ~Edge.TOP} radius={innerRadius} />
-          )}
-        </translate>
-      ))}
+      {cells.map((cell, idx) => {
+        let imprintSize = V({ xy: maxImprintSize.min(cell.size), z: maxImprintSize })
+        const scoopWidth = scoop ? computeScoopWidth(cell.size.z, scoopFactor) : 0
+        if (scoop) {
+          const axis = determineScoopAxis(cell)
+          imprintSize = imprintSize.s({ [axis]: scoopWidth * 2, [axis === 'x' ? 'y' : 'x']: innerRadius * 2 })
+        } else if ((containerCutoutEdges & Edge.BOT) !== 0) {
+          imprintSize = imprintSize.s({ xy: innerRadius * 2 })
+        }
+
+        return (
+          <translate by={cell.offset} key={`cavity-${idx}`}>
+            {scoop ? (
+              <ScoopedCavity
+                size={cell.size}
+                scoopWidth={scoopWidth}
+                radius={innerRadius}
+                edges={containerCutoutEdges & ~Edge.TOP}
+              />
+            ) : (
+              <Cuboid size={cell.size} edges={containerCutoutEdges & ~Edge.TOP} radius={innerRadius} />
+            )}
+            {cell.imprintSrc !== undefined && (
+              <translate by={{ xy: cell.size.s(imprintSize).d(2), z: -imprintSize.z }}>
+                <svgfile file={cell.imprintSrc} size={imprintSize.a({ z: 0.1 })} />
+              </translate>
+            )}
+          </translate>
+        )
+      })}
 
       {allCutoutPlacements.map((placement, idx) => (
         <translate by={placement.translation} key={`cutout-${idx}`}>

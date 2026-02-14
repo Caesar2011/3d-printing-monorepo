@@ -25,13 +25,14 @@ export type CutoutSettings = {
   center?: boolean
 }
 
-export type ContainerOpts = {
+export type ContainerContextOpts = {
   radius: number
   edges: Edge
   gripWidth: number
   cutout: CutoutSettings
   cutoutEdges: Edge
   scoopFactor: number
+  maxImprintSize: AxisRecordDefinition
 }
 
 /**
@@ -42,8 +43,9 @@ export type ContainerOpts = {
  * Each child can optionally be further subdivided (axis flips automatically).
  */
 export type Division = {
-  at: number[]
+  at?: number[]
   children?: (Division | null)[]
+  imprintSrc?: string
 }
 
 export type CutoutConfig = {
@@ -60,4 +62,5 @@ export type ContainerProps = {
   cutout?: CutoutConfig
   scoop?: boolean
   cutoutEdges?: Edge
+  maxImprintSize?: AxisRecordDefinition
 }

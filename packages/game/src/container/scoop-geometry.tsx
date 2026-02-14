@@ -32,6 +32,13 @@ export function validateScoopFit(cell: CavityCell, scoopWidth: number): void {
   }
 }
 
+/** Validates that imprint of cell is only on solid bottom. */
+export function validateImprintBottom(cell: CavityCell, isSolidBottom: boolean): void {
+  if (!isSolidBottom && cell.imprintSrc !== undefined) {
+    throw new Error(`Imprint is only allowed on solid bottom.`)
+  }
+}
+
 /** Checks whether the scoop cylinders need filleted edges based on the container edge bitmask. */
 function needsScoopFillet(edges: Edge, axis: ScoopAxis): boolean {
   const relevantEdges = axis === 'x' ? Edge.LEFT | Edge.RIGHT | Edge.BOT : Edge.FRONT | Edge.BACK | Edge.BOT

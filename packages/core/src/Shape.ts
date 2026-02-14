@@ -154,9 +154,15 @@ export class Shape implements Geom3 {
     return shape.translate({ by: props.center !== undefined ? props.center : V(props.size).d(2) })
   }
 
-  /** Creates a 3D shape by loading an SVG and extruding it to the given height. */
+  /** Creates a 3D shape by loading an SVG, optionally scaling it to fill the given size, and extruding to the given z height. */
   public static svgfile(
-    props: { file: string; height: number; segments?: number; center?: AxisRecordDefinition } & ShapeProperties,
+    props: {
+      file: string
+      size: AxisRecordDefinition
+      segments?: number
+      center?: AxisRecordDefinition
+      fillSize?: boolean
+    } & ShapeProperties,
   ) {
     const svgSource = loadSvgSource(props.file)
     const geom2s = svgToGeom2s(svgSource, { segments: props.segments ?? 32 })
@@ -165,10 +171,13 @@ export class Shape implements Geom3 {
       throw new Error(`SVG file produced no geometry: ${props.file}`)
     }
 
+    const sizeVec = V(props.size)
+    const height = sizeVec.v[2]
+
     const geom3s: Geom3[] = []
     for (const g of geom2s) {
       try {
-        geom3s.push(extrusions.extrudeLinear({ height: props.height }, g))
+        geom3s.push(extrusions.extrudeLinear({ height }, g))
       } catch (e) {
         logger.debug(`SVG: skipping non-extrudable geom2 (${e instanceof Error ? e.message : e}) in ${props.file}`)
       }
@@ -179,12 +188,38 @@ export class Shape implements Geom3 {
     }
 
     const combined: Geom3 = geom3s.length === 1 ? geom3s[0] : booleans.union(geom3s)
-    const shape = new Shape(combined, props)
+
+    // Move to origin first so we can reason about the SVG bounds cleanly
+    let shape = new Shape(combined, props).translate({ fromOrigin: 'xyz' })
+
+    const [, svgMax] = measurements.measureBoundingBox(shape)
+    const svgW = svgMax[0]
+    const svgH = svgMax[1]
+
+    const targetW = sizeVec.v[0]
+    const targetH = sizeVec.v[1]
+
+    if (props.fillSize === true) {
+      // Scale the SVG to exactly fill the target x/y dimensions
+      const scaleX = targetW / svgW
+      const scaleY = targetH / svgH
+      shape = shape.scale({ by: { x: scaleX, y: scaleY, z: 1 } })
+    } else {
+      // Uniform scale to fit within target, then center within the target area
+      const scaleFactor = Math.min(targetW / svgW, targetH / svgH)
+      shape = shape.scale({ by: { x: scaleFactor, y: scaleFactor, z: 1 } })
+
+      const scaledW = svgW * scaleFactor
+      const scaledH = svgH * scaleFactor
+      const offsetX = (targetW - scaledW) / 2
+      const offsetY = (targetH - scaledH) / 2
+      shape = shape.translate({ by: { x: offsetX, y: offsetY } })
+    }
 
     if (props.center !== undefined) {
       return shape.translate({ by: props.center })
     }
-    return shape.translate({ fromOrigin: 'xyz' })
+    return shape
   }
 }
 

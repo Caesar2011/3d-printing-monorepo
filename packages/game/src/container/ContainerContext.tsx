@@ -5,10 +5,10 @@ import { Edge } from '../primitives/Cuboid.js'
 import type { DeepPartial, DeepRequired } from '../utils/deep-merge.js'
 import { deepMerge } from '../utils/deep-merge.js'
 
-import type { ContainerOpts } from './types.js'
+import type { ContainerContextOpts } from './types.js'
 import { CutoutType } from './types.js'
 
-export type ContainerContextType = DeepRequired<ContainerOpts>
+export type ContainerContextType = DeepRequired<ContainerContextOpts>
 
 const DEFAULT_VALUES: ContainerContextType = {
   radius: 4,
@@ -24,6 +24,7 @@ const DEFAULT_VALUES: ContainerContextType = {
   },
   cutoutEdges: Edge.NONE,
   scoopFactor: 1.3,
+  maxImprintSize: { x: 40, y: 40, z: 0.5 },
 }
 
 const ContainerContext = createContext<ContainerContextType>(DEFAULT_VALUES)
