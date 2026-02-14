@@ -8,7 +8,6 @@ const { mat4 } = maths
 
 // --- Color Parsing ---
 
-// Based on https://www.w3.org/TR/SVG11/types.html#ColorKeywords
 const svgColors: Record<string, [number, number, number]> = {
   aliceblue: [240, 248, 255],
   antiquewhite: [250, 235, 215],
@@ -173,13 +172,17 @@ export function parseColor(value: string | undefined): Color | undefined {
   if (value.startsWith('#')) {
     const hex = value.slice(1)
     if (hex.length === 3) {
-      const [r, g, b] = hex.split('').map((c) => parseInt(c + c, 16))
+      const r = parseInt(hex[0] + hex[0], 16)
+      const g = parseInt(hex[1] + hex[1], 16)
+      const b = parseInt(hex[2] + hex[2], 16)
+      if (isNaN(r) || isNaN(g) || isNaN(b)) return undefined
       return [r / 255, g / 255, b / 255, 1]
     }
     if (hex.length === 6) {
       const r = parseInt(hex.slice(0, 2), 16)
       const g = parseInt(hex.slice(2, 4), 16)
       const b = parseInt(hex.slice(4, 6), 16)
+      if (isNaN(r) || isNaN(g) || isNaN(b)) return undefined
       return [r / 255, g / 255, b / 255, 1]
     }
   }
@@ -210,21 +213,67 @@ export function parseUnits(value: string | undefined, pmm = 3.54): number {
   if (value.endsWith('in')) return num * inchMM
   if (value.endsWith('pt')) return num * ptMM
   if (value.endsWith('pc')) return num * pcMM
-  // Assume pixels/user units otherwise
   return num / pmm
+}
+
+// --- ViewBox Parsing ---
+
+export interface ViewBox {
+  minX: number
+  minY: number
+  width: number
+  height: number
+}
+
+/** Parses an SVG `viewBox` attribute into its components. */
+export function parseViewBox(value: string | undefined): ViewBox | undefined {
+  if (value === undefined) return undefined
+  const parts = value
+    .trim()
+    .split(/[\s,]+/)
+    .map(parseFloat)
+  if (parts.length !== 4 || parts.some(isNaN)) return undefined
+  return { minX: parts[0], minY: parts[1], width: parts[2], height: parts[3] }
+}
+
+/**
+ * Computes pixels-per-mm from SVG root attributes.
+ * Falls back to the default 90 DPI assumption (≈3.5433 px/mm).
+ */
+export function computePxPerMm(
+  widthAttr: string | undefined,
+  heightAttr: string | undefined,
+  viewBox: ViewBox | undefined,
+): number {
+  const defaultPmm = 90 / 25.4 // ≈3.5433
+
+  if (viewBox === undefined) return defaultPmm
+
+  const widthMm = widthAttr !== undefined ? parseUnits(widthAttr, defaultPmm) : undefined
+  if (widthMm !== undefined && widthMm > 0) {
+    return viewBox.width / widthMm
+  }
+
+  const heightMm = heightAttr !== undefined ? parseUnits(heightAttr, defaultPmm) : undefined
+  if (heightMm !== undefined && heightMm > 0) {
+    return viewBox.height / heightMm
+  }
+
+  return defaultPmm
 }
 
 // --- Transform Parsing ---
 
-const TRANSFORM_REGEX = /(\w+)\s*\(([^)]+)\)/g
-
+/** Parses an SVG `transform` attribute string into a mat4. */
 export function parseTransform(transformStr: string | undefined): jscad.maths.mat4.Mat4 | undefined {
   if (transformStr === undefined) return undefined
 
   const matrix: jscad.maths.mat4.Mat4 = mat4.create()
+  // Local regex to avoid stale lastIndex from a shared global instance
+  const regex = /(\w+)\s*\(([^)]+)\)/g
   let match: RegExpExecArray | null
 
-  while ((match = TRANSFORM_REGEX.exec(transformStr))) {
+  while ((match = regex.exec(transformStr))) {
     const [, name, argsStr] = match
     const args = argsStr
       .trim()

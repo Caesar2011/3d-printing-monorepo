@@ -1,6 +1,7 @@
 import jscad from '@jscad/modeling'
 
-import { parseColor, parseTransform, parseUnits } from './attribute-parser.js'
+import { computePxPerMm, parseColor, parseTransform, parseUnits, parseViewBox } from './attribute-parser.js'
+import { assembleEvenOdd, assembleNonZero } from './geometry-utils.js'
 import { parsePath } from './path-parser.js'
 import type { SvgAttributes, SvgNode, SvgOptions, Vec2 } from './types.js'
 
@@ -9,35 +10,52 @@ const { maths, primitives, geometries } = jscad
 type Geom2 = jscad.geometries.geom2.Geom2
 type Mat4 = jscad.maths.mat4.Mat4
 
-/** Processes a tree of SvgNodes into an array of Geom2 shapes. */
-export function processNodes(nodes: SvgNode[], options: SvgOptions): Geom2[] {
-  return nodes.flatMap((node) => processNode(node, maths.mat4.create(), {}, options))
+interface ProcessingContext {
+  options: SvgOptions
+  pmm: number
 }
 
-function processNode(node: SvgNode, parentMatrix: Mat4, parentStyle: SvgAttributes, options: SvgOptions): Geom2[] {
+/** Processes a tree of SvgNodes into an array of Geom2 shapes. */
+export function processNodes(nodes: SvgNode[], options: SvgOptions): Geom2[] {
+  // Find the root <svg> element to extract viewBox and dimensions
+  const svgRoot = nodes.find((n) => n.tag === 'svg')
+  const viewBox = parseViewBox(svgRoot?.attributes.viewBox)
+  const pmm = computePxPerMm(svgRoot?.attributes.width, svgRoot?.attributes.height, viewBox)
+
+  const ctx: ProcessingContext = { options, pmm }
+  return nodes.flatMap((node) => processNode(node, maths.mat4.create(), {}, ctx))
+}
+
+function processNode(node: SvgNode, parentMatrix: Mat4, parentStyle: SvgAttributes, ctx: ProcessingContext): Geom2[] {
   const style = { ...parentStyle, ...parseStyle(node.attributes.style) }
   const localMatrix = parseTransform(node.attributes.transform)
   const matrix = localMatrix ? maths.mat4.multiply(maths.mat4.create(), parentMatrix, localMatrix) : parentMatrix
+
+  // Resolve fill-rule: attribute takes precedence over inherited style
+  const fillRule = node.attributes['fill-rule'] ?? style['fill-rule']
 
   const results: Geom2[] = []
 
   let geom: Geom2 | undefined
   switch (node.tag) {
     case 'rect':
-      geom = rectToGeom(node.attributes)
+      geom = rectToGeom(node.attributes, ctx.pmm)
       break
     case 'circle':
-      geom = circleToGeom(node.attributes, options)
+      geom = circleToGeom(node.attributes, ctx)
       break
     case 'ellipse':
-      geom = ellipseToGeom(node.attributes, options)
+      geom = ellipseToGeom(node.attributes, ctx)
+      break
+    case 'line':
+      geom = lineToGeom(node.attributes, ctx.pmm)
       break
     case 'polygon':
     case 'polyline':
-      geom = polyToGeom(node.attributes)
+      geom = polyToGeom(node.attributes, ctx.pmm)
       break
     case 'path':
-      geom = pathToGeom(node.attributes, options)
+      geom = pathToGeom(node.attributes, ctx, fillRule)
       break
   }
 
@@ -50,9 +68,8 @@ function processNode(node: SvgNode, parentMatrix: Mat4, parentStyle: SvgAttribut
     results.push(transformedGeom)
   }
 
-  // Recursively process children
   for (const child of node.children) {
-    results.push(...processNode(child, matrix, style, options))
+    results.push(...processNode(child, matrix, style, ctx))
   }
 
   return results
@@ -70,15 +87,15 @@ function parseStyle(styleStr: string | undefined): SvgAttributes {
   return style
 }
 
-function rectToGeom(attr: SvgAttributes): Geom2 | undefined {
-  const w = parseUnits(attr.width)
-  const h = parseUnits(attr.height)
+function rectToGeom(attr: SvgAttributes, pmm: number): Geom2 | undefined {
+  const w = parseUnits(attr.width, pmm)
+  const h = parseUnits(attr.height, pmm)
   if (w <= 0 || h <= 0) return undefined
 
-  const x = parseUnits(attr.x)
-  const y = -parseUnits(attr.y) // SVG y-axis is inverted
-  const rx = parseUnits(attr.rx)
-  const ry = parseUnits(attr.ry)
+  const x = parseUnits(attr.x, pmm)
+  const y = -parseUnits(attr.y, pmm)
+  const rx = parseUnits(attr.rx, pmm)
+  const ry = parseUnits(attr.ry, pmm)
 
   const radius = Math.max(rx, ry)
   const center: Vec2 = [x + w / 2, y - h / 2]
@@ -89,72 +106,78 @@ function rectToGeom(attr: SvgAttributes): Geom2 | undefined {
   return primitives.rectangle({ center, size: [w, h] })
 }
 
-function circleToGeom(attr: SvgAttributes, options: SvgOptions): Geom2 | undefined {
-  const r = parseUnits(attr.r)
+function circleToGeom(attr: SvgAttributes, ctx: ProcessingContext): Geom2 | undefined {
+  const r = parseUnits(attr.r, ctx.pmm)
   if (r <= 0) return undefined
 
-  const cx = parseUnits(attr.cx)
-  const cy = -parseUnits(attr.cy)
-  return primitives.circle({ center: [cx, cy], radius: r, segments: options.segments })
+  const cx = parseUnits(attr.cx, ctx.pmm)
+  const cy = -parseUnits(attr.cy, ctx.pmm)
+  return primitives.circle({ center: [cx, cy], radius: r, segments: ctx.options.segments })
 }
 
-function ellipseToGeom(attr: SvgAttributes, options: SvgOptions): Geom2 | undefined {
-  const rx = parseUnits(attr.rx)
-  const ry = parseUnits(attr.ry)
+function ellipseToGeom(attr: SvgAttributes, ctx: ProcessingContext): Geom2 | undefined {
+  const rx = parseUnits(attr.rx, ctx.pmm)
+  const ry = parseUnits(attr.ry, ctx.pmm)
   if (rx <= 0 || ry <= 0) return undefined
 
-  const cx = parseUnits(attr.cx)
-  const cy = -parseUnits(attr.cy)
-  return primitives.ellipse({ center: [cx, cy], radius: [rx, ry], segments: options.segments })
+  const cx = parseUnits(attr.cx, ctx.pmm)
+  const cy = -parseUnits(attr.cy, ctx.pmm)
+  return primitives.ellipse({ center: [cx, cy], radius: [rx, ry], segments: ctx.options.segments })
 }
 
-function polyToGeom(attr: SvgAttributes): Geom2 | undefined {
-  const pointsStr = attr.points
-  if (!pointsStr) return undefined
+function lineToGeom(attr: SvgAttributes, pmm: number): Geom2 | undefined {
+  const x1 = parseUnits(attr.x1, pmm)
+  const y1 = -parseUnits(attr.y1, pmm)
+  const x2 = parseUnits(attr.x2, pmm)
+  const y2 = -parseUnits(attr.y2, pmm)
 
+  if (x1 === x2 && y1 === y2) return undefined
+
+  // A line has no fill area; represent as a degenerate polygon for extrusion compatibility
+  const dx = x2 - x1
+  const dy = y2 - y1
+  const len = Math.sqrt(dx * dx + dy * dy)
+  const nx = (-dy / len) * 0.01
+  const ny = (dx / len) * 0.01
+
+  return geometries.geom2.fromPoints([
+    [x1 + nx, y1 + ny],
+    [x2 + nx, y2 + ny],
+    [x2 - nx, y2 - ny],
+    [x1 - nx, y1 - ny],
+  ])
+}
+
+function polyToGeom(attr: SvgAttributes, pmm: number): Geom2 | undefined {
+  const pointsStr = attr.points
+  if (pointsStr === undefined) return undefined
+
+  const values = pointsStr
+    .trim()
+    .split(/[\s,]+/)
+    .map(parseFloat)
   const points: Vec2[] = []
-  const pairs = pointsStr.trim().split(/[\s,]+/)
-  for (let i = 0; i < pairs.length; i += 2) {
-    points.push([parseFloat(pairs[i]), -parseFloat(pairs[i + 1])])
+  for (let i = 0; i + 1 < values.length; i += 2) {
+    if (isNaN(values[i]) || isNaN(values[i + 1])) continue
+    points.push([values[i] / pmm, -values[i + 1] / pmm])
   }
 
   if (points.length < 3) return undefined
-  return geometries.geom2.fromPoints(points.map((p) => [parseUnits(p[0].toString()), parseUnits(p[1].toString())]))
+  return geometries.geom2.fromPoints(points)
 }
 
-function pathToGeom(attr: SvgAttributes, options: SvgOptions): Geom2 | undefined {
+function pathToGeom(attr: SvgAttributes, ctx: ProcessingContext, fillRule: string | undefined): Geom2 | undefined {
   const d = attr.d
-  if (!d) return undefined
+  if (d === undefined) return undefined
 
-  const outlines = parsePath(d, options.segments)
+  const outlines = parsePath(d, ctx.options.segments)
   if (outlines.length === 0) return undefined
 
-  const pmm = 3.54 // TODO: make configurable from viewBox
-  const scaledOutlines = outlines.map((outline) => outline.map(([x, y]) => [x / pmm, -y / pmm] as Vec2))
+  const scaledOutlines = outlines.map((outline) => outline.map(([x, y]) => [x / ctx.pmm, -y / ctx.pmm] as Vec2))
 
-  if (attr['fill-rule'] === 'evenodd') {
-    const allSides = scaledOutlines.flatMap((outline) => {
-      const sides: [Vec2, Vec2][] = []
-      for (let i = 0; i < outline.length; i++) {
-        sides.push([outline[i], outline[(i + 1) % outline.length]])
-      }
-      return sides
-    })
-    return jscad.geometries.geom2.create(allSides)
+  if (fillRule === 'evenodd') {
+    return assembleEvenOdd(scaledOutlines)
   }
 
-  // Default is 'nonzero': use winding order
-  let result: Geom2 | undefined
-  for (const outline of scaledOutlines) {
-    const geom = jscad.geometries.geom2.fromPoints(outline)
-    if (result == undefined) {
-      result = geom
-    } else {
-      // Winding direction determines if it's a hole (subtract) or a new solid (union)
-      const area = jscad.measurements.measureArea(geom)
-      result = (area > 0 ? jscad.booleans.union : jscad.booleans.subtract)(result, geom) as Geom2
-    }
-  }
-
-  return result
+  return assembleNonZero(scaledOutlines)
 }

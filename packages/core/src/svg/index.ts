@@ -14,3 +14,5 @@ export function svgToGeom2s(source: string, options: SvgOptions): Geom2[] {
   const nodes = deserializeSvg(source)
   return processNodes(nodes, options)
 }
+
+export type { SvgOptions } from './types.js'

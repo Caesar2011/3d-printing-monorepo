@@ -1,5 +1,7 @@
 import { SaxesParser } from 'saxes'
 
+import { logger } from '../logger.js'
+
 import type { SvgAttributes, SvgNode } from './types.js'
 
 /**
@@ -37,8 +39,7 @@ export function deserializeSvg(source: string): SvgNode[] {
   })
 
   parser.on('error', (error) => {
-    // Saxes parser is very strict; we log and continue to be robust
-    console.error('SVG parsing error:', error.message)
+    logger.error(`SVG parsing error: ${error.message}`)
   })
 
   parser.write(source).close()
