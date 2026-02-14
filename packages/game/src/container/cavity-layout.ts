@@ -41,7 +41,7 @@ export function computeCavityCells(
   innerOrigin: Vector3,
   innerSize: Vector3,
   wall: number,
-  division?: Division | null,
+  division?: Division,
   axis: 'x' | 'y' = 'x',
 ): CavityCell[] {
   if (!division || !division.at || division.at.length === 0) {
@@ -79,7 +79,7 @@ export function computeCavityCells(
     const sectionDim =
       axis === 'x' ? V([sectionSize, innerSize.y, innerSize.z]) : V([innerSize.x, sectionSize, innerSize.z])
 
-    const childDivision = children[i] ?? null
+    const childDivision = children[i] ?? undefined
     cells.push(...computeCavityCells(sectionOrigin, sectionDim, wall, childDivision, nextAxis))
   }
 
