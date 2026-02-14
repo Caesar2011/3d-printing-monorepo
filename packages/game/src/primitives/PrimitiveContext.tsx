@@ -7,7 +7,7 @@ export type PrimitiveContextType = {
 }
 
 const DEFAULT_VALUES: PrimitiveContextType = {
-  sphereSegments: 64,
+  sphereSegments: 20,
   cylinderSegments: 16,
 }
 

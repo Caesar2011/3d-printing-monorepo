@@ -30,6 +30,7 @@ export type ContainerOpts = {
   edges: Edge
   gripWidth: number
   cutout: CutoutSettings
+  cutoutEdges: Edge
 }
 
 /**
@@ -56,4 +57,5 @@ export type ContainerProps = {
   edges?: Edge
   divisions?: Division
   cutout?: CutoutConfig
+  cutoutEdges?: Edge
 }

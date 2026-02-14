@@ -45,6 +45,7 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
 
   const containerRadius = options.radius ?? containerCtx.radius
   const containerEdges = options.edges ?? containerCtx.edges
+  const containerCutoutEdges = containerEdges | (options.cutoutEdges ?? containerCtx.cutoutEdges)
   const wall = shapeCtx.wall
   const floor = shapeCtx.floor
 
@@ -57,7 +58,7 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
   const cells = computeCavityCells(innerOrigin, innerSize, wall, options.divisions)
 
   const allCutoutPlacements = cells.flatMap((cell) =>
-    computeCellCutoutPlacements(cell, dim, wall, floor, containerRadius, containerEdges, resolvedCutouts),
+    computeCellCutoutPlacements(cell, dim, wall, floor, containerRadius, containerCutoutEdges, resolvedCutouts),
   )
 
   return (
@@ -66,7 +67,7 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
 
       {cells.map((cell, idx) => (
         <translate by={cell.offset} key={`cavity-${idx}`}>
-          <Cuboid size={cell.size} edges={containerEdges & ~Edge.TOP} radius={innerRadius} />
+          <Cuboid size={cell.size} edges={containerCutoutEdges & ~Edge.TOP} radius={innerRadius} />
         </translate>
       ))}
 

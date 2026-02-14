@@ -22,6 +22,7 @@ const DEFAULT_VALUES: ContainerContextType = {
     hexWidth: 1.2,
     center: true,
   },
+  cutoutEdges: Edge.NONE,
 }
 
 const ContainerContext = createContext<ContainerContextType>(DEFAULT_VALUES)

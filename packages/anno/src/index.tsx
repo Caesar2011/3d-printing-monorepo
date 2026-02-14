@@ -33,7 +33,7 @@ const App = memo(() => {
           {/* Container split in half along X */}
           <translate by={{ x: 100 }}>
             <entity name={'split-half'} type={ShapeType.Part} color={Colors.GREEN_2}>
-              <Container size={V({ x: 80, y: 60, z: 40 })} divisions={{ at: [0.5] }} />
+              <Container size={V({ x: 80, y: 60, z: 40 })} divisions={{ at: [0.5] }} cutoutEdges={Edge.BOT} />
             </entity>
           </translate>
 
@@ -47,6 +47,10 @@ const App = memo(() => {
                   children: [{ at: [0.5] }, null, { at: [0.333, 0.666] }],
                 }}
                 edges={Edge.SIDE | Edge.BOT}
+                cutout={{
+                  side: {},
+                  bottom: {},
+                }}
               />
             </entity>
           </translate>
