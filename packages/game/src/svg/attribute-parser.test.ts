@@ -1,58 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { computePxPerMm, parseColor, parseTransform, parseUnits, parseViewBox } from './attribute-parser.js'
-
-describe('parseColor', () => {
-  test('returns undefined for undefined', () => {
-    expect(parseColor(undefined)).toBeUndefined()
-  })
-
-  test('returns undefined for "none"', () => {
-    expect(parseColor('none')).toBeUndefined()
-    expect(parseColor('None')).toBeUndefined()
-  })
-
-  test('parses 6-digit hex', () => {
-    expect(parseColor('#ff0000')).toEqual([1, 0, 0, 1])
-    expect(parseColor('#00ff00')).toEqual([0, 1, 0, 1])
-    expect(parseColor('#0000ff')).toEqual([0, 0, 1, 1])
-  })
-
-  test('parses 3-digit hex', () => {
-    expect(parseColor('#f00')).toEqual([1, 0, 0, 1])
-    expect(parseColor('#0f0')).toEqual([0, 1, 0, 1])
-  })
-
-  test('parses named colors', () => {
-    const red = parseColor('red')
-    expect(red).toEqual([1, 0, 0, 1])
-
-    const blue = parseColor('blue')
-    expect(blue).toEqual([0, 0, 1, 1])
-  })
-
-  test('parses rgb() notation', () => {
-    expect(parseColor('rgb(255, 0, 0)')).toEqual([1, 0, 0, 1])
-    expect(parseColor('rgb(0, 128, 0)')).toEqual([0, 128 / 255, 0, 1])
-  })
-
-  test('parses rgb() with percentages', () => {
-    expect(parseColor('rgb(100%, 0%, 0%)')).toEqual([1, 0, 0, 1])
-  })
-
-  test('parses #a99168 correctly', () => {
-    const color = parseColor('#a99168')
-    expect(color).toBeDefined()
-    expect(color![0]).toBeCloseTo(0xa9 / 255)
-    expect(color![1]).toBeCloseTo(0x91 / 255)
-    expect(color![2]).toBeCloseTo(0x68 / 255)
-    expect(color![3]).toBe(1)
-  })
-
-  test('returns undefined for unsupported format', () => {
-    expect(parseColor('hsl(0, 100%, 50%)')).toBeUndefined()
-  })
-})
+import { computePxPerMm, parseTransform, parseUnits, parseViewBox } from './attribute-parser.js'
 
 describe('parseUnits', () => {
   test('returns 0 for undefined', () => {

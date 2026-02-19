@@ -4,6 +4,7 @@ import { V } from '@jsxcad/core'
 import { Cuboid } from '../primitives/index.js'
 import { useShapeContext } from '../shape/ShapeContext.js'
 import { Edge } from '../primitives/Cuboid.js'
+import { SvgShape } from '../primitives/SvgShape.js'
 
 import type { CutoutSettings, ContainerProps, SideFaceName } from './types.js'
 import type { FaceCutoutMap, ResolvedCutout } from './cutout-geometry.js'
@@ -126,7 +127,7 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
             )}
             {cell.imprintSrc !== undefined && (
               <translate by={{ xy: cell.size.s(imprintSize).d(2), z: -imprintSize.z }}>
-                <svgfile file={cell.imprintSrc} size={imprintSize.a({ z: 0.1 })} />
+                <SvgShape file={cell.imprintSrc} size={imprintSize.a({ z: 0.1 })} />
               </translate>
             )}
           </translate>

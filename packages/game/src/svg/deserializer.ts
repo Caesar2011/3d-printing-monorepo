@@ -4,10 +4,7 @@ import { logger } from '../logger.js'
 
 import type { SvgAttributes, SvgNode } from './types.js'
 
-/**
- * Deserializes an SVG source string into a tree of SvgNode objects.
- * This is an intermediate representation, not the final geometry.
- */
+/** Deserializes an SVG source string into a tree of SvgNode objects. */
 export function deserializeSvg(source: string): SvgNode[] {
   const parser = new SaxesParser()
   const rootNodes: SvgNode[] = []

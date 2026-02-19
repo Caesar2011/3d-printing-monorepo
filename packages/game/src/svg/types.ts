@@ -1,4 +1,3 @@
-
 export type Vec2 = [number, number]
 
 export interface SvgOptions {
@@ -6,7 +5,6 @@ export interface SvgOptions {
 }
 
 export interface SvgAttributes {
-  // Common presentation attributes
   id?: string
   class?: string
   style?: string
@@ -17,7 +15,6 @@ export interface SvgAttributes {
   'stroke-width'?: string
   opacity?: string
 
-  // Geometry attributes
   d?: string
   x?: string
   y?: string
@@ -34,10 +31,8 @@ export interface SvgAttributes {
   x2?: string
   y2?: string
 
-  // ViewBox
   viewBox?: string
 
-  // Fallback for unknown attributes
   [key: string]: string | undefined
 }
 

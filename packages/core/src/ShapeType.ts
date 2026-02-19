@@ -144,13 +144,13 @@ export class CylinderNode extends PrimitiveNode<CylinderProps> {
   }
 }
 
-type SvgProps = Parameters<typeof Shape.svgfile>[0]
-export class SvgNode extends PrimitiveNode<SvgProps> {
-  public getClass(): new (props: unknown) => PrimitiveNode<SvgProps> {
-    return SvgNode
+type PolygonProps = Parameters<typeof Shape.prism>[0]
+export class PrismNode extends PrimitiveNode<PolygonProps> {
+  public getClass(): new (props: unknown) => PrimitiveNode<PolygonProps> {
+    return PrismNode
   }
   public renderFn(): Shape[] {
-    return [Shape.svgfile(this.props)]
+    return [Shape.prism(this.props)]
   }
 }
 
@@ -277,7 +277,7 @@ export const ShapeMap = {
   cuboid: CuboidNode,
   sphere: SphereNode,
   cylinder: CylinderNode,
-  svgfile: SvgNode,
+  prism: PrismNode,
 } as const
 
 export const ShapeMapBooleans = {

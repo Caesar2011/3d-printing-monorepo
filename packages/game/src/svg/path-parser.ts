@@ -4,10 +4,7 @@ import type { Vec2 } from './types.js'
 
 const { geometries } = jscad
 
-/**
- * Parses an SVG path `d` attribute into an array of outlines (point arrays).
- * Handles all command types and their relative/absolute variations.
- */
+/** Parses an SVG path `d` attribute into an array of outlines (point arrays). */
 export function parsePath(d: string, segments: number): Vec2[][] {
   const parser = new PathParser(d, segments)
   return parser.parse()

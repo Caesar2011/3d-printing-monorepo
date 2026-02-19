@@ -1,7 +1,3 @@
-import fs from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-
 import type { Color, Geom3, Poly3 } from '@jscad/modeling/src/geometries/types.js'
 import type { Mat4 } from '@jscad/modeling/src/maths/types.js'
 import type { CylinderOptions, SphereOptions } from '@jscad/modeling/src/primitives/index.js'
@@ -9,8 +5,6 @@ import jscad from '@jscad/modeling'
 
 import type { AxisRecordDefinition, UniqueAxisString } from './Vector3.js'
 import { axisOrRecordToVec3, V } from './Vector3.js'
-import { logger } from './logger.js'
-import { svgToGeom2s } from './svg/index.js'
 
 const { booleans, maths, measurements, primitives, transforms, hulls, extrusions } = jscad
 
@@ -154,89 +148,25 @@ export class Shape implements Geom3 {
     return shape.translate({ by: props.center !== undefined ? props.center : V(props.size).d(2) })
   }
 
-  /** Creates a 3D shape by loading an SVG, optionally scaling it to fill the given size, and extruding to the given z height. */
-  public static svgfile(
+  /** Creates a 3D shape by extruding a closed 2D polygon to the given height. Points must be in counter-clockwise order. */
+  public static prism(
     props: {
-      file: string
-      size: AxisRecordDefinition
-      segments?: number
+      points: [number, number][]
+      height: number
       center?: AxisRecordDefinition
-      fillSize?: boolean
     } & ShapeProperties,
   ) {
-    const svgSource = loadSvgSource(props.file)
-    const geom2s = svgToGeom2s(svgSource, { segments: props.segments ?? 32 })
-
-    if (geom2s.length === 0) {
-      throw new Error(`SVG file produced no geometry: ${props.file}`)
+    if (props.points.length < 3) {
+      throw new Error('Polygon must have at least 3 points')
     }
 
-    const sizeVec = V(props.size)
-    const height = sizeVec.v[2]
-
-    const geom3s: Geom3[] = []
-    for (const g of geom2s) {
-      try {
-        geom3s.push(extrusions.extrudeLinear({ height }, g))
-      } catch (e) {
-        logger.debug(`SVG: skipping non-extrudable geom2 (${e instanceof Error ? e.message : e}) in ${props.file}`)
-      }
-    }
-
-    if (geom3s.length === 0) {
-      throw new Error(`SVG file produced no extrudable geometry: ${props.file}`)
-    }
-
-    const combined: Geom3 = geom3s.length === 1 ? geom3s[0] : booleans.union(geom3s)
-
-    // Move to origin first so we can reason about the SVG bounds cleanly
-    let shape = new Shape(combined, props).translate({ fromOrigin: 'xyz' })
-
-    const [, svgMax] = measurements.measureBoundingBox(shape)
-    const svgW = svgMax[0]
-    const svgH = svgMax[1]
-
-    const targetW = sizeVec.v[0]
-    const targetH = sizeVec.v[1]
-
-    if (props.fillSize === true) {
-      // Scale the SVG to exactly fill the target x/y dimensions
-      const scaleX = targetW / svgW
-      const scaleY = targetH / svgH
-      shape = shape.scale({ by: { x: scaleX, y: scaleY, z: 1 } })
-    } else {
-      // Uniform scale to fit within target, then center within the target area
-      const scaleFactor = Math.min(targetW / svgW, targetH / svgH)
-      shape = shape.scale({ by: { x: scaleFactor, y: scaleFactor, z: 1 } })
-
-      const scaledW = svgW * scaleFactor
-      const scaledH = svgH * scaleFactor
-      const offsetX = (targetW - scaledW) / 2
-      const offsetY = (targetH - scaledH) / 2
-      shape = shape.translate({ by: { x: offsetX, y: offsetY } })
-    }
+    const geom2 = primitives.polygon({ points: props.points })
+    const geom3 = extrusions.extrudeLinear({ height: props.height }, geom2)
+    const shape = new Shape(geom3, props)
 
     if (props.center !== undefined) {
       return shape.translate({ by: props.center })
     }
     return shape
   }
-}
-
-function loadSvgSource(uri: string): string {
-  if (uri.startsWith('data:')) {
-    const commaIndex = uri.indexOf(',')
-    if (commaIndex === -1) throw new Error('Malformed data: URL')
-    const meta = uri.slice(0, commaIndex)
-    const encoded = uri.slice(commaIndex + 1)
-    return meta.includes(';base64') ? Buffer.from(encoded, 'base64').toString('utf-8') : decodeURIComponent(encoded)
-  }
-
-  if (uri.startsWith('file://')) {
-    uri = fileURLToPath(uri)
-  }
-
-  const resolved = path.isAbsolute(uri) ? uri : path.resolve(process.cwd(), uri)
-  if (!fs.existsSync(resolved)) throw new Error(`SVG file not found: ${resolved}`)
-  return fs.readFileSync(resolved, 'utf-8')
 }

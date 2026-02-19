@@ -10,6 +10,7 @@ import {
   Edge,
   renderComponent,
   RoundedCylinder,
+  SvgShape,
 } from '@jsxcad/game'
 
 import { logger } from './logger.js'
@@ -107,6 +108,9 @@ const App = memo(() => {
         </translate>
       </DebugAxes>
       {/* */}
+      <entity color={Colors.GREEN_2}>
+        <SvgShape file={'res/energy1-simple.svg'} size={100} />
+      </entity>
     </entity>
   )
 })
