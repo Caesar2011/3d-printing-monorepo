@@ -100,12 +100,20 @@ function collectGroups(
 }
 
 function parseStyle(styleStr: string | undefined): SvgAttributes {
-  if (styleStr === undefined) return {}
+  if (styleStr == null) {
+    return {}
+  }
   const style: SvgAttributes = {}
-  for (const decl of styleStr.split(';')) {
-    const [key, value] = decl.split(':')
-    if (key && value) {
-      style[key.trim()] = value.trim()
+  for (const declaration of styleStr.split(';')) {
+    if (!declaration) {
+      continue
+    }
+    const separatorIndex = declaration.indexOf(':')
+    // Ensure a key is present and is not empty.
+    if (separatorIndex > 0) {
+      const key = declaration.substring(0, separatorIndex).trim()
+      const value = declaration.substring(separatorIndex + 1).trim()
+      style[key] = value
     }
   }
   return style

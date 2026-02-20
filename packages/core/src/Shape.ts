@@ -151,7 +151,7 @@ export class Shape implements Geom3 {
   /** Creates a 3D shape by extruding a closed 2D polygon to the given height. Points must be in counter-clockwise order. */
   public static prism(
     props: {
-      points: [number, number][]
+      points: AxisRecordDefinition[]
       height: number
       center?: AxisRecordDefinition
     } & ShapeProperties,
@@ -160,7 +160,9 @@ export class Shape implements Geom3 {
       throw new Error('Polygon must have at least 3 points')
     }
 
-    const geom2 = primitives.polygon({ points: props.points })
+    const points = props.points.map((point) => V(point).v.slice(0, 2) as [number, number])
+
+    const geom2 = primitives.polygon({ points })
     const geom3 = extrusions.extrudeLinear({ height: props.height }, geom2)
     const shape = new Shape(geom3, props)
 

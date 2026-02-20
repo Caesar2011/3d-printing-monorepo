@@ -4,7 +4,7 @@ import { V } from '@jsxcad/core'
 import { Cuboid } from '../primitives/index.js'
 import { useShapeContext } from '../shape/ShapeContext.js'
 import { Edge } from '../primitives/Cuboid.js'
-import { SvgShape } from '../primitives/SvgShape.js'
+import { SvgShape } from '../svg/SvgShape.js'
 
 import type { CutoutSettings, ContainerProps, SideFaceName } from './types.js'
 import type { FaceCutoutMap, ResolvedCutout } from './cutout-geometry.js'
