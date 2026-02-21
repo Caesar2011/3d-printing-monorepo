@@ -2,12 +2,6 @@ import type { AxisRecordDefinition } from '@jsxcad/core'
 
 import type { Edge } from '../primitives/Cuboid.js'
 
-export enum Lap {
-  NONE,
-  INNER_HALF,
-  OUTER_HALF,
-}
-
 export enum CutoutType {
   EMPTY,
   HEX,
@@ -55,7 +49,6 @@ export type CutoutConfig = {
 
 export type ContainerProps = {
   size: AxisRecordDefinition
-  lap?: Lap
   radius?: number
   edges?: Edge
   divisions?: Division

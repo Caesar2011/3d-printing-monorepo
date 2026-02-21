@@ -14,7 +14,7 @@
     "serve": "yarn workspace @jsxcad/server serve",
     "dev": "cross-env FORCE_COLOR=1 npm-run-all --parallel -l watch:anno serve game:anno",
     "dev:paleo": "cross-env FORCE_COLOR=1 npm-run-all --parallel -l watch:paleo serve game:paleo",
-    "build": "yarn workspaces foreach -At run build",
+    "build": "node scripts/cleanup.ts && yarn workspaces foreach -At run build",
     "lint": "prettier --write . && eslint . --fix",
     "lint:eslint": "eslint . --fix",
     "lint-staged": "lint-staged",

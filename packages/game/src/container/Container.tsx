@@ -2,6 +2,7 @@ import type { FC } from 'react'
 import { V } from '@jsxcad/core'
 
 import { Cuboid } from '../primitives/index.js'
+import type { ShapeContextType } from '../shape/ShapeContext.js'
 import { useShapeContext } from '../shape/ShapeContext.js'
 import { Edge } from '../primitives/Cuboid.js'
 import { SvgShape } from '../svg/SvgShape.js'
@@ -10,6 +11,7 @@ import type { CutoutSettings, ContainerProps, SideFaceName } from './types.js'
 import type { FaceCutoutMap, ResolvedCutout } from './cutout-geometry.js'
 import { computeCellCutoutPlacements } from './cutout-geometry.js'
 import { computeCavityCells } from './cavity-layout.js'
+import type { ContainerContextType } from './ContainerContext.js'
 import { useContainerContext } from './ContainerContext.js'
 import { CutoutFace } from './CutoutFace.js'
 import {
@@ -56,10 +58,11 @@ function hasCutouts(cutoutProps?: ContainerProps['cutout']): boolean {
   )
 }
 
-export const Container: FC<ContainerProps> = ({ size, ...options }) => {
-  const shapeCtx = useShapeContext()
-  const containerCtx = useContainerContext()
-
+export function resolveContainerConfig(
+  options: Omit<ContainerProps, 'size'>,
+  containerCtx: ContainerContextType,
+  shapeCtx: ShapeContextType,
+) {
   const scoop = options.scoop ?? false
   const containerRadius = options.radius ?? containerCtx.radius
   const containerEdges = options.edges ?? containerCtx.edges
@@ -68,6 +71,14 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
   const floor = shapeCtx.floor
   const scoopFactor = containerCtx.scoopFactor
   const maxImprintSize = V(options.maxImprintSize ?? containerCtx.maxImprintSize)
+  return { scoop, containerRadius, containerEdges, containerCutoutEdges, wall, floor, scoopFactor, maxImprintSize }
+}
+
+export const Container: FC<ContainerProps> = ({ size, ...options }) => {
+  const shapeCtx = useShapeContext()
+  const containerCtx = useContainerContext()
+  const { scoop, containerRadius, containerEdges, containerCutoutEdges, wall, floor, scoopFactor, maxImprintSize } =
+    resolveContainerConfig(options, containerCtx, shapeCtx)
 
   if (scoop && hasCutouts(options.cutout)) {
     throw new Error('Cannot use scoop and cutouts simultaneously. Enable only one of the two.')

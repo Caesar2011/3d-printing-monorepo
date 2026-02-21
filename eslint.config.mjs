@@ -155,6 +155,7 @@ export default [
       'vitest.config.ts',
       'src/server.ts',
       '.idea',
+      'scripts/**/*.ts',
     ],
   },
 ]
