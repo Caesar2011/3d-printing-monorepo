@@ -32,10 +32,10 @@ export function validateScoopFit(cell: CavityCell, scoopWidth: number): void {
   }
 }
 
-/** Validates that imprint of cell is only on solid bottom. */
-export function validateImprintBottom(cell: CavityCell, isSolidBottom: boolean): void {
-  if (!isSolidBottom && cell.imprintSrc !== undefined) {
-    throw new Error(`Imprint is only allowed on solid bottom.`)
+/** Validates that an emboss source is only used on a solid (non-cutout) bottom. */
+export function validateEmbossBottom(cell: CavityCell, isSolidBottom: boolean): void {
+  if (!isSolidBottom && cell.embossSrc !== undefined) {
+    throw new Error(`Emboss is only allowed on solid bottom.`)
   }
 }
 

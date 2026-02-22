@@ -24,7 +24,7 @@ const DEFAULT_VALUES: ContainerContextType = {
   },
   cutoutEdges: Edge.NONE,
   scoopFactor: 1.3,
-  maxImprintSize: { x: 40, y: 40, z: 0.5 },
+  maxEmbossSize: { x: 40, y: 40, z: 0.5 },
 }
 
 const ContainerContext = createContext<ContainerContextType>(DEFAULT_VALUES)

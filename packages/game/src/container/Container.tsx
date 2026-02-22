@@ -19,7 +19,7 @@ import {
   computeScoopWidth,
   validateScoopFit,
   determineScoopAxis,
-  validateImprintBottom,
+  validateEmbossBottom,
 } from './scoop-geometry.js'
 
 const SIDE_FACES: readonly SideFaceName[] = ['front', 'left', 'back', 'right'] as const
@@ -70,14 +70,14 @@ export function resolveContainerConfig(
   const wall = shapeCtx.wall
   const floor = shapeCtx.floor
   const scoopFactor = containerCtx.scoopFactor
-  const maxImprintSize = V(options.maxImprintSize ?? containerCtx.maxImprintSize)
-  return { scoop, containerRadius, containerEdges, containerCutoutEdges, wall, floor, scoopFactor, maxImprintSize }
+  const maxEmbossSize = V(options.maxEmbossSize ?? containerCtx.maxEmbossSize)
+  return { scoop, containerRadius, containerEdges, containerCutoutEdges, wall, floor, scoopFactor, maxEmbossSize }
 }
 
 export const Container: FC<ContainerProps> = ({ size, ...options }) => {
   const shapeCtx = useShapeContext()
   const containerCtx = useContainerContext()
-  const { scoop, containerRadius, containerEdges, containerCutoutEdges, wall, floor, scoopFactor, maxImprintSize } =
+  const { scoop, containerRadius, containerEdges, containerCutoutEdges, wall, floor, scoopFactor, maxEmbossSize } =
     resolveContainerConfig(options, containerCtx, shapeCtx)
 
   if (scoop && hasCutouts(options.cutout)) {
@@ -101,7 +101,7 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
   }
 
   for (const cell of cells) {
-    validateImprintBottom(cell, resolvedCutouts.bottom === undefined)
+    validateEmbossBottom(cell, resolvedCutouts.bottom === undefined)
   }
 
   const allCutoutPlacements = scoop
@@ -115,13 +115,13 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
       <Cuboid size={size} edges={containerEdges} radius={containerRadius} />
 
       {cells.map((cell, idx) => {
-        let imprintSize = V({ xy: maxImprintSize.min(cell.size), z: maxImprintSize })
+        let embossSize = V({ xy: maxEmbossSize.min(cell.size), z: maxEmbossSize })
         const scoopWidth = scoop ? computeScoopWidth(cell.size.z, scoopFactor) : 0
         if (scoop) {
           const axis = determineScoopAxis(cell)
-          imprintSize = imprintSize.s({ [axis]: scoopWidth * 2, [axis === 'x' ? 'y' : 'x']: innerRadius * 2 })
+          embossSize = embossSize.s({ [axis]: scoopWidth * 2, [axis === 'x' ? 'y' : 'x']: innerRadius * 2 })
         } else if ((containerCutoutEdges & Edge.BOT) !== 0) {
-          imprintSize = imprintSize.s({ xy: innerRadius * 2 })
+          embossSize = embossSize.s({ xy: innerRadius * 2 })
         }
 
         return (
@@ -136,9 +136,9 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
             ) : (
               <Cuboid size={cell.size} edges={containerCutoutEdges & ~Edge.TOP} radius={innerRadius} />
             )}
-            {cell.imprintSrc !== undefined && (
-              <translate by={{ xy: cell.size.s(imprintSize).d(2), z: -imprintSize.z }}>
-                <SvgShape file={cell.imprintSrc} size={imprintSize.a({ z: 0.1 })} />
+            {cell.embossSrc !== undefined && (
+              <translate by={{ xy: cell.size.s(embossSize).d(2), z: -embossSize.z }}>
+                <SvgShape file={cell.embossSrc} size={embossSize.a({ z: 0.1 })} />
               </translate>
             )}
           </translate>

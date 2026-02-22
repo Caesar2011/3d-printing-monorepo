@@ -26,7 +26,7 @@ export type ContainerContextOpts = {
   cutout: CutoutSettings
   cutoutEdges: Edge
   scoopFactor: number
-  maxImprintSize: AxisRecordDefinition
+  maxEmbossSize: AxisRecordDefinition
 }
 
 /**
@@ -39,7 +39,7 @@ export type ContainerContextOpts = {
 export type Division = {
   at?: number[]
   children?: (Division | null)[]
-  imprintSrc?: string
+  embossSrc?: string
 }
 
 export type CutoutConfig = {
@@ -55,5 +55,5 @@ export type ContainerProps = {
   cutout?: CutoutConfig
   scoop?: boolean
   cutoutEdges?: Edge
-  maxImprintSize?: AxisRecordDefinition
+  maxEmbossSize?: AxisRecordDefinition
 }

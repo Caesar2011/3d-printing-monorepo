@@ -25,7 +25,7 @@ const App = memo(() => {
           {/* --- Refactored Container examples --- * /}
           <DividerTest />
           <translate by={{ y: 100 }}>
-            <ImprintTest />
+            <EmbossTest />
           </translate>
           {/* */}
           <PrimitiveContextProvider cylinderSegments={64}>
@@ -35,26 +35,25 @@ const App = memo(() => {
           </PrimitiveContextProvider>
         </ContainerContextProvider>
 
-        {/* --- Rounded Cylinder examples --- */}
+        {/* --- Rounded Cylinder examples --- * /}
         <translate by={{ y: -50 }}>
           <CylinderTest />
         </translate>
+        {/* */}
       </DebugAxes>
     </entity>
   )
 })
 
 /**
- * Component demonstrating a container with an SVG imprinted on a division.
- * Positioned at y = -50 as requested.
+ * Component demonstrating a container with an SVG embossed on a division.
  */
-const ImprintTest = memo(() => (
-  // Container split in half along X with an imprint
+const EmbossTest = memo(() => (
   <translate by={{ x: 100 }}>
     <entity name={'split-half'} type={ShapeType.Part} color={Colors.GREEN_2}>
       <Container
         size={V({ x: 80, y: 60, z: 20 })}
-        divisions={{ at: [0.5], children: [{ imprintSrc: 'res/energy1-simple.svg' }, {}] }}
+        divisions={{ at: [0.5], children: [{ embossSrc: 'res/energy1-simple.svg' }, {}] }}
         cutoutEdges={Edge.BOT}
         scoop={true}
       />
@@ -64,7 +63,6 @@ const ImprintTest = memo(() => (
 
 /**
  * Component demonstrating various container and divider configurations.
- * Positioned at y = -50 as requested.
  */
 const DividerTest = memo(() => (
   <>
