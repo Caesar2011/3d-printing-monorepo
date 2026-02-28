@@ -19,7 +19,8 @@ const DEFAULT_VALUES: ShapeContextType = {
       },
       height: 0.1,
     },
-    lap: 0.02,
+    sliding: 0.2,
+    pressFit: 0.02,
   },
 }
 

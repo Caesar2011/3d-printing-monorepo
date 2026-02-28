@@ -7,7 +7,6 @@ import { useShapeContext } from '../shape/ShapeContext.js'
 import { useContainerContext } from '../container/ContainerContext.js'
 import { Edge } from '../primitives/index.js'
 import { Colors } from '../utils/index.js'
-import { logger } from '../logger.js'
 
 import type { LidProps } from './types.js'
 import { getMinWallWidth, SlidingLid, SlidingLidCutout } from './sliding-lid.js'
@@ -19,7 +18,7 @@ export const ClosedContainer: FC<ContainerProps & LidProps> = ({ size, ...option
   const containerDimensions = V(size)
 
   if (options.lid?.type === 'slide' && wall < getMinWallWidth()) {
-    logger.error(`Sliding lid requires a wall thickness of at least ${getMinWallWidth()}mm.`)
+    throw new Error(`Sliding lid requires a wall thickness of at least ${getMinWallWidth()}mm.`)
   }
 
   if (options.lid?.type !== 'slide') {

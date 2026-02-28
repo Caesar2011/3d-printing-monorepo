@@ -13,7 +13,7 @@ import {
   RoundedCylinder,
   ShapeContextProvider,
 } from '@jsxcad/game'
-import { ClosedContainer } from '@jsxcad/game/dist/closed-container/ClosedContainer.js'
+import { CardContainer } from '@jsxcad/game/dist/card-container/CardContainer.js'
 
 import { logger } from './logger.js'
 
@@ -30,7 +30,13 @@ const App = memo(() => {
           {/* */}
           <PrimitiveContextProvider cylinderSegments={64}>
             <ShapeContextProvider wall={3}>
-              <ClosedContainer size={{ x: 80, y: 120, z: 30 }} lid={{ type: 'slide' }} radius={10} />
+              {/*<ClosedContainer size={{ x: 80, y: 120, z: 30 }} lid={{ type: 'slide' }} radius={10} />*/}
+              <CardContainer
+                size={{ x: 80, y: 120, z: 30 }}
+                dividerSpacingMin={5}
+                dividerRadius={2}
+                dividers={[10, 5, 2]}
+              />
             </ShapeContextProvider>
           </PrimitiveContextProvider>
         </ContainerContextProvider>

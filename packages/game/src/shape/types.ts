@@ -9,6 +9,7 @@ export type ShapeSpecs = {
       }
       height: number
     }
-    lap: number
+    sliding: number
+    pressFit: number
   }
 }

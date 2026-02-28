@@ -4,12 +4,12 @@ import { V } from '@jsxcad/core'
 
 import { Cuboid, Cylinder, Edge } from '../primitives/index.js'
 import type { ContainerProps } from '../container/types.js'
+import { useShapeContext } from '../shape/ShapeContext.js'
 
 import type { LidProps } from './types.js'
 
 // --- Dimensions & Tolerances ---
 const SLIDE_LID_HEIGHT = 2.6
-const SLIDE_LID_TOLERANCE = 0.2 // General tolerance for sliding parts
 const SLIDE_CARVE_OUT_FROM_WALL = 1.5
 
 // --- Slide Rail Geometry ---
@@ -40,12 +40,15 @@ interface SlidingMechanismProps {
 }
 
 function getSlideCalculations(containerRadius: number, wallThickness: number, containerDimensions: Vector3) {
+  const shapeContext = useShapeContext()
+  const slideTolerance = shapeContext.tolerance.sliding
+
   const railOffsetFromWall = wallThickness - SLIDE_CARVE_OUT_FROM_WALL
 
   // Calculate where the slide mechanism would intersect a rounded inner corner
   // to ensure the slide rail doesn't poke through the inner wall.
   const slideWidthAtInnerRadius =
-    containerRadius - (railOffsetFromWall + SLIDE_LID_TOLERANCE + SLIDE_RAIL_WIDTH + SLIDE_RAIL_CLEARANCE)
+    containerRadius - (railOffsetFromWall + slideTolerance + SLIDE_RAIL_WIDTH + SLIDE_RAIL_CLEARANCE)
 
   let slideRailStartY = 1 // Default start Y for non-rounded or large-radius corners.
   if (slideWidthAtInnerRadius > 0) {
@@ -115,6 +118,8 @@ export const SlidingLidCutout: FC<Omit<SlidingMechanismProps, 'options'>> = ({
     wallThickness,
     containerDimensions,
   )
+  const shapeContext = useShapeContext()
+  const slideTolerance = shapeContext.tolerance.sliding
 
   const SideCutout = () => (
     <ContainerSideProfileCutout
@@ -147,7 +152,7 @@ export const SlidingLidCutout: FC<Omit<SlidingMechanismProps, 'options'>> = ({
         size={{
           x:
             slideDimensions.x -
-            (SLIDE_RAIL_WIDTH + SLIDE_LID_TOLERANCE + LID_HANDLE_PULL_TAB_WIDTH + LID_HANDLE_POST_WIDTH / 2) * 2,
+            (SLIDE_RAIL_WIDTH + slideTolerance + LID_HANDLE_PULL_TAB_WIDTH + LID_HANDLE_POST_WIDTH / 2) * 2,
           y: containerDimensions.y,
           z: slideDimensions.z,
         }}
@@ -166,7 +171,10 @@ const LidSideProfile: FC<{
   lidDimensions: Vector3
   containerDimensions: Vector3
 }> = ({ railOffsetFromWall, lidDimensions, containerDimensions }) => {
-  const railX = railOffsetFromWall + SLIDE_LID_TOLERANCE
+  const shapeContext = useShapeContext()
+  const slideTolerance = shapeContext.tolerance.sliding
+
+  const railX = railOffsetFromWall + slideTolerance
   const railEndX = railX + SLIDE_RAIL_WIDTH
   const handlePostOuterX = railEndX + LID_HANDLE_PULL_TAB_WIDTH + LID_HANDLE_POST_WIDTH
   const cylinderRadius = LID_HANDLE_POST_WIDTH / 2
@@ -214,16 +222,17 @@ export const SlidingLid: FC<Omit<SlidingMechanismProps, 'options'>> = ({
     wallThickness,
     containerDimensions,
   )
+  const shapeContext = useShapeContext()
+  const slideTolerance = shapeContext.tolerance.sliding
 
-  const lidRailTolerance = SLIDE_LID_TOLERANCE + SLIDE_LID_TOLERANCE / TAN_SLIDE_RAIL_ANGLE
+  const lidRailTolerance = slideTolerance + slideTolerance / TAN_SLIDE_RAIL_ANGLE
   const lidDimensions = V({
     xyz: slideDimensions,
     x: -lidRailTolerance * 2,
-    z: -SLIDE_LID_TOLERANCE,
+    z: -slideTolerance,
   })
 
-  const handleProfileWidthOnSide =
-    SLIDE_LID_TOLERANCE + SLIDE_RAIL_WIDTH + LID_HANDLE_PULL_TAB_WIDTH + LID_HANDLE_POST_WIDTH
+  const handleProfileWidthOnSide = slideTolerance + SLIDE_RAIL_WIDTH + LID_HANDLE_PULL_TAB_WIDTH + LID_HANDLE_POST_WIDTH
 
   const Side = () => (
     <LidSideProfile
