@@ -33,11 +33,17 @@ export class Vector3 {
   }
 
   public m(add: AxisRecordDefinition): Vector3 {
-    return this.elementWiseOther(add, (a, b) => a * b)
+    return this.elementWiseOther(add, (a, b) => {
+      if (b === 0) return a
+      return a * b
+    })
   }
 
   public d(add: AxisRecordDefinition): Vector3 {
-    return this.elementWiseOther(add, (a, b) => a / b)
+    return this.elementWiseOther(add, (a, b) => {
+      if (b === 0) return a
+      return a / b
+    })
   }
 
   public min(b: AxisRecordDefinition): Vector3 {

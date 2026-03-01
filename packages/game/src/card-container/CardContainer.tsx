@@ -6,7 +6,7 @@ import type { ContainerProps } from '../container/types.js'
 import { Container, resolveContainerConfig } from '../container/Container.js'
 import { useShapeContext } from '../shape/ShapeContext.js'
 import { useContainerContext } from '../container/ContainerContext.js'
-import { Edge } from '../primitives/index.js'
+import { Cuboid, Cylinder, Edge, Fillet } from '../primitives/index.js'
 import { Colors } from '../utils/index.js'
 import { logger } from '../logger.js'
 
@@ -74,6 +74,39 @@ export const CardContainer: FC<ContainerProps & DividerProps> = ({ size, ...opti
     <>
       <subtract>
         <Container size={size} {...options} />
+        {cutoutDiameter !== undefined && (
+          <>
+            <translate
+              by={{
+                x: containerDimensions.x / 2 - cutoutDiameter / 2,
+                y: containerDimensions.y,
+                z: containerDimensions.z - cutoutDiameter / 2 - dividerRadius,
+              }}
+            >
+              <rotate by={{ x: Math.PI / 2 }}>
+                <Cylinder size={{ xy: cutoutDiameter, z: containerDimensions.y }} />
+              </rotate>
+            </translate>
+
+            <translate by={{ x: upperWidth, z: containerDimensions.z }}>
+              <rotate by={{ y: Math.PI / 2, z: Math.PI / 2 }}>
+                <Fillet size={{ xy: dividerRadius, z: containerDimensions.y }} />
+              </rotate>
+            </translate>
+            <translate
+              by={{ x: containerDimensions.x - upperWidth, y: containerDimensions.y, z: containerDimensions.z }}
+            >
+              <rotate by={{ y: Math.PI / 2, z: -Math.PI / 2 }}>
+                <Fillet size={{ xy: dividerRadius, z: containerDimensions.y }} />
+              </rotate>
+            </translate>
+            <translate by={{ x: upperWidth, z: containerDimensions.z - dividerRadius }}>
+              <Cuboid
+                size={{ x: containerDimensions.x - 2 * upperWidth, y: containerDimensions.y, z: dividerRadius }}
+              />
+            </translate>
+          </>
+        )}
         {range(divisions - 1).map((i) => (
           <translate
             by={{
