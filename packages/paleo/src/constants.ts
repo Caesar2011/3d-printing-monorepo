@@ -2,8 +2,8 @@ import { V } from '@jsxcad/core'
 
 const card = V([87.2, 56.1, 50.5 / 171])
 
-const dims = {
-  box: V([290, 290, 70]),
+export const DIMS = {
+  box: V([288, 288, 70]),
   cards: {
     // base
     a: card.m({ z: 9 }),
@@ -34,5 +34,12 @@ const dims = {
     extraE: card.m({ z: 9 }),
     // add-ons
     // TODO
+  },
+  stand: {
+    size: V([250, 143, 67]),
+    lowerBar: V([250, 40, 40]),
+    upperBar: V([250, 40, 35]),
+    outerSpace: 15,
+    cardBoardWidth: 2,
   },
 }

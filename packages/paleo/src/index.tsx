@@ -1,22 +1,19 @@
 import { memo } from 'react'
-import { ShapeType, V } from '@jsxcad/core'
-import { HexGrid, Cuboid, Colors, renderComponent } from '@jsxcad/game'
+import { DebugAxes, renderComponent } from '@jsxcad/game'
 
 import { logger } from './logger.js'
+import { DIMS } from './constants.js'
+import { Stand } from './Stand.js'
+import { Box } from './Box.js'
 
 const App = memo(() => {
-  const dim = V({ x: 200, y: 100, z: 2 })
   return (
-    <entity name={'app'}>
-      <entity name={'hex'}>
-        <HexGrid size={dim} hexInnerDiameter={10} hexWidth={1.2} center={true} />
-      </entity>
-      <subtract name={'outer'} type={ShapeType.Technical} color={Colors.BLUE_2}>
-        <translate by={{ xy: -0.1 }}>
-          <Cuboid size={dim.a({ xy: 0.2 })} />
-        </translate>
-        <Cuboid size={dim} />
-      </subtract>
+    <entity name={'paleo'}>
+      <DebugAxes x={DIMS.box.x} y={DIMS.box.y} z={DIMS.box.z} />
+      <Box />
+      <translate by={{ y: DIMS.box.y - DIMS.stand.size.y }}>
+        <Stand />
+      </translate>
     </entity>
   )
 })
