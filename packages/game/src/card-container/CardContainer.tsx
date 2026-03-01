@@ -6,15 +6,24 @@ import type { ContainerProps } from '../container/types.js'
 import { Container, resolveContainerConfig } from '../container/Container.js'
 import { useShapeContext } from '../shape/ShapeContext.js'
 import { useContainerContext } from '../container/ContainerContext.js'
-import { Cuboid, Cylinder, Edge, Fillet } from '../primitives/index.js'
+import { Edge } from '../primitives/index.js'
 import { Colors } from '../utils/index.js'
 import { logger } from '../logger.js'
 
-import type { DividerProps } from './types.js'
-import { DividerCutout } from './DividerCutout.js'
+import type { DividerConfig } from './types.js'
+import { computeDividerLayout } from './useDividerLayout.js'
+import { CardContainerCutout } from './CardContainerCutout.js'
+import { DividerSlotCutout } from './DividerSlotCutout.js'
 import { Divider } from './Divider.js'
 
-export const CardContainer: FC<ContainerProps & DividerProps> = ({ size, ...options }) => {
+function resolveDividerIndices(dividers: DividerConfig['dividers'], slotCount: number): number[] {
+  if (dividers === 'all') return range(slotCount)
+  if (typeof dividers === 'number') return range(dividers)
+  if (dividers === undefined) return []
+  return dividers
+}
+
+export const CardContainer: FC<ContainerProps & DividerConfig> = ({ size, ...options }) => {
   const shapeCtx = useShapeContext()
   const containerCtx = useContainerContext()
 
@@ -26,118 +35,103 @@ export const CardContainer: FC<ContainerProps & DividerProps> = ({ size, ...opti
     throw new Error(`Divisions feature is not supported for this container type.`)
   }
 
-  // TODO test with cutout sides
-
   const { containerRadius, containerEdges, wall, floor } = resolveContainerConfig(options, containerCtx, shapeCtx)
-  const containerDimensions = V(size)
+  const containerSize = V(size)
 
-  const isRounded = (Edge.BACK & Edge.SIDE & containerEdges) !== 0
-  const radiusForLid = isRounded ? containerRadius : 0
+  const hasRoundedBackEdges = (Edge.BACK & Edge.SIDE & containerEdges) !== 0
+  const lidRadius = hasRoundedBackEdges ? containerRadius : 0
 
   const slideTolerance = shapeCtx.tolerance.sliding
-  const dividerDepth = (options.dividerDepth ?? wall / 2) + slideTolerance * 2
-  const dividerArmHeight = options.dividerArmHeight ?? containerDimensions.z / 5
-  const dividerRadius = options.dividerRadius ?? radiusForLid - wall / 2
-  const dividerSpacingMin = options.dividerSpacingMin ?? dividerRadius * 2 + dividerDepth * 4
+  const slotDepth = (options.dividerDepth ?? wall / 2) + slideTolerance * 2
+  const armHeight = options.dividerArmHeight ?? containerSize.z / 5
+  const filletRadius = options.dividerRadius ?? lidRadius - wall / 2
+  const minSpacing = options.dividerSpacingMin ?? filletRadius * 2 + slotDepth * 4
 
-  if (dividerSpacingMin < dividerRadius * 2) {
+  if (minSpacing < filletRadius * 2) {
     throw new Error(
-      `Divider spacing must be at least ${dividerRadius * 2}mm (at least twice the radius of the divider).`,
+      `Divider spacing must be at least ${filletRadius * 2}mm (at least twice the radius of the divider).`,
     )
   }
 
-  const startMax = Math.max(wall, radiusForLid)
-  const endMax = containerDimensions.y - startMax
-  const divisions = Math.floor((endMax - startMax + dividerDepth) / (dividerDepth + dividerSpacingMin))
-  const dividerSpacing = (endMax - startMax - dividerDepth * (divisions - 1)) / divisions
-
-  const dividerSize = V({
-    x: containerDimensions,
-    y: dividerDepth - slideTolerance * 2,
-    z: containerDimensions.z - floor,
+  const layout = computeDividerLayout({
+    containerSize,
+    wall,
+    lidRadius,
+    slotDepth,
+    minSpacing,
+    filletRadius,
   })
-  const upperWidth = Math.max(dividerRadius * 2, wall * 2, dividerSize.x / 2 - dividerSize.z / 2)
-  const cutoutDiameter = dividerSize.x - upperWidth * 2
 
-  const dividers =
-    options.dividers === 'all'
-      ? range(divisions)
-      : typeof options.dividers === 'number'
-        ? range(options.dividers)
-        : options.dividers === undefined
-          ? []
-          : options.dividers
+  const dividerThickness = slotDepth - slideTolerance * 2
+  const dividerSize = V({
+    x: containerSize,
+    y: dividerThickness,
+    z: containerSize.z - floor,
+  })
 
-  logger.info(`Dividers: ${dividers.join(', ')}`)
+  const armWidth = Math.max(filletRadius * 2, wall * 2, dividerSize.x / 2 - dividerSize.z / 2)
+  const fingerCutoutDiameter = dividerSize.x - armWidth * 2
+
+  const dividerIndices = resolveDividerIndices(options.dividers, layout.slotCount)
+
+  logger.info(`Dividers: ${dividerIndices.join(', ')}`)
+
+  /** Compute the Y position for a divider slot by index */
+  const slotY = (index: number) => layout.regionStartY + layout.spacing + (layout.spacing + slotDepth) * index
 
   return (
     <>
       <subtract>
         <Container size={size} {...options} />
-        {cutoutDiameter !== undefined && (
-          <>
-            <translate
-              by={{
-                x: containerDimensions.x / 2 - cutoutDiameter / 2,
-                y: containerDimensions.y,
-                z: containerDimensions.z - cutoutDiameter / 2 - dividerRadius,
-              }}
-            >
-              <rotate by={{ x: Math.PI / 2 }}>
-                <Cylinder size={{ xy: cutoutDiameter, z: containerDimensions.y }} />
-              </rotate>
-            </translate>
 
-            <translate by={{ x: upperWidth, z: containerDimensions.z }}>
-              <rotate by={{ y: Math.PI / 2, z: Math.PI / 2 }}>
-                <Fillet size={{ xy: dividerRadius, z: containerDimensions.y }} />
-              </rotate>
-            </translate>
-            <translate
-              by={{ x: containerDimensions.x - upperWidth, y: containerDimensions.y, z: containerDimensions.z }}
-            >
-              <rotate by={{ y: Math.PI / 2, z: -Math.PI / 2 }}>
-                <Fillet size={{ xy: dividerRadius, z: containerDimensions.y }} />
-              </rotate>
-            </translate>
-            <translate by={{ x: upperWidth, z: containerDimensions.z - dividerRadius }}>
-              <Cuboid
-                size={{ x: containerDimensions.x - 2 * upperWidth, y: containerDimensions.y, z: dividerRadius }}
-              />
-            </translate>
-          </>
+        {/* Finger-scoop cutout along the top of the container */}
+        {fingerCutoutDiameter !== undefined && (
+          <CardContainerCutout
+            containerSize={containerSize}
+            fingerCutoutDiameter={fingerCutoutDiameter}
+            armWidth={armWidth}
+            filletRadius={filletRadius}
+          />
         )}
-        {range(divisions - 1).map((i) => (
+
+        {/* Divider slot cutouts in the container walls */}
+        {range(layout.slotCount - 1).map((i) => (
           <translate
+            key={i}
             by={{
-              y: startMax + dividerSpacing + (dividerSpacing + dividerDepth) * i,
-              z: containerDimensions.z - dividerArmHeight,
+              y: slotY(i),
+              z: containerSize.z - armHeight,
             }}
           >
-            <DividerCutout
-              dim={{
-                x: containerDimensions,
-                y: dividerDepth,
-                z: dividerArmHeight,
+            <DividerSlotCutout
+              size={{
+                x: containerSize,
+                y: slotDepth,
+                z: armHeight,
               }}
-              upperFiletRadius={dividerRadius}
+              filletRadius={filletRadius}
             />
           </translate>
         ))}
       </subtract>
-      {range(divisions - 1)
-        .filter((i) => dividers.includes(i))
+
+      {/* Divider parts */}
+      {range(layout.slotCount - 1)
+        .filter((i) => dividerIndices.includes(i))
         .map((i) => (
           <entity type={ShapeType.Part} color={Colors.BROWN_5} key={i} name={`divider-${i}`}>
             <translate
-              by={{ y: startMax + dividerSpacing + slideTolerance + (dividerSpacing + dividerDepth) * i, z: floor }}
+              by={{
+                y: slotY(i) + slideTolerance,
+                z: floor,
+              }}
             >
               <Divider
-                dim={dividerSize}
-                upperFiletRadius={dividerRadius}
-                wall={wall + slideTolerance}
-                upperHeight={dividerArmHeight}
-                cutoutDiameter={cutoutDiameter}
+                size={dividerSize}
+                filletRadius={filletRadius}
+                armInset={wall + slideTolerance}
+                armHeight={armHeight}
+                fingerCutoutDiameter={fingerCutoutDiameter}
               />
             </translate>
           </entity>

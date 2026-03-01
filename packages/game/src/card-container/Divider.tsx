@@ -1,92 +1,81 @@
-import type { AxisRecordDefinition } from '@jsxcad/core/dist/Vector3.js'
-import { V } from '@jsxcad/core/dist/Vector3.js'
+import type { FC } from 'react'
+import type { AxisRecordDefinition } from '@jsxcad/core'
+import { V } from '@jsxcad/core'
 
-import { Cuboid, Cylinder, Edge } from '../primitives/index.js'
+import { Cuboid, Edge } from '../primitives/index.js'
 
-interface DividerCutoutProps {
-  dim: AxisRecordDefinition
-  upperFiletRadius: number
-  wall: number
-  upperHeight: number
-  cutoutDiameter?: number
+import { CardContainerCutout } from './CardContainerCutout.js'
+
+interface DividerProps {
+  size: AxisRecordDefinition
+  filletRadius: number
+  armInset: number
+  armHeight: number
+  fingerCutoutDiameter?: number
 }
 
-export const Divider = ({ dim, upperFiletRadius, wall, upperHeight, cutoutDiameter }: DividerCutoutProps) => {
-  const size = V(dim)
-  const lowerHeight = size.z - upperHeight
+/**
+ * A single divider piece that slots into the container.
+ *
+ * Anatomy (side view, looking along Y):
+ *
+ *   ┌─arm─┐           ┌─arm─┐
+ *   │     ╰───────────╯     │  ← armHeight (upper region with cutout)
+ *   │                       │
+ *   └── armInset ──┘  └─────┘  ← body (full width minus inset on each side)
+ */
+export const Divider: FC<DividerProps> = ({
+  size: sizeDef,
+  filletRadius,
+  armInset,
+  armHeight,
+  fingerCutoutDiameter,
+}) => {
+  const size = V(sizeDef)
+  const bodyHeight = size.z - armHeight
 
-  const upperWidth = cutoutDiameter !== undefined ? (size.x - cutoutDiameter) / 2 : undefined
+  const armWidth = fingerCutoutDiameter !== undefined ? (size.x - fingerCutoutDiameter) / 2 : undefined
 
-  if (upperWidth !== undefined && upperWidth < wall * 2) {
-    throw Error(`Upper width must be at least ${wall * 2}mm (at least twice the wall thickness).`)
+  if (armWidth !== undefined && armWidth < armInset * 2) {
+    throw Error(`Arm width must be at least ${armInset * 2}mm (at least twice the arm inset / wall thickness).`)
   }
 
-  if (cutoutDiameter !== undefined && cutoutDiameter > size.z) {
+  if (fingerCutoutDiameter !== undefined && fingerCutoutDiameter > size.z) {
     throw Error(
-      `Cutout diameter must be at most ${size.z}mm, got ${cutoutDiameter}mm (radius at most half the height).`,
+      `Finger cutout diameter must be at most ${size.z}mm, got ${fingerCutoutDiameter}mm (radius at most half the height).`,
     )
   }
 
   return (
     <subtract>
       <union>
-        {upperWidth === undefined ? (
-          <translate by={{ z: lowerHeight }}>
-            <Cuboid
-              size={{
-                x: size.x,
-                y: size.y,
-                z: upperHeight,
-              }}
-              radius={upperFiletRadius}
-              edges={Edge.TOP & (Edge.LEFT | Edge.RIGHT)}
-            />
-          </translate>
-        ) : (
-          <>
-            <translate by={{ z: lowerHeight }}>
-              <Cuboid
-                size={{
-                  x: upperWidth,
-                  y: size.y,
-                  z: upperHeight,
-                }}
-                radius={upperFiletRadius}
-                edges={Edge.TOP & (Edge.LEFT | Edge.RIGHT)}
-              />
-            </translate>
-            <translate by={{ x: size.x - upperWidth, z: lowerHeight }}>
-              <Cuboid
-                size={{
-                  x: upperWidth,
-                  y: size.y,
-                  z: upperHeight,
-                }}
-                radius={upperFiletRadius}
-                edges={Edge.TOP & (Edge.LEFT | Edge.RIGHT)}
-              />
-            </translate>
-          </>
-        )}
+        {/* Upper arms (left and right, or full width with no cutout) */}
+        <translate by={{ z: bodyHeight }}>
+          <Cuboid
+            size={{ x: size.x, y: size.y, z: armHeight }}
+            radius={filletRadius}
+            edges={Edge.TOP & (Edge.LEFT | Edge.RIGHT)}
+          />
+        </translate>
 
-        <translate by={{ x: wall }}>
+        {/* Body (inset from both sides) */}
+        <translate by={{ x: armInset }}>
           <Cuboid
             size={{
-              x: size.x - wall * 2,
+              x: size.x - armInset * 2,
               y: size.y,
-              z: size.z - upperFiletRadius,
+              z: size.z - filletRadius,
             }}
           />
         </translate>
       </union>
-      {cutoutDiameter !== undefined && (
-        <translate
-          by={{ x: size.x / 2 - cutoutDiameter / 2, y: wall, z: size.z - cutoutDiameter / 2 - upperFiletRadius }}
-        >
-          <rotate by={{ x: Math.PI / 2 }}>
-            <Cylinder size={{ xy: cutoutDiameter, z: wall }} />
-          </rotate>
-        </translate>
+      {fingerCutoutDiameter !== undefined && armWidth !== undefined && (
+        <CardContainerCutout
+          containerSize={size}
+          fingerCutoutDiameter={fingerCutoutDiameter}
+          armWidth={armWidth}
+          filletRadius={filletRadius}
+        />
       )}
     </subtract>
   )
