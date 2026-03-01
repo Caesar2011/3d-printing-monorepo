@@ -6,7 +6,7 @@ export type DividerConfig = {
   dividerArmHeight?: number
   dividerRadius?: number
   dividers?: number | number[] | 'all'
-  contentSizes?: AxisRecordDefinition[]
+  contentSizes?: (AxisRecordDefinition | undefined)[]
 }
 
 export type DividerLayout = {

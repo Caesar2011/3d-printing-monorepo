@@ -73,11 +73,23 @@ export const CardContainer: FC<ContainerProps & DividerConfig> = ({ size, ...opt
   const fingerCutoutDiameter = dividerSize.x - armWidth * 2
 
   const dividerIndices = resolveDividerIndices(options.dividers, layout.slotCount)
+  const contentSizes = options.contentSizes ?? []
+
+  if (contentSizes.length > layout.slotCount) {
+    throw new Error(
+      `contentSizes has ${contentSizes.length} entries but only ${layout.slotCount} regions are available.`,
+    )
+  }
 
   logger.info(`Dividers: ${dividerIndices.join(', ')}`)
 
   /** Compute the Y position for a divider slot by index */
   const slotY = (index: number) => layout.regionStartY + layout.spacing + (layout.spacing + slotDepth) * index
+
+  /** Compute the Y start of a region by index */
+  const regionY = (index: number) => layout.regionStartY + index * (layout.spacing + slotDepth)
+
+  const innerWidth = containerSize.x - 2 * wall
 
   return (
     <>
@@ -136,6 +148,26 @@ export const CardContainer: FC<ContainerProps & DividerConfig> = ({ size, ...opt
             </translate>
           </entity>
         ))}
+
+      {/* Content cuboids */}
+      {contentSizes.map((contentSizeDef, i) => {
+        if (contentSizeDef === undefined) return undefined
+        const contentSize = V(contentSizeDef)
+        const rY = regionY(i)
+        // Center content on X within the inner cavity
+        const contentX = wall + (innerWidth - contentSize.x) / 2
+        // Center content on Y within the region's free space (layout.spacing)
+        const contentY = rY + (layout.spacing - contentSize.y) / 2
+        const contentZ = floor
+
+        return (
+          <entity type={ShapeType.Content} key={`content-${i}`} name={`content-${i}`} color={Colors.GREEN_3}>
+            <translate by={{ x: contentX, y: contentY, z: contentZ }}>
+              <cuboid size={contentSize} />
+            </translate>
+          </entity>
+        )
+      })}
     </>
   )
 }
