@@ -48,6 +48,7 @@ export type CutoutConfig = {
 } & Partial<Record<SideFaceName, CutoutSettings>>
 
 export type ContainerProps = {
+  wall?: number
   size: AxisRecordDefinition
   radius?: number
   edges?: Edge

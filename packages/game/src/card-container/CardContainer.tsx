@@ -23,6 +23,28 @@ function resolveDividerIndices(dividers: DividerConfig['dividers'], slotCount: n
   return dividers
 }
 
+/** Computes Y-regions bounded by placed dividers (and container edges). */
+function computeContentRegions(
+  dividerIndices: number[],
+  slotYPositions: number[],
+  slotDepth: number,
+  regionStartY: number,
+  regionEndY: number,
+): { startY: number; endY: number }[] {
+  const sortedSlots = [...dividerIndices].sort((a, b) => a - b)
+  const boundaries: { startY: number; endY: number }[] = []
+
+  let cursor = regionStartY
+  for (const slotIdx of sortedSlots) {
+    const slotStart = slotYPositions[slotIdx]
+    boundaries.push({ startY: cursor, endY: slotStart })
+    cursor = slotStart + slotDepth
+  }
+  boundaries.push({ startY: cursor, endY: regionEndY })
+
+  return boundaries
+}
+
 export const CardContainer: FC<ContainerProps & DividerConfig> = ({ size, ...options }) => {
   const shapeCtx = useShapeContext()
   const containerCtx = useContainerContext()
@@ -60,6 +82,7 @@ export const CardContainer: FC<ContainerProps & DividerConfig> = ({ size, ...opt
     slotDepth,
     minSpacing,
     filletRadius,
+    regionSpacing: options.regionSpacing,
   })
 
   const dividerThickness = slotDepth - slideTolerance * 2
@@ -75,19 +98,35 @@ export const CardContainer: FC<ContainerProps & DividerConfig> = ({ size, ...opt
   const dividerIndices = resolveDividerIndices(options.dividers, layout.slotCount)
   const contentSizes = options.contentSizes ?? []
 
-  if (contentSizes.length > layout.slotCount) {
+  // Precompute cumulative Y positions for each region and slot
+  const regionYPositions: number[] = []
+  const slotYPositions: number[] = []
+  let cursor = layout.regionStartY
+  for (let i = 0; i < layout.slotCount; i++) {
+    regionYPositions.push(cursor)
+    cursor += layout.regionSpacings[i]
+    if (i < layout.slotCount - 1) {
+      slotYPositions.push(cursor)
+      cursor += slotDepth
+    }
+  }
+
+  // Content regions are bounded by placed dividers and container edges
+  const contentRegions = computeContentRegions(
+    dividerIndices,
+    slotYPositions,
+    slotDepth,
+    layout.regionStartY,
+    layout.regionEndY,
+  )
+
+  if (contentSizes.length > contentRegions.length) {
     throw new Error(
-      `contentSizes has ${contentSizes.length} entries but only ${layout.slotCount} regions are available.`,
+      `contentSizes has ${contentSizes.length} entries but only ${contentRegions.length} content regions are available.`,
     )
   }
 
   logger.info(`Dividers: ${dividerIndices.join(', ')}`)
-
-  /** Compute the Y position for a divider slot by index */
-  const slotY = (index: number) => layout.regionStartY + layout.spacing + (layout.spacing + slotDepth) * index
-
-  /** Compute the Y start of a region by index */
-  const regionY = (index: number) => layout.regionStartY + index * (layout.spacing + slotDepth)
 
   const innerWidth = containerSize.x - 2 * wall
 
@@ -96,7 +135,6 @@ export const CardContainer: FC<ContainerProps & DividerConfig> = ({ size, ...opt
       <subtract>
         <Container size={size} {...options} />
 
-        {/* Finger-scoop cutout along the top of the container */}
         {fingerCutoutDiameter !== undefined && (
           <CardContainerCutout
             containerSize={containerSize}
@@ -106,12 +144,11 @@ export const CardContainer: FC<ContainerProps & DividerConfig> = ({ size, ...opt
           />
         )}
 
-        {/* Divider slot cutouts in the container walls */}
         {range(layout.slotCount - 1).map((i) => (
           <translate
             key={i}
             by={{
-              y: slotY(i),
+              y: slotYPositions[i],
               z: containerSize.z - armHeight,
             }}
           >
@@ -127,14 +164,13 @@ export const CardContainer: FC<ContainerProps & DividerConfig> = ({ size, ...opt
         ))}
       </subtract>
 
-      {/* Divider parts */}
       {range(layout.slotCount - 1)
         .filter((i) => dividerIndices.includes(i))
         .map((i) => (
           <entity type={ShapeType.Part} color={Colors.BROWN_5} key={i} name={`divider-${i}`}>
             <translate
               by={{
-                y: slotY(i) + slideTolerance,
+                y: slotYPositions[i] + slideTolerance,
                 z: floor,
               }}
             >
@@ -149,20 +185,17 @@ export const CardContainer: FC<ContainerProps & DividerConfig> = ({ size, ...opt
           </entity>
         ))}
 
-      {/* Content cuboids */}
       {contentSizes.map((contentSizeDef, i) => {
         if (contentSizeDef === undefined) return undefined
         const contentSize = V(contentSizeDef)
-        const rY = regionY(i)
-        // Center content on X within the inner cavity
+        const region = contentRegions[i]
+        const regionDepth = region.endY - region.startY
         const contentX = wall + (innerWidth - contentSize.x) / 2
-        // Center content on Y within the region's free space (layout.spacing)
-        const contentY = rY + (layout.spacing - contentSize.y) / 2
-        const contentZ = floor
+        const contentY = region.startY + (regionDepth - contentSize.y) / 2
 
         return (
           <entity type={ShapeType.Content} key={`content-${i}`} name={`content-${i}`} color={Colors.GREEN_3}>
-            <translate by={{ x: contentX, y: contentY, z: contentZ }}>
+            <translate by={{ x: contentX, y: contentY, z: floor }}>
               <cuboid size={contentSize} />
             </translate>
           </entity>

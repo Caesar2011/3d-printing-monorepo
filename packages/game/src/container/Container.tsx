@@ -67,7 +67,7 @@ export function resolveContainerConfig(
   const containerRadius = options.radius ?? containerCtx.radius
   const containerEdges = options.edges ?? containerCtx.edges
   const containerCutoutEdges = containerEdges | (options.cutoutEdges ?? containerCtx.cutoutEdges)
-  const wall = shapeCtx.wall
+  const wall = options.wall ?? shapeCtx.wall
   const floor = shapeCtx.floor
   const scoopFactor = containerCtx.scoopFactor
   const maxEmbossSize = V(options.maxEmbossSize ?? containerCtx.maxEmbossSize)

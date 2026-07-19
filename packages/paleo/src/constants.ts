@@ -42,4 +42,8 @@ export const DIMS = {
     outerSpace: 15,
     cardBoardWidth: 2,
   },
+  tokens: {
+    mammoth: V([34, 74, 11]),
+    skull: V([26, 30, 11]),
+  },
 }

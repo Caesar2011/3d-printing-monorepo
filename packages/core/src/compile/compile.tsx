@@ -28,11 +28,12 @@ export async function compile(root: ReactElement, options: RenderOptions & Rende
 
   opts.onParsedAst?.()
 
-  const shapes = rootNode.render()
+  const shapes = rootNode.render().filter(opts.filter)
 
   opts.onRendered?.()
 
   if (opts.dev) logger.warn('Dev mode is enabled!')
+  logger.info(`Shapes found:`, { names: shapes.map((shape) => shape.name) })
 
   validateShapes(shapes, createValidator(opts.dev))
 

@@ -7,29 +7,57 @@ export interface DividerLayoutParams {
   slotDepth: number
   minSpacing: number
   filletRadius: number
+  /** Per-region Y spacing overrides, keyed by region index (0-based). */
+  regionSpacing?: Record<number, number>
 }
 
 export interface DividerLayoutResult {
-  /** Number of divider slots along the Y axis */
+  /** Number of regions along the Y axis */
   slotCount: number
-  /** Even spacing between dividers */
+  /** Default even spacing for non-overridden regions */
   spacing: number
   /** Y offset where usable divider region begins */
   regionStartY: number
   /** Y offset where usable divider region ends */
   regionEndY: number
+  /** Resolved per-region spacings (length === slotCount) */
+  regionSpacings: number[]
 }
 
 export function computeDividerLayout(params: DividerLayoutParams): DividerLayoutResult {
-  const { containerSize, wall, lidRadius, slotDepth, minSpacing } = params
+  const { containerSize, wall, lidRadius, slotDepth, minSpacing, regionSpacing = {} } = params
 
-  // The divider region starts after the wall/radius and ends symmetrically before the far wall
-  const regionStartY = Math.max(wall, lidRadius)
-  const regionEndY = containerSize.y - regionStartY
+  // The divider region spans the inner Y cavity minus the lid radius insets
+  const regionStartY = wall + lidRadius
+  const regionEndY = containerSize.y - wall - lidRadius
+  const totalRegion = regionEndY - regionStartY
 
-  const availableLength = regionEndY - regionStartY
-  const slotCount = Math.floor((availableLength + slotDepth) / (slotDepth + minSpacing))
-  const spacing = (availableLength - slotDepth * (slotCount - 1)) / slotCount
+  // Determine slot count from uniform spacing first
+  const maxSlots = Math.floor((totalRegion + slotDepth) / (minSpacing + slotDepth))
+  const slotCount = Math.max(1, maxSlots)
+  const totalSlotDepth = (slotCount - 1) * slotDepth
 
-  return { slotCount, spacing, regionStartY, regionEndY }
+  // Sum fixed overrides and count how many regions use the default spacing
+  const fixedOverrides = Object.entries(regionSpacing)
+  let fixedTotal = 0
+  let fixedCount = 0
+  for (const [key, value] of fixedOverrides) {
+    const idx = Number(key)
+    if (idx >= 0 && idx < slotCount) {
+      fixedTotal += value
+      fixedCount++
+    }
+  }
+
+  const flexCount = slotCount - fixedCount
+  const remainingSpace = totalRegion - totalSlotDepth - fixedTotal
+  const spacing = flexCount > 0 ? remainingSpace / flexCount : 0
+
+  // Build the resolved per-region spacings array
+  const regionSpacings: number[] = []
+  for (let i = 0; i < slotCount; i++) {
+    regionSpacings.push(regionSpacing[i] ?? spacing)
+  }
+
+  return { slotCount, spacing, regionStartY, regionEndY, regionSpacings }
 }

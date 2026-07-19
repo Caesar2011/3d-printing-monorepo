@@ -7,6 +7,8 @@ export type DividerConfig = {
   dividerRadius?: number
   dividers?: number | number[] | 'all'
   contentSizes?: (AxisRecordDefinition | undefined)[]
+  /** Per-region Y spacing overrides, keyed by region index (0-based). */
+  regionSpacing?: Record<number, number>
 }
 
 export type DividerLayout = {

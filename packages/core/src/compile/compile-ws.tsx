@@ -45,11 +45,12 @@ export async function compileToJson(
 
   opts.onParsedAst?.()
 
-  const shapes: Shape[] = rootNode.render()
+  const shapes: Shape[] = rootNode.render().filter(opts.filter)
 
   opts.onRendered?.()
 
   if (opts.dev) logger.warn('Dev mode is enabled!')
+  logger.info(`Shapes found:`, { names: shapes.map((shape) => shape.name) })
 
   validateShapes(shapes, createValidator(opts.dev))
 

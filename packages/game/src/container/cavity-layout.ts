@@ -45,6 +45,10 @@ export function computeCavityCells(
   axis: 'x' | 'y' = 'x',
 ): CavityCell[] {
   if (!division || !division.at || division.at.length === 0) {
+    if (division?.children?.length === 1 && division.children[0]) {
+      const nextAxis = axis === 'x' ? 'y' : 'x'
+      return computeCavityCells(innerOrigin, innerSize, wall, division.children[0], nextAxis)
+    }
     return [{ offset: innerOrigin, size: innerSize, embossSrc: division?.embossSrc }]
   }
 
