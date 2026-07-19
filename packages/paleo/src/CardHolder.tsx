@@ -40,10 +40,12 @@ const CONTENT_SIZES = [
 const EXCLUSIONS = [0, 2, 7, 9]
 
 export const CardHolder = () => (
-  <CardContainer
-    size={{ x: DIMS.cards.a.x, y: 260, z: DIMS.cards.a.y, xyz: 10 }}
-    dividers={range(CONTENT_SIZES.length + EXCLUSIONS.length).filter((i) => !EXCLUSIONS.includes(i))}
-    dividerSpacingMin={6.5}
-    contentSizes={CONTENT_SIZES.map((size) => (size !== undefined ? V([size.x, size.z, size.y]) : undefined))}
-  />
+  <entity name={'cards'}>
+    <CardContainer
+      size={{ x: DIMS.cards.a.x, y: 260, z: DIMS.cards.a.y, xyz: 10 }}
+      dividers={range(CONTENT_SIZES.length + EXCLUSIONS.length).filter((i) => !EXCLUSIONS.includes(i))}
+      dividerSpacingMin={6.5}
+      contentSizes={CONTENT_SIZES.map((size) => (size !== undefined ? V([size.x, size.z, size.y]) : undefined))}
+    />
+  </entity>
 )
