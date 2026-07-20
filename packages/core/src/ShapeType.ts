@@ -260,6 +260,16 @@ export class EntityNode extends OperatorNode<EntityProps> {
   }
 }
 
+type PickProps = Parameters<InstanceType<typeof Shape>['pick']>[0]
+export class PickNode extends OperatorNode<PickProps> {
+  public getClass(): new (props: unknown) => OperatorNode<PickProps> {
+    return PickNode
+  }
+  public renderFn(children: Shape[]): Shape[] {
+    return children.map((shape) => shape.pick(this.props)).filter((shape) => shape !== undefined)
+  }
+}
+
 export class RootNode extends OperatorNode {
   constructor() {
     super({})
@@ -295,6 +305,7 @@ export const ShapeMapTransforms = {
   center: CenterNode,
   transform: TransformNode,
   entity: EntityNode,
+  pick: PickNode,
 } as const
 
 type TShapeMap = typeof ShapeMap

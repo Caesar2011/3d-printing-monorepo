@@ -103,6 +103,22 @@ export class Shape implements Geom3 {
     return new Shape(transforms.transform(props.mat4, this), this.mergeProps(props))
   }
 
+  public pick(
+    props: { typeWhitelist?: ShapeType[]; typeBlacklist?: ShapeType[]; nameRegex?: string } & ShapeProperties,
+  ) {
+    if (!(props.typeWhitelist?.includes(this.type) ?? true)) {
+      return undefined
+    }
+    if (props.typeBlacklist?.includes(this.type) ?? false) {
+      return undefined
+    }
+    if (props.nameRegex !== undefined && !new RegExp(props.nameRegex).test(this.name)) {
+      return undefined
+    }
+
+    return this
+  }
+
   public static union(geoms: Shape[], props: ShapeProperties) {
     const first = geoms.at(0)
     if (!first) throw new Error('Union must contain at least one geom')

@@ -30,7 +30,7 @@ export const ClosedContainer: FC<ContainerProps & LidProps> = ({ size, ...option
 
   return (
     <>
-      <subtract>
+      <subtract type={ShapeType.Part}>
         <Container size={size} {...options} />
         <SlidingLidCutout
           wallThickness={wall}
