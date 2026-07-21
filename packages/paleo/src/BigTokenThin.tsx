@@ -148,7 +148,7 @@ export const BigTokenThin = () => {
     )
   }
   return (
-    <entity name={'bigTokenMain'}>
+    <entity name={'bigTokenThin'}>
       <intersect type={ShapeType.Part}>
         <union>
           <Cuboid size={{ xy: size, z: floor }} />

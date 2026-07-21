@@ -72,6 +72,6 @@ const RootDebug = () => {
   )
 }
 
-renderComponent(<RootDebug />, {
+renderComponent(<Root />, {
   // filter: (s) => s.type !== ShapeType.Lid,
 }).catch(logger.error)
