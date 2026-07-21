@@ -1,5 +1,5 @@
-import { ShapeType } from '@jsxcad/core'
-import { Colors, Cuboid } from '@jsxcad/game'
+import { Colors, ShapeType } from '@jsxcad/core'
+import { Cuboid } from '@jsxcad/game'
 
 import { DIMS } from './constants.js'
 

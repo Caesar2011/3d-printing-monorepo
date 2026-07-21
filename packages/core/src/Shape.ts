@@ -3,6 +3,7 @@ import type { Mat4 } from '@jscad/modeling/src/maths/types.js'
 import type { CylinderOptions, SphereOptions } from '@jscad/modeling/src/primitives/index.js'
 import jscad from '@jscad/modeling'
 
+import { Colors } from './Colors.js'
 import type { AxisRecordDefinition, UniqueAxisString } from './Vector3.js'
 import { axisOrRecordToVec3, V } from './Vector3.js'
 
@@ -29,7 +30,6 @@ export class Shape implements Geom3 {
   constructor(Shape: Geom3, props: ShapeProperties) {
     this.polygons = Shape.polygons
     this.transforms = Shape.transforms
-    this.color = Shape.color ?? props.color
     this.type = props.type ?? ShapeType.Unspecified
     this.name =
       props.name !== undefined && props.name !== ''
@@ -37,6 +37,24 @@ export class Shape implements Geom3 {
         : this.type !== ShapeType.Unspecified
           ? ShapeType[this.type]
           : ''
+
+    this.color = Shape.color ?? props.color
+    if (this.color === undefined) {
+      switch (this.type) {
+        case ShapeType.Content:
+          this.color = Colors.GREEN_1
+          break
+        case ShapeType.Lid:
+          this.color = Colors.ORANGE_1
+          break
+        case ShapeType.Magnet:
+          this.color = Colors.PURPLE_1
+          break
+        case ShapeType.Technical:
+          this.color = Colors.PINK_1
+          break
+      }
+    }
   }
 
   private mergeProps(newProps: ShapeProperties): ShapeProperties {
@@ -48,6 +66,7 @@ export class Shape implements Geom3 {
       newProps.name !== undefined && newProps.name !== '' && oldProps.name !== undefined && oldProps.name !== ''
         ? { name: `${newProps.name}-${oldProps.name}` }
         : undefined
+
     return { ...oldProps, ...newProps, ...name }
   }
 

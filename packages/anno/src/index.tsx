@@ -1,7 +1,6 @@
 import { memo } from 'react'
-import { ShapeType, V } from '@jsxcad/core'
+import { Colors, ShapeType, V } from '@jsxcad/core'
 import {
-  Colors,
   Container,
   ContainerContextProvider,
   Cylinder,

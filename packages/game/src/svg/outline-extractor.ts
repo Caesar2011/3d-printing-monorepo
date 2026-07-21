@@ -1,5 +1,5 @@
 import jscad from '@jscad/modeling'
-import type { Vec3 } from '@jsxcad/core/dist/Vector3.js'
+import type { Vec3 } from '@jsxcad/core'
 
 import { computePxPerMm, parseTransform, parseUnits, parseViewBox } from './attribute-parser.js'
 import { parsePath } from './path-parser.js'

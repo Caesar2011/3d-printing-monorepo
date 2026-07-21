@@ -1,5 +1,5 @@
-import { Colors, Cuboid, Cylinder, Fillet, useContainerContext, useShapeContext } from '@jsxcad/game'
-import { ShapeType, V } from '@jsxcad/core'
+import { Cuboid, Cylinder, Fillet, useContainerContext, useShapeContext } from '@jsxcad/game'
+import { Colors, ShapeType, V } from '@jsxcad/core'
 import { range } from '@jsxcad/utils'
 import { ClosedContainer } from '@jsxcad/game/dist/closed-container/ClosedContainer.js'
 

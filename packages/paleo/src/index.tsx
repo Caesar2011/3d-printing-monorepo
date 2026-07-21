@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { Colors, DebugAxes, renderComponent, useShapeContext } from '@jsxcad/game'
+import { DebugAxes, renderComponent, useShapeContext } from '@jsxcad/game'
 
 import { logger } from './logger.js'
 import { DIMS } from './constants.js'
@@ -52,7 +52,7 @@ const App = memo(() => {
           <BigTokenThin />
         </rotate>
       </translate>
-      <translate color={Colors.GREEN_1} by={{ y: DIMS.cards.a.x + 11 }}>
+      <translate by={{ y: DIMS.cards.a.x + 11 }}>
         <BigTokenMain />
       </translate>
     </entity>
@@ -72,6 +72,6 @@ const RootDebug = () => {
   )
 }
 
-renderComponent(<Root />, {
+renderComponent(<RootDebug />, {
   // filter: (s) => s.type !== ShapeType.Lid,
 }).catch(logger.error)

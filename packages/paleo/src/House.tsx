@@ -1,5 +1,5 @@
-import { Colors, Cylinder } from '@jsxcad/game'
-import { ShapeType } from '@jsxcad/core/dist/Shape.js'
+import { Cylinder } from '@jsxcad/game'
+import { Colors, ShapeType } from '@jsxcad/core'
 
 import { DIMS } from './constants.js'
 

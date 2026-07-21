@@ -1,6 +1,6 @@
 import { ClosedContainer } from '@jsxcad/game/dist/closed-container/ClosedContainer.js'
-import { Colors, Cuboid } from '@jsxcad/game'
-import { ShapeType, V } from '@jsxcad/core'
+import { Cuboid } from '@jsxcad/game'
+import { Colors, ShapeType, V } from '@jsxcad/core'
 
 import { DIMS } from './constants.js'
 

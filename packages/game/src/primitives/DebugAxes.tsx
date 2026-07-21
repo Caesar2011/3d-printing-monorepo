@@ -1,7 +1,5 @@
 import type { FC, ReactNode } from 'react'
-import { ShapeType, V } from '@jsxcad/core'
-
-import { Colors } from '../utils/colors.js'
+import { Colors, ShapeType, V } from '@jsxcad/core'
 
 const AXIS_THICKNESS = 0.4
 const TICK_MINOR_LENGTH = 1

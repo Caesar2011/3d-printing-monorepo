@@ -13,4 +13,5 @@ async function cleanup() {
   )
 }
 
-cleanup()
+// @ts-ignore
+await cleanup().catch(console.error)
