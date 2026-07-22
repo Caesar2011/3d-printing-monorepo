@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import { Colors, ShapeType, V } from '@jsxcad/core'
+import { ShapeType, V } from '@jsxcad/core'
 
 import type { ContainerProps } from '../container/types.js'
 import { Container, resolveContainerConfig } from '../container/Container.js'
@@ -37,7 +37,7 @@ export const ClosedContainer: FC<ContainerProps & LidProps> = ({ size, ...option
           containerRadius={radiusForLid}
         />
       </subtract>
-      <entity type={ShapeType.Lid} color={Colors.ORANGE_2}>
+      <entity type={ShapeType.Lid}>
         <SlidingLid wallThickness={wall} containerDimensions={containerDimensions} containerRadius={radiusForLid} />
       </entity>
     </>

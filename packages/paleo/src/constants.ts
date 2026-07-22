@@ -1,7 +1,10 @@
 import { V } from '@jsxcad/core'
 
+const CARDBOARD_TOKEN = 2.3
+
 const card = V([87.2, 56.1, 50.5 / 171])
-const bigToken = V([36, 33, 42 / 19])
+const bigToken = V([36, 33, CARDBOARD_TOKEN])
+const longToken = V([59, 22, CARDBOARD_TOKEN])
 
 export const DIMS = {
   box: V([288, 288, 70]),
@@ -77,5 +80,21 @@ export const DIMS = {
     root: bigToken.m({ z: 2 }),
     shell: bigToken.m({ z: 2 }),
     rope: bigToken.m({ z: 3 }),
+  },
+  farmTokens: {
+    base: V([86, 57, CARDBOARD_TOKEN]),
+    scythe: V([61, 21.3, CARDBOARD_TOKEN]),
+    heal: V([59, 22.5, CARDBOARD_TOKEN]),
+    gate: V([60, 20, CARDBOARD_TOKEN * 3]),
+    millstone: V([45, 38, CARDBOARD_TOKEN]),
+    stone: V([21, 21, CARDBOARD_TOKEN * 5]),
+  },
+  hiddenTokens: {
+    h2: longToken,
+    h3: longToken,
+    h4: bigToken,
+    h5: bigToken,
+    h6: bigToken,
+    h7: longToken,
   },
 }

@@ -40,16 +40,34 @@ const OuterPillars = ({ height }: { height: number }) =>
     </translate>
   ))
 
+const TokenContents = () => {
+  const { floor } = useShapeContext()
+  return TOKEN_ORDER.map((token, index) => {
+    let size = DIMS.bigTokens[token]
+    let name: string = token
+    if (token === 'fur') {
+      size = size.m({ z: index !== TOKEN_ORDER.length - 1 ? 5 / 9 : 4 / 9 })
+      name = index !== TOKEN_ORDER.length - 1 ? 'fur5' : 'fur4'
+    }
+    return (
+      <translate
+        key={name}
+        by={{
+          x: EXTRA_SPACE_SIDE + WALL_X + (DIMS.bigTokens.torch.y + EXTRA_SPACE_X) * index,
+          y: EXTRA_SPACE_SIDE,
+          z: floor,
+        }}
+      >
+        <Cylinder name={name} type={ShapeType.Content} size={{ x: size.y, y: size.x, z: size }} />
+      </translate>
+    )
+  })
+}
+
 export const BigTokenMain = () => {
   const { floor } = useShapeContext()
   const { radius, edges } = useContainerContext()
   const size = getBigTokenMainSize(floor)
-  logger.info('dims', size)
-  if (TOKEN_ORDER[0].length !== TOKEN_ORDER[0].length) {
-    throw new Error(
-      `In BigTokenThin TOKEN_ORDER[0] (${TOKEN_ORDER[0]}) must be larger by 1 then TOKEN_ORDER[1] (${TOKEN_ORDER[1]}).`,
-    )
-  }
   return (
     <entity name={'bigTokenMain'}>
       <intersect type={ShapeType.Part}>
@@ -74,26 +92,7 @@ export const BigTokenMain = () => {
         </union>
         <Cuboid size={size} radius={radius} edges={edges} />
       </intersect>
-      {TOKEN_ORDER.map((token, idx) => {
-        let size = DIMS.bigTokens[token]
-        let name: string = token
-        if (token === 'fur') {
-          size = size.m({ z: idx !== TOKEN_ORDER.length - 1 ? 5 / 9 : 4 / 9 })
-          name = idx !== TOKEN_ORDER.length - 1 ? 'fur5' : 'fur4'
-        }
-        return (
-          <translate
-            key={name}
-            by={{
-              x: EXTRA_SPACE_SIDE + WALL_X + (DIMS.bigTokens.torch.y + EXTRA_SPACE_X) * idx,
-              y: EXTRA_SPACE_SIDE,
-              z: floor,
-            }}
-          >
-            <Cylinder name={name} type={ShapeType.Content} size={{ x: size.y, y: size.x, z: size }} />
-          </translate>
-        )
-      })}
+      <TokenContents />
       <pick typeWhitelist={[ShapeType.Lid]}>
         <ClosedContainer size={size} lid={{ type: 'slide' }} wall={3} />
       </pick>

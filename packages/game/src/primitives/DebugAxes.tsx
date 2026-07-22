@@ -90,7 +90,7 @@ export const DebugAxes: FC<DebugAxesProps> = ({ x, y, z, children }) => {
   const zRange = resolveRange(z, 100)
 
   return (
-    <entity name={'debug-axes'} type={ShapeType.Technical}>
+    <entity name={'debugAxes'} type={ShapeType.Technical}>
       <Axis length={xRange.max} offset={xRange.min} color={Colors.RED_2} direction="x" name="x" />
       <Axis length={yRange.max} offset={yRange.min} color={Colors.GREEN_2} direction="y" name="y" />
       <Axis length={zRange.max} offset={zRange.min} color={Colors.BLUE_2} direction="z" name="z" />

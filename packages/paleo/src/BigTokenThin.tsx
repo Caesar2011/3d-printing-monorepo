@@ -103,13 +103,13 @@ const LidGuidePillars = () => {
   )
 }
 
-const Content = () => {
+const TokenContents = () => {
   const { floor } = useShapeContext()
   const size = getBigTokenThinSize(floor)
   return (
     <>
       {TOKEN_ORDER[0].map((token, idx) => (
-        <entity type={ShapeType.Content} color={Colors.GREEN_1} name={'Content_' + token} key={token}>
+        <entity type={ShapeType.Content} color={Colors.GREEN_1} name={`token-${token}`} key={token}>
           <translate
             by={{
               x: (EXTRA_SPACE_X + DIMS.bigTokens[token].x) * idx + EXTRA_SPACE_SIDE,
@@ -122,7 +122,7 @@ const Content = () => {
         </entity>
       ))}
       {TOKEN_ORDER[1].map((token, idx) => (
-        <entity type={ShapeType.Content} color={Colors.GREEN_1} name={'Content_' + token} key={token}>
+        <entity type={ShapeType.Content} color={Colors.GREEN_1} name={`token-${token}`} key={token}>
           <translate
             by={{
               x: (EXTRA_SPACE_X + DIMS.bigTokens[token].x) * (idx + 0.5) + EXTRA_SPACE_SIDE,
@@ -142,7 +142,7 @@ export const BigTokenThin = () => {
   const { floor } = useShapeContext()
   const { radius, edges } = useContainerContext()
   const size = getBigTokenThinSize(floor)
-  if (TOKEN_ORDER[0].length !== TOKEN_ORDER[0].length) {
+  if (TOKEN_ORDER[0].length !== TOKEN_ORDER[1].length + 1) {
     throw new Error(
       `In BigTokenThin TOKEN_ORDER[0] (${TOKEN_ORDER[0]}) must be larger by 1 then TOKEN_ORDER[1] (${TOKEN_ORDER[1]}).`,
     )
@@ -169,7 +169,7 @@ export const BigTokenThin = () => {
         </union>
         <Cuboid size={size} radius={radius} edges={edges} />
       </intersect>
-      <Content />
+      <TokenContents />
       <pick typeWhitelist={[ShapeType.Lid]}>
         <ClosedContainer size={size} lid={{ type: 'slide' }} wall={3} />
       </pick>
