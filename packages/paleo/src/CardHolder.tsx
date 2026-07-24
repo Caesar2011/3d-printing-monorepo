@@ -23,27 +23,28 @@ const CONTENT_SIZES = [
   DIMS.cards.h,
   DIMS.cards.i,
   DIMS.cards.j,
-  undefined, // k
-  undefined, // l
+  DIMS.cards.k,
+  DIMS.cards.l,
   DIMS.cards.m,
   DIMS.cards.n,
   DIMS.cards.o,
   DIMS.cards.p,
   DIMS.cards.q,
   DIMS.cards.r,
-  undefined, // s
-  undefined, // t
-  undefined, // u
-  undefined,
+  DIMS.cards.s,
+  DIMS.cards.t,
+  DIMS.cards.u,
 ]
 
-const EXCLUSIONS = [0, 2, 7, 9]
+const EXCLUSIONS = [1, 2, 5, 8, 10]
+
+export const getCardHolderSize = () => V({ x: DIMS.cards.a.x + 6, y: 268, z: DIMS.cards.a.y + 10 })
 
 export const CardHolder = () => (
   <entity name={'cards'}>
     <CardContainer
-      size={{ x: DIMS.cards.a.x, y: 260, z: DIMS.cards.a.y, xyz: 10 }}
-      dividers={range(CONTENT_SIZES.length + EXCLUSIONS.length).filter((i) => !EXCLUSIONS.includes(i))}
+      size={getCardHolderSize()}
+      dividers={range(CONTENT_SIZES.length + EXCLUSIONS.length - 1).filter((i) => !EXCLUSIONS.includes(i))}
       dividerSpacingMin={6.5}
       contentSizes={CONTENT_SIZES.map((size) => (size !== undefined ? V([size.x, size.z, size.y]) : undefined))}
     />

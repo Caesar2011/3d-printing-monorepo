@@ -28,8 +28,8 @@ export function computeDividerLayout(params: DividerLayoutParams): DividerLayout
   const { containerSize, wall, lidRadius, slotDepth, minSpacing, regionSpacing = {} } = params
 
   // The divider region spans the inner Y cavity minus the lid radius insets
-  const regionStartY = wall + lidRadius
-  const regionEndY = containerSize.y - wall - lidRadius
+  const regionStartY = wall + lidRadius / 2
+  const regionEndY = containerSize.y - wall - lidRadius / 2
   const totalRegion = regionEndY - regionStartY
 
   // Determine slot count from uniform spacing first

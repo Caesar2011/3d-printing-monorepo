@@ -20,11 +20,11 @@ export const DIMS = {
     h: card.m({ z: 14 }),
     i: card.m({ z: 11 }),
     j: card.m({ z: 14 }),
-    quest: card.m({ z: 22 + 8 }),
-    recipes: card.m({ z: 8 + 3 }),
-    dream: card.m({ z: 16 + 5 }),
+    quest: card.m({ z: 22 + 8 + 9 /* The New Secrets */ }),
+    recipes: card.m({ z: 8 + 3 + 2 /* Flash of Inspiration */ }),
+    dream: card.m({ z: 16 + 5 + 5 /* Flash of Inspiration */ }),
     people: card.m({ z: 20 }),
-    base: card.m({ z: 32 }),
+    base: card.m({ z: 32 + 9 /* The New Secrets */ }),
     extra: card.m({ z: 18 }),
     // expansion
     m: card.m({ z: 12 }),
@@ -37,7 +37,11 @@ export const DIMS = {
     baseE: card.m({ z: 35 }),
     extraE: card.m({ z: 9 }),
     // add-ons
-    // TODO
+    k: card.m({ z: 18 }), // Terror Birds
+    l: card.m({ z: 17 }), // Initiation Rite
+    s: card.m({ z: 20 }), // The Hornets
+    u: card.m({ z: 19 }), // The Caves
+    t: card.m({ z: 18 }), // The White Whale
   },
   stand: {
     size: V([250, 143, 67]),

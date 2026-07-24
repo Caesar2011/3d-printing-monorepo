@@ -7,7 +7,6 @@ import { Container, resolveContainerConfig } from '../container/Container.js'
 import { useShapeContext } from '../shape/ShapeContext.js'
 import { useContainerContext } from '../container/ContainerContext.js'
 import { Edge } from '../primitives/index.js'
-import { logger } from '../logger.js'
 
 import type { DividerConfig } from './types.js'
 import { computeDividerLayout } from './useDividerLayout.js'
@@ -35,6 +34,7 @@ function computeContentRegions(
 
   let cursor = regionStartY
   for (const slotIdx of sortedSlots) {
+    if (slotIdx >= slotYPositions.length) break
     const slotStart = slotYPositions[slotIdx]
     boundaries.push({ startY: cursor, endY: slotStart })
     cursor = slotStart + slotDepth
@@ -125,13 +125,11 @@ export const CardContainer: FC<ContainerProps & DividerConfig> = ({ size, ...opt
     )
   }
 
-  logger.info(`Dividers: ${dividerIndices.join(', ')}`)
-
   const innerWidth = containerSize.x - 2 * wall
 
   return (
     <>
-      <subtract>
+      <subtract type={ShapeType.Part}>
         <Container size={size} {...options} />
 
         {fingerCutoutDiameter !== undefined && (
@@ -190,10 +188,15 @@ export const CardContainer: FC<ContainerProps & DividerConfig> = ({ size, ...opt
         const region = contentRegions[i]
         const regionDepth = region.endY - region.startY
         const contentX = wall + (innerWidth - contentSize.x) / 2
-        const contentY = region.startY + (regionDepth - contentSize.y) / 2
+        const contentY =
+          i === 0
+            ? region.endY - contentSize.y - 0.1
+            : i === contentSizes.length - 1
+              ? region.startY + 0.1
+              : region.startY + (regionDepth - contentSize.y) / 2
 
         return (
-          <entity type={ShapeType.Content} key={`content-${i}`} name={`content-${i}`} color={Colors.GREEN_3}>
+          <entity type={ShapeType.Content} key={`content-${i}`} name={`content-${i}`}>
             <translate by={{ x: contentX, y: contentY, z: floor }}>
               <cuboid size={contentSize} />
             </translate>

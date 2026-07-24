@@ -108,11 +108,24 @@ wss.on('connection', (ws, req) => {
 function watchMfFile(): void {
   const dir = path.dirname(mfPath)
   const basename = path.basename(mfPath)
+  let reloadTimer: NodeJS.Timeout | undefined
+
+  const notify3mfUpdated = (): void => {
+    // The serializer writes the archive asynchronously; wait briefly so viewers
+    // do not fetch the previous file while the replacement is still in flight.
+    clearTimeout(reloadTimer)
+    reloadTimer = setTimeout(() => {
+      if (state.renderMode === '3mf') {
+        broadcastToViewers(JSON.stringify({ type: '3mf-updated', timestamp: Date.now() }))
+      }
+    }, 50)
+  }
 
   try {
     fs.watch(dir, (eventType, filename) => {
-      if (filename !== basename || state.renderMode !== '3mf') return
-      broadcastToViewers(JSON.stringify({ type: '3mf-updated', timestamp: Date.now() }))
+      const changedName = filename?.toString()
+      if (changedName == null || changedName.toLowerCase() !== basename.toLowerCase()) return
+      notify3mfUpdated()
     })
     logger.debug(`Watching ${mfPath} for changes`)
   } catch {
@@ -124,7 +137,7 @@ function watchMfFile(): void {
         if (mtime > lastModified) {
           lastModified = mtime
           if (state.renderMode === '3mf') {
-            broadcastToViewers(JSON.stringify({ type: '3mf-updated', timestamp: mtime }))
+            notify3mfUpdated()
           }
         }
       } catch {

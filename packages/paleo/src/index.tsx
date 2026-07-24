@@ -1,10 +1,13 @@
+import * as path from 'node:path'
+
 import { DebugAxes, renderComponent, useShapeContext } from '@jsxcad/game'
+import { ShapeType } from '@jsxcad/core'
 
 import { logger } from './logger.js'
 import { DIMS } from './constants.js'
 import { MAMMOTH_SKULL_BOX_SIZE, MammothSkullBox } from './MammothSkullBox.js'
 import { Box } from './Box.js'
-import { CardHolder } from './CardHolder.js'
+import { CardHolder, getCardHolderSize } from './CardHolder.js'
 import { FarmBasePlate, GraveyardBasePlate, GraveyardHeightPlate } from './Plates.js'
 import { House } from './House.js'
 import { Stand } from './Stand.js'
@@ -38,12 +41,12 @@ const Paleo = () => {
       <DebugAxes x={DIMS.box.x} y={DIMS.box.y} z={DIMS.box.z} />
       <Box />
       <StandContents />
-      <translate by={{ y: DIMS.cards.a.x + 10 }}>
+      <translate by={{ y: getCardHolderSize().x }}>
         <rotate by={{ z: -Math.PI / 2 }}>
           <CardHolder />
         </rotate>
       </translate>
-      <translate by={{ x: MAMMOTH_SKULL_BOX_SIZE.y, y: DIMS.cards.a.x + 11, z: getBigTokenMainSize(floor).z }}>
+      <translate by={{ x: MAMMOTH_SKULL_BOX_SIZE.y, y: getCardHolderSize().x + 1, z: getBigTokenMainSize(floor).z }}>
         <rotate by={{ z: Math.PI / 2 }}>
           <MammothSkullBox />
         </rotate>
@@ -63,7 +66,7 @@ const Paleo = () => {
           <FarmTokens />
         </rotate>
       </translate>
-      <translate by={{ y: DIMS.cards.a.x + 11 }}>
+      <translate by={{ y: getCardHolderSize().x + 1 }}>
         <BigTokenMain />
       </translate>
     </entity>
@@ -77,6 +80,13 @@ const PaleoDev = () => (
   </entity>
 )
 
+const PaleoExport = () => (
+  <pick typeWhitelist={[ShapeType.Part, ShapeType.Lid]}>
+    <Paleo />
+  </pick>
+)
+
 renderComponent(<Paleo />, {
+  fileDir: path.join(import.meta.dirname, '../../server'),
   // filter: (s) => s.type !== ShapeType.Lid,
 }).catch(logger.error)
