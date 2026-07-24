@@ -618,7 +618,6 @@ __metadata:
     "@jsxcad/reconciler": "workspace:*"
     "@jsxcad/utils": "workspace:*"
     saxes: "npm:^6.0.0"
-    vitest: "npm:^4.1.10"
   languageName: unknown
   linkType: soft
 
@@ -642,6 +641,7 @@ __metadata:
   dependencies:
     "@jsxcad/core": "workspace:*"
     "@jsxcad/game": "workspace:*"
+    "@jsxcad/testing": "workspace:*"
     "@jsxcad/utils": "workspace:*"
     tsc-watch: "npm:^6.2.1"
     tsx: "npm:^3.12.7"
@@ -666,6 +666,15 @@ __metadata:
     "@types/ws": "npm:^8.18.1"
     express: "npm:^4.21.2"
     ws: "npm:^8.19.0"
+  languageName: unknown
+  linkType: soft
+
+"@jsxcad/testing@workspace:*, @jsxcad/testing@workspace:packages/testing":
+  version: 0.0.0-use.local
+  resolution: "@jsxcad/testing@workspace:packages/testing"
+  dependencies:
+    "@jsxcad/core": "workspace:*"
+    vitest: "npm:^4.1.10"
   languageName: unknown
   linkType: soft
 

@@ -167,7 +167,7 @@ export class Shape implements Geom3 {
   ) {
     const opts: SphereOptions = { radius: 0.5, segments: props.segments }
     const shape = new Shape(primitives.sphere(opts), props).scale({ by: props.size })
-    return shape.translate({ by: props.center !== undefined ? props.center : V(props.size).d(2) })
+    return shape.translate({ by: props.center ?? V(props.size).d(2) })
   }
 
   public static cylinder(
@@ -175,15 +175,19 @@ export class Shape implements Geom3 {
   ) {
     const opts: CylinderOptions = { radius: 0.5, height: 1, segments: props.segments }
     const shape = new Shape(primitives.cylinder(opts), props).scale({ by: props.size })
-    return shape.translate({ by: props.center !== undefined ? props.center : V(props.size).d(2) })
+    return shape.translate({ by: props.center ?? V(props.size).d(2) })
   }
 
   public static cuboid(props: { size: AxisRecordDefinition; center?: AxisRecordDefinition } & ShapeProperties) {
     const shape = new Shape(primitives.cube({ size: 1 }), props).scale({ by: props.size })
-    return shape.translate({ by: props.center !== undefined ? props.center : V(props.size).d(2) })
+    return shape.translate({ by: props.center ?? V(props.size).d(2) })
   }
 
   /** Creates a 3D shape by extruding a closed 2D polygon to the given height. Points must be in counter-clockwise order. */
+  public get volume(): number {
+    return measurements.measureVolume(this)
+  }
+
   public static prism(
     props: {
       points: AxisRecordDefinition[]

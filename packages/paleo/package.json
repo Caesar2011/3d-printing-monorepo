@@ -15,6 +15,7 @@
     "@jsxcad/utils": "workspace:*"
   },
   "devDependencies": {
+    "@jsxcad/testing": "workspace:*",
     "tsc-watch": "^6.2.1",
     "tsx": "^3.12.7"
   }

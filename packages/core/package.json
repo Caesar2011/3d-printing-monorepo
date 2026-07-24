@@ -12,7 +12,6 @@
     "@jscad/modeling": "^2.12.5",
     "@jsxcad/reconciler": "workspace:*",
     "@jsxcad/utils": "workspace:*",
-    "saxes": "^6.0.0",
-    "vitest": "^4.1.10"
+    "saxes": "^6.0.0"
   }
 }

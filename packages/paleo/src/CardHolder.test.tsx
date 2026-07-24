@@ -1,6 +1,6 @@
 import { describe, test } from 'vitest'
 import React from 'react'
-import { fitsOnPrinterBed, fitsOnPrinterHeight, noOverlap, PRINTER_CONFIG } from '@jsxcad/core'
+import { fitsOnPrinterBed, fitsOnPrinterHeight, noOverlap, PRINTER_CONFIG } from '@jsxcad/testing'
 
 import { CardHolder, getCardHolderSize } from './CardHolder.js'
 
