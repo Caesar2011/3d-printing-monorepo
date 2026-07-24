@@ -25,7 +25,7 @@ const Roof2 = () => (
 )
 
 export const House = () => (
-  <entity name={'house'} type={ShapeType.Content} color={Colors.BROWN_5}>
+  <union name={'house'} type={ShapeType.Content} color={Colors.BROWN_5}>
     <Cylinder size={DIMS.house.base} />
     <translate by={{ xy: DIMS.house.base.s(DIMS.house.height).d(2), z: DIMS.house.base }}>
       <subtract>
@@ -34,5 +34,5 @@ export const House = () => (
         <Roof2 />
       </subtract>
     </translate>
-  </entity>
+  </union>
 )

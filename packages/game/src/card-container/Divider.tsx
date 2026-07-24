@@ -22,7 +22,7 @@ interface DividerProps {
  *   ┌─arm─┐           ┌─arm─┐
  *   │     ╰───────────╯     │  ← armHeight (upper region with cutout)
  *   │                       │
- *   └── armInset ──┘  └─────┘  ← body (full width minus inset on each side)
+ *   └── armInset ───────────┘  ← body (full width minus inset on each side)
  */
 export const Divider: FC<DividerProps> = ({
   size: sizeDef,
