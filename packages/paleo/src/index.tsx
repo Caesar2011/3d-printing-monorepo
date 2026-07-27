@@ -5,48 +5,24 @@ import { ShapeType } from '@jsxcad/core'
 
 import { logger } from './logger.js'
 import { DIMS } from './constants.js'
-import { MammothSkullBox } from './MammothSkullBox.js'
 import { Box, BOX_OUTER_SIZE } from './Box.js'
 import { CardHolder } from './CardHolder.js'
-import { FarmBasePlate, GraveyardBasePlate, GraveyardHeightPlate } from './Plates.js'
+import {
+  DrawPilesPlate,
+  FarmBasePlate,
+  GraveyardBasePlate,
+  GraveyardHeightPlate,
+  MamoothSkullPlate,
+  ResourcesPlate,
+} from './Plates.js'
 import { House } from './House.js'
 import { Stand } from './Stand.js'
 import { BigTokenThin } from './BigTokenThin.js'
 import { BigTokenMain } from './BigTokenMain.js'
 import { FarmTokens } from './FarmTokens.js'
 import { HiddenTokens } from './HiddenTokens.js'
-
-const StandContents = () => (
-  <translate>
-    <layout gap={1}>
-      <layoutItem id="stand">
-        <Stand />
-      </layoutItem>
-      <layoutItem id="farmBase" layout={[{ x: 'stand', align: 'center' }]}>
-        <FarmBasePlate />
-      </layoutItem>
-      <layoutItem id="graveyardBase" layout={[{ x: 'farmBase', align: 'start' }, { z: 'farmBase' }]}>
-        <GraveyardBasePlate />
-      </layoutItem>
-      <layoutItem
-        id="graveyardHeight"
-        layout={[
-          { x: 'farmBase', align: 'start' },
-          { y: 'stand', align: 'start', gap: DIMS.stand.lowerBar.y - 13 },
-          { z: 'graveyardBase' },
-        ]}
-      >
-        <GraveyardHeightPlate />
-      </layoutItem>
-      <layoutItem
-        id="house"
-        layout={[{ x: 'farmBase', align: 'start' }, { y: 'graveyardHeight', align: 'start' }, { z: 'graveyardHeight' }]}
-      >
-        <House />
-      </layoutItem>
-    </layout>
-  </translate>
-)
+import { MammothSkullBox } from './MammothSkullBox.js'
+import { FoodResources } from './Resources.js'
 
 const Paleo = () => {
   const gap = 1
@@ -58,25 +34,64 @@ const Paleo = () => {
         <layoutItem id="box">
           <Box />
         </layoutItem>
-        <layoutItem id={'stand'} layout={[{ y: 'box', align: 'end', gap: BOX_ALIGNMENT }]}>
-          <StandContents />
+        {/* ---------- STAND ---------- */}
+        <layoutItem id="stand" layout={[{ y: 'box', align: 'end', gap: BOX_ALIGNMENT }]}>
+          <Stand />
         </layoutItem>
-        <layoutItem id={'card-holder'} layout={[{ y: 'box', align: 'start', gap: BOX_ALIGNMENT }]}>
+        <layoutItem
+          id="farmBase"
+          layout={[
+            { x: 'stand', align: 'center' },
+            { y: 'stand', align: 'start' },
+          ]}
+        >
+          <FarmBasePlate />
+        </layoutItem>
+        <layoutItem
+          id="graveyardBase"
+          layout={[{ x: 'farmBase', align: 'start' }, { y: 'stand', align: 'start' }, { z: 'farmBase' }]}
+        >
+          <GraveyardBasePlate />
+        </layoutItem>
+        <layoutItem
+          id="graveyardHeight"
+          layout={[
+            { x: 'farmBase', align: 'start' },
+            { y: 'stand', align: 'start', gap: DIMS.stand.lowerBar.y - 13 },
+            { z: 'graveyardBase' },
+          ]}
+        >
+          <GraveyardHeightPlate />
+        </layoutItem>
+        <layoutItem
+          id="house"
+          layout={[
+            { x: 'farmBase', align: 'start' },
+            { y: 'graveyardHeight', align: 'start' },
+            { z: 'graveyardHeight' },
+          ]}
+        >
+          <House />
+        </layoutItem>
+        {/* ---------- CARDS ---------- */}
+        <layoutItem id={'cardHolder'} layout={[{ y: 'box', align: 'start', gap: BOX_ALIGNMENT }]}>
           <rotate by={{ z: -Math.PI / 2 }}>
             <CardHolder />
           </rotate>
         </layoutItem>
-        <layoutItem id={'big-token-main'} layout={[{ x: 'card-holder', align: 'start' }, { y: 'card-holder' }]}>
+        {/* ---------- MIDDLE ---------- */}
+        <layoutItem id={'big-token-main'} layout={[{ x: 'cardHolder', align: 'start' }, { y: 'cardHolder' }]}>
           <BigTokenMain />
         </layoutItem>
         <layoutItem
           id={'mammoth-skull'}
-          layout={[{ x: 'card-holder', align: 'start' }, { y: 'card-holder' }, { z: 'big-token-main' }]}
+          layout={[{ x: 'house' }, { x: 'graveyardHeight' }, { y: 'house', align: 'center' }, { z: 'graveyardBase' }]}
         >
           <rotate by={{ z: Math.PI / 2 }}>
             <MammothSkullBox />
           </rotate>
         </layoutItem>
+        {/* ---------- RIGHT ---------- */}
         <layoutItem
           id={'big-token-thin'}
           layout={[
@@ -89,7 +104,7 @@ const Paleo = () => {
           </rotate>
         </layoutItem>
         <layoutItem
-          id={'hidden-tokens'}
+          id={'hiddenTokens'}
           layout={[
             { x: 'big-token-thin', align: 'before' },
             { y: 'stand', align: 'end' },
@@ -100,15 +115,48 @@ const Paleo = () => {
           </rotate>
         </layoutItem>
         <layoutItem
-          id={'farm-tokens'}
+          id={'farmTokens'}
           layout={[
-            { x: 'hidden-tokens', align: 'before' },
+            { x: 'hiddenTokens', align: 'before' },
             { y: 'stand', align: 'end' },
           ]}
         >
           <rotate by={{ x: Math.PI / 2, z: -Math.PI / 2 }}>
             <FarmTokens />
           </rotate>
+        </layoutItem>
+        {/* ---------- RESOURCES ---------- */}
+        <layoutItem
+          id={'food'}
+          layout={[{ x: 'stand', align: 'center' }, { y: 'cardHolder' }, { z: 'big-token-main' }]}
+        >
+          <rotate by={{ x: Math.PI / 2 }}>
+            <FoodResources />
+          </rotate>
+        </layoutItem>
+        <layoutItem
+          id={'food2'}
+          layout={[{ x: 'food', align: 'start' }, { y: 'food', gap: 0.5 }, { z: 'big-token-main' }]}
+        >
+          <rotate by={{ x: Math.PI / 2 }}>
+            <FoodResources />
+          </rotate>
+        </layoutItem>
+        <layoutItem id={'food3'} layout={[{ x: 'food', align: 'start' }, { y: 'food2' }, { z: 'food2', align: 'end' }]}>
+          <FoodResources />
+        </layoutItem>
+        {/* ---------- RESOURCES ---------- */}
+        <layoutItem
+          id={'plateDraw'}
+          layout={[{ z: 'cardHolder' }, { z: 'food3' }, { z: 'farmTokens', gap: 0 }, { z: 'hiddenTokens' }]}
+        >
+          <DrawPilesPlate />
+        </layoutItem>
+        <layoutItem id={'resPlate'} layout={[{ z: 'plateDraw', gap: 0 }]}>
+          <ResourcesPlate />
+        </layoutItem>
+        <layoutItem id={'plateMammoth'} layout={[{ z: 'resPlate', gap: 0 }]}>
+          <MamoothSkullPlate />
         </layoutItem>
       </layout>
     </entity>

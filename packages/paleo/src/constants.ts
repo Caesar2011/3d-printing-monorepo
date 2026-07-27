@@ -106,4 +106,12 @@ export const DIMS = {
     h6: bigToken,
     h7: longToken,
   },
+  resources: {
+    wheat: { size: V([18, 9, 5]), count: 8 },
+    food: { size: V([18, 10, 7.2]), count: 20 },
+    stone: { size: V([20, 14, 7]), count: 8 },
+    wood: { size: V([26, 6.1, 6.1]), count: 12 },
+    dice: { size: V([19, 19, 19]), count: 2 },
+    life: { size: V([18, 17, CARDBOARD_TOKEN]), count: 40 },
+  },
 }

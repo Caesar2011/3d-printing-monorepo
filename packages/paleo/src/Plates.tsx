@@ -18,3 +18,19 @@ export const FarmBasePlate = () => (
     <Cuboid size={DIMS.plates.farm} />
   </entity>
 )
+
+export const MamoothSkullPlate = () => (
+  <entity name={'farmBase'} type={ShapeType.Content} color={Colors.BROWN_4}>
+    <Cuboid size={DIMS.plates.mammothSkull} />
+  </entity>
+)
+export const DrawPilesPlate = () => (
+  <entity name={'farmBase'} type={ShapeType.Content} color={Colors.BROWN_4}>
+    <Cuboid size={DIMS.plates.drawPiles} />
+  </entity>
+)
+export const ResourcesPlate = () => (
+  <entity name={'farmBase'} type={ShapeType.Content} color={Colors.BROWN_4}>
+    <Cuboid size={DIMS.plates.resources} />
+  </entity>
+)
