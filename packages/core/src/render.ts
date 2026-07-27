@@ -1,7 +1,7 @@
 import { PersistantReconciler } from '@jsxcad/reconciler'
 
-import type { PrimitiveNode } from './ShapeType.js'
-import { createShape, OperatorNode, RootNode } from './ShapeType.js'
+import type { PrimitiveNode } from './shapes/index.js'
+import { OperatorNode, RootNode, createShape } from './shapes/index.js'
 import { logger } from './logger.js'
 
 export async function parseAst(element: React.ReactNode) {

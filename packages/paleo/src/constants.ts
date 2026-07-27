@@ -61,9 +61,14 @@ export const DIMS = {
     skull: V([26, 30, 11]),
   },
   plates: {
+    /* Below stand */
     farm: V([220, 138, 2]),
     graveyardHeight: V([88, 66, 2]),
     graveyardBase: V([139, 133, 3]),
+    /* On top */
+    mammothSkull: V([261, 233, 3]),
+    drawPiles: V([254, 193, 3]),
+    resources: V([263, 225, 3]),
   },
   bigTokens: {
     torch: bigToken.m({ z: 5 }),

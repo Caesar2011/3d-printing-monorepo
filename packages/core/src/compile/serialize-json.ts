@@ -1,6 +1,6 @@
 import jscad from '@jscad/modeling'
 
-import type { Shape } from '../Shape.js'
+import type { Shape } from '../shapes/index.js'
 
 const { geom3 } = jscad.geometries
 

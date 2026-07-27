@@ -3,9 +3,9 @@ import type { Mat4 } from '@jscad/modeling/src/maths/types.js'
 import type { CylinderOptions, SphereOptions } from '@jscad/modeling/src/primitives/index.js'
 import jscad from '@jscad/modeling'
 
-import { Colors } from './Colors.js'
-import type { AxisRecordDefinition, UniqueAxisString } from './Vector3.js'
-import { axisOrRecordToVec3, V } from './Vector3.js'
+import { Colors } from '../Colors.js'
+import type { AxisRecordDefinition, UniqueAxisString, Vector3 } from '../Vector3.js'
+import { V, axisOrRecordToVec3 } from '../Vector3.js'
 
 const { booleans, maths, measurements, primitives, transforms, hulls, extrusions } = jscad
 
@@ -183,9 +183,15 @@ export class Shape implements Geom3 {
     return shape.translate({ by: props.center ?? V(props.size).d(2) })
   }
 
-  /** Creates a 3D shape by extruding a closed 2D polygon to the given height. Points must be in counter-clockwise order. */
   public get volume(): number {
     return measurements.measureVolume(this)
+  }
+
+  public get boundingBox(): { position: Vector3; size: Vector3 } {
+    const [bottomLeft, topRight] = measurements.measureBoundingBox(this)
+    const position = V(bottomLeft)
+    const size = V(topRight).s(position)
+    return { position, size }
   }
 
   public static prism(

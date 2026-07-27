@@ -1,5 +1,5 @@
-import type { Shape } from '../Shape.js'
-import { ShapeType } from '../Shape.js'
+import type { Shape } from '../shapes/index.js'
+import { ShapeType } from '../shapes/index.js'
 import { logger } from '../logger.js'
 
 export type ValidationReporter = (condition: boolean, message: string, meta: object) => void

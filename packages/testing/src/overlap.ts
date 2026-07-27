@@ -1,5 +1,4 @@
 import { parseAst } from '@jsxcad/core'
-
 import type { Shape } from '@jsxcad/core'
 
 export type ShapePair = {

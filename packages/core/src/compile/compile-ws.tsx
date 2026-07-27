@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react'
 
-import type { Shape } from '../Shape.js'
+import type { Shape } from '../shapes/index.js'
 import { parseAst } from '../render.js'
 import { logger } from '../logger.js'
 

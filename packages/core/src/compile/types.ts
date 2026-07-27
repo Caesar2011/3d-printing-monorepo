@@ -1,4 +1,4 @@
-import type { Shape } from '../Shape.js'
+import type { Shape } from '../shapes/index.js'
 
 export enum RenderMethod {
   All,

@@ -1,5 +1,4 @@
 import { expect, test } from 'vitest'
-
 import { Shape } from '@jsxcad/core'
 
 import { getShapePairs } from './overlap.js'

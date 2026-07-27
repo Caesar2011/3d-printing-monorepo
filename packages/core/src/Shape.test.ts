@@ -1,8 +1,7 @@
 import { describe, expect, test, beforeEach } from 'vitest'
 import jscad from '@jscad/modeling'
 
-import { Shape, ShapeType } from './Shape.js'
-import { PrimitiveNode } from './ShapeType.js'
+import { PrimitiveNode, Shape, ShapeType } from './shapes/index.js'
 
 beforeEach(() => {
   PrimitiveNode.clearCache()

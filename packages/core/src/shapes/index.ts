@@ -1,0 +1,5 @@
+export { OperatorNode } from './OperatorNode.js'
+export { Shape, ShapeType } from './Shape.js'
+export { RootNode } from './RootNode.js'
+export { PrimitiveNode } from './PrimitiveNode.js'
+export { TProps, createShape } from './ShapeType.js'
