@@ -1,19 +1,15 @@
-import { describe, test } from 'vitest'
+import { describe } from 'vitest'
 import React from 'react'
-import { fitsOnPrinterBed, fitsOnPrinterHeight, noOverlap, PRINTER_CONFIG } from '@jsxcad/testing'
+import { fitsOnPrinterBed, fitsOnPrinterHeight, getShapes, noOverlap, PRINTER_CONFIG } from '@jsxcad/testing'
 
-import { CardHolder, getCardHolderSize } from './CardHolder.js'
+import { CardHolder } from './CardHolder.js'
+
+const shapes = await getShapes(<CardHolder />)
 
 describe('CardHolder', () => {
-  test('fits on printer bed', () => {
-    fitsOnPrinterBed(getCardHolderSize(), PRINTER_CONFIG.P1S)
-  })
+  describe('fits on printer bed', () => fitsOnPrinterBed(shapes, PRINTER_CONFIG.P1S))
 
-  test('fits printer build height', () => {
-    fitsOnPrinterHeight(getCardHolderSize(), PRINTER_CONFIG.P1S)
-  })
+  describe('fits printer build height', () => fitsOnPrinterHeight(shapes, PRINTER_CONFIG.P1S))
 
-  describe('does not overlap', async () => {
-    await noOverlap(<CardHolder />)
-  })
+  describe('does not overlap', () => noOverlap(shapes))
 })

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest'
-import { PrimitiveNode } from '@jsxcad/core/shapes/PrimitiveNode.js'
 
+import { PrimitiveNode } from './shapes/index.js'
 import { parseAst } from './render.js'
 
 beforeEach(() => {

@@ -1,6 +1,8 @@
-import { expect } from 'vitest'
-import type { AxisRecordDefinition } from '@jsxcad/core'
+import { expect, test } from 'vitest'
+import type { AxisRecordDefinition, Shape } from '@jsxcad/core'
 import { V } from '@jsxcad/core'
+
+import { fitsShapeOnBed, isLidOrPart } from './utils.js'
 
 export const PRINTER_CONFIG = {
   P1S: { size: { x: 256, y: 238, z: 249 }, diagonalSize: 256 },
@@ -11,70 +13,49 @@ type PrinterConfig = {
   diagonalSize: AxisRecordDefinition
 }
 
-export function fitsOnPrinterBed(size: AxisRecordDefinition, printerConfig: PrinterConfig) {
-  const x = V(size).x
-  const y = V(size).y
-
-  const w0 = V(printerConfig.size).x
-  const h0 = V(printerConfig.size).y
-  const w = V(printerConfig.diagonalSize).x
-  const h = V(printerConfig.diagonalSize).y
-
-  const fitsLandscape = x <= w0 && y <= h0
-  const fitsPortrait = x <= h0 && y <= w0
-
-  const angles = [0, Math.PI / 2]
-  const addBoundaryAngles = (firstSide: number, secondSide: number, limit: number) => {
-    const radius = Math.hypot(firstSide, secondSide)
-    const offset = Math.atan2(secondSide, firstSide)
-    const delta = Math.acos(limit / radius)
-
-    for (const angle of [offset - delta, offset + delta]) {
-      if (angle >= 0 && angle <= Math.PI / 2) angles.push(angle)
-    }
+export function fitsOnPrinterBed(shapes: Shape[], printerConfig: PrinterConfig) {
+  const filtered = shapes.filter(isLidOrPart)
+  if (filtered.length === 0) {
+    test('has shapes matching lid/part filter', () => {
+      expect(filtered.length, 'fitsOnPrinterBed: no shapes matched lid/part filter').toBeGreaterThan(0)
+    })
+    return
   }
 
-  if (w <= Math.hypot(x, y)) addBoundaryAngles(x, y, w)
-  if (h <= Math.hypot(x, y)) addBoundaryAngles(y, x, h)
+  test.each(filtered)('$name fits on bed', (shape) => {
+    const { x, y } = V(shape.boundingBox.size)
+    const w0 = V(printerConfig.size).x
+    const h0 = V(printerConfig.size).y
+    const w = V(printerConfig.diagonalSize).x
+    const h = V(printerConfig.diagonalSize).y
 
-  const diagonalAngle = angles.find((angle) => {
-    const projX = x * Math.cos(angle) + y * Math.sin(angle)
-    const projY = x * Math.sin(angle) + y * Math.cos(angle)
-    return projX <= w && projY <= h
+    const result = fitsShapeOnBed(x, y, w0, h0, w, h)
+
+    expect(
+      result.fits,
+      `Card holder footprint (${x} x ${y} mm) exceeds all supported printer-bed orientations: ` +
+        `rotated at ${((result.optAngle * 180) / Math.PI).toFixed(1)}° <= ${w}x${h} mm ` +
+        `(max ${result.maxXAtOpt.toFixed(1)} x ${y} mm or ${x} x ${result.maxYAtOpt.toFixed(1)} mm) ` +
+        `or straight ${w0} x ${h0} mm.`,
+    ).toBeTruthy()
   })
-  const fitsDiagonally = diagonalAngle !== undefined
-  const optAngle =
-    diagonalAngle ??
-    angles.reduce((bestAngle, angle) => {
-      const bestOverflow = Math.max(
-        (x * Math.cos(bestAngle) + y * Math.sin(bestAngle)) / w,
-        (x * Math.sin(bestAngle) + y * Math.cos(bestAngle)) / h,
-      )
-      const overflow = Math.max(
-        (x * Math.cos(angle) + y * Math.sin(angle)) / w,
-        (x * Math.sin(angle) + y * Math.cos(angle)) / h,
-      )
-      return overflow < bestOverflow ? angle : bestAngle
-    })
-  const sin = Math.sin(optAngle)
-  const cos = Math.cos(optAngle)
-  const maxXAtOpt = Math.max(0, Math.min((w - y * sin) / cos, (h - y * cos) / sin))
-  const maxYAtOpt = Math.max(0, Math.min((w - x * cos) / sin, (h - x * sin) / cos))
-
-  expect(
-    fitsDiagonally || fitsLandscape || fitsPortrait,
-    `Card holder footprint (${x} x ${y} mm) exceeds all supported printer-bed orientations: ` +
-      `rotated at ${((optAngle * 180) / Math.PI).toFixed(1)}° <= ${w}x${h} mm ` +
-      `(max ${maxXAtOpt.toFixed(1)} x ${y} mm or ${x} x ${maxYAtOpt.toFixed(1)} mm) ` +
-      `or straight ${w0} x ${h0} mm.`,
-  ).toBeTruthy()
 }
 
-export function fitsOnPrinterHeight(size: AxisRecordDefinition, printerConfig: PrinterConfig) {
-  const { z } = V(size)
-  const { z: zPrinter } = V(printerConfig.size)
+export function fitsOnPrinterHeight(shapes: Shape[], printerConfig: PrinterConfig) {
+  const filtered = shapes.filter(isLidOrPart)
+  if (filtered.length === 0) {
+    test('has shapes matching lid/part filter', () => {
+      expect(filtered.length, 'fitsOnPrinterHeight: no shapes matched lid/part filter').toBeGreaterThan(0)
+    })
+    return
+  }
 
-  expect(z, `Card holder height (${z} mm) exceeds the ${zPrinter} mm printer build height`).toBeLessThanOrEqual(
-    zPrinter,
-  )
+  test.each(filtered)('$name fits on height', (shape) => {
+    const { z } = V(shape.boundingBox.size)
+    const { z: zPrinter } = V(printerConfig.size)
+
+    expect(z, `Card holder height (${z} mm) exceeds the ${zPrinter} mm printer build height`).toBeLessThanOrEqual(
+      zPrinter,
+    )
+  })
 }

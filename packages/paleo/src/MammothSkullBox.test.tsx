@@ -1,19 +1,15 @@
-import { describe, test } from 'vitest'
+import { describe } from 'vitest'
 import React from 'react'
-import { fitsOnPrinterBed, fitsOnPrinterHeight, noOverlap, PRINTER_CONFIG } from '@jsxcad/testing'
+import { fitsOnPrinterBed, fitsOnPrinterHeight, getShapes, noOverlap, PRINTER_CONFIG } from '@jsxcad/testing'
 
-import { MammothSkullBox, MAMMOTH_SKULL_BOX_SIZE } from './MammothSkullBox.js'
+import { MammothSkullBox } from './MammothSkullBox.js'
+
+const shapes = await getShapes(<MammothSkullBox />)
 
 describe('MammothSkullBox', () => {
-  test('fits on printer bed', () => {
-    fitsOnPrinterBed(MAMMOTH_SKULL_BOX_SIZE, PRINTER_CONFIG.P1S)
-  })
+  describe('fits on printer bed', () => fitsOnPrinterBed(shapes, PRINTER_CONFIG.P1S))
 
-  test('fits printer build height', () => {
-    fitsOnPrinterHeight(MAMMOTH_SKULL_BOX_SIZE, PRINTER_CONFIG.P1S)
-  })
+  describe('fits printer build height', () => fitsOnPrinterHeight(shapes, PRINTER_CONFIG.P1S))
 
-  describe('does not overlap', async () => {
-    await noOverlap(<MammothSkullBox />)
-  })
+  describe('does not overlap', () => noOverlap(shapes))
 })
