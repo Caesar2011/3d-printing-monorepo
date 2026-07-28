@@ -7,6 +7,7 @@ export type CavityCell = {
   offset: Vector3
   size: Vector3
   embossSrc?: string
+  scoop?: boolean
 }
 
 /** Validates a Division node and throws on invalid input. */
@@ -43,13 +44,18 @@ export function computeCavityCells(
   wall: number,
   division?: Division,
   axis: 'x' | 'y' = 'x',
+  inheritedProps: { embossSrc?: string; scoop?: boolean } = {},
 ): CavityCell[] {
+  const inherited = {
+    embossSrc: division?.embossSrc ?? inheritedProps.embossSrc,
+    scoop: division?.scoop ?? inheritedProps.scoop,
+  }
   if (!division || !division.at || division.at.length === 0) {
     if (division?.children?.length === 1 && division.children[0]) {
       const nextAxis = axis === 'x' ? 'y' : 'x'
-      return computeCavityCells(innerOrigin, innerSize, wall, division.children[0], nextAxis)
+      return computeCavityCells(innerOrigin, innerSize, wall, division.children[0], nextAxis, inherited)
     }
-    return [{ offset: innerOrigin, size: innerSize, embossSrc: division?.embossSrc }]
+    return [{ offset: innerOrigin, size: innerSize, embossSrc: inherited.embossSrc, scoop: inherited.scoop }]
   }
 
   validateDivision(division)
@@ -84,7 +90,7 @@ export function computeCavityCells(
       axis === 'x' ? V([sectionSize, innerSize.y, innerSize.z]) : V([innerSize.x, sectionSize, innerSize.z])
 
     const childDivision = children[i] ?? undefined
-    cells.push(...computeCavityCells(sectionOrigin, sectionDim, wall, childDivision, nextAxis))
+    cells.push(...computeCavityCells(sectionOrigin, sectionDim, wall, childDivision, nextAxis, inherited))
   }
 
   return cells

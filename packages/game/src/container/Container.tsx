@@ -92,10 +92,10 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
   const innerSize = V([dim.x - 2 * wall, dim.y - 2 * wall, dim.z - floor])
   const cells = computeCavityCells(innerOrigin, innerSize, wall, options.divisions)
 
-  // Validate scoop fit for all cells up front
-  if (scoop) {
-    const scoopWidth = computeScoopWidth(innerSize.z, scoopFactor)
-    for (const cell of cells) {
+  // Validate scoop fit for every cell that inherits or enables it.
+  for (const cell of cells) {
+    if (cell.scoop ?? scoop) {
+      const scoopWidth = computeScoopWidth(cell.size.z, scoopFactor)
       validateScoopFit(cell, scoopWidth)
     }
   }
@@ -104,20 +104,20 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
     validateEmbossBottom(cell, resolvedCutouts.bottom === undefined)
   }
 
-  const allCutoutPlacements = scoop
-    ? []
-    : cells.flatMap((cell) =>
-        computeCellCutoutPlacements(cell, dim, wall, floor, containerRadius, containerCutoutEdges, resolvedCutouts),
-      )
-
+  const allCutoutPlacements = cells.flatMap((cell) =>
+    (cell.scoop ?? scoop)
+      ? []
+      : computeCellCutoutPlacements(cell, dim, wall, floor, containerRadius, containerCutoutEdges, resolvedCutouts),
+  )
   return (
     <subtract>
       <Cuboid size={size} edges={containerEdges} radius={containerRadius} />
 
       {cells.map((cell, idx) => {
+        const cellScoop = cell.scoop ?? scoop
         let embossSize = V({ xy: maxEmbossSize.min(cell.size), z: maxEmbossSize })
-        const scoopWidth = scoop ? computeScoopWidth(cell.size.z, scoopFactor) : 0
-        if (scoop) {
+        const scoopWidth = cellScoop ? computeScoopWidth(cell.size.z, scoopFactor) : 0
+        if (cellScoop) {
           const axis = determineScoopAxis(cell)
           embossSize = embossSize.s({ [axis]: scoopWidth * 2, [axis === 'x' ? 'y' : 'x']: innerRadius * 2 })
         } else if ((containerCutoutEdges & Edge.BOT) !== 0) {
@@ -126,7 +126,7 @@ export const Container: FC<ContainerProps> = ({ size, ...options }) => {
 
         return (
           <translate by={cell.offset} key={`cavity-${idx}`}>
-            {scoop ? (
+            {cellScoop ? (
               <ScoopedCavity
                 size={cell.size}
                 scoopWidth={scoopWidth}

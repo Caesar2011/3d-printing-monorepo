@@ -40,6 +40,8 @@ export type Division = {
   at?: number[]
   children?: (Division | null)[]
   embossSrc?: string
+  /** Overrides the container scoop setting for this division and its children. */
+  scoop?: boolean
 }
 
 export type CutoutConfig = {

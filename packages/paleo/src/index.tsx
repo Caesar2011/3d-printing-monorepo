@@ -22,9 +22,9 @@ import { BigTokenMain } from './BigTokenMain.js'
 import { FarmTokens } from './FarmTokens.js'
 import { HiddenTokens } from './HiddenTokens.js'
 import { MammothSkullBox } from './MammothSkullBox.js'
-import { FoodResources } from './Resources.js'
+import { BuildResources, FoodResources, LifeResources } from './Resources.js'
 
-const Paleo = () => {
+export const Paleo = () => {
   const gap = 1
   const BOX_ALIGNMENT = BOX_OUTER_SIZE
   return (
@@ -135,27 +135,27 @@ const Paleo = () => {
           </rotate>
         </layoutItem>
         <layoutItem
-          id={'food2'}
+          id={'build'}
           layout={[{ x: 'food', align: 'start' }, { y: 'food', gap: 0.5 }, { z: 'big-token-main' }]}
         >
           <rotate by={{ x: Math.PI / 2 }}>
-            <FoodResources />
+            <BuildResources />
           </rotate>
         </layoutItem>
-        <layoutItem id={'food3'} layout={[{ x: 'food', align: 'start' }, { y: 'food2' }, { z: 'food2', align: 'end' }]}>
-          <FoodResources />
+        <layoutItem id={'life'} layout={[{ x: 'food', align: 'start' }, { y: 'build' }, { z: 'build', align: 'end' }]}>
+          <LifeResources />
         </layoutItem>
-        {/* ---------- RESOURCES ---------- */}
+        {/* ---------- TOP PLATES ---------- */}
         <layoutItem
           id={'plateDraw'}
-          layout={[{ z: 'cardHolder' }, { z: 'food3' }, { z: 'farmTokens', gap: 0 }, { z: 'hiddenTokens' }]}
+          layout={[{ z: 'cardHolder' }, { z: 'life' }, { z: 'farmTokens', gap: 0 }, { z: 'hiddenTokens' }]}
         >
           <DrawPilesPlate />
         </layoutItem>
-        <layoutItem id={'resPlate'} layout={[{ z: 'plateDraw', gap: 0 }]}>
+        <layoutItem id={'plateRes'} layout={[{ z: 'plateDraw', gap: 0 }]}>
           <ResourcesPlate />
         </layoutItem>
-        <layoutItem id={'plateMammoth'} layout={[{ z: 'resPlate', gap: 0 }]}>
+        <layoutItem id={'plateMammoth'} layout={[{ z: 'plateRes', gap: 0 }]}>
           <MamoothSkullPlate />
         </layoutItem>
       </layout>
@@ -166,7 +166,15 @@ const Paleo = () => {
 const PaleoDev = () => (
   <entity name="paleoDev">
     <DebugAxes x={DIMS.box.x} y={DIMS.box.y} z={DIMS.box.z} />
-    <HiddenTokens />
+    <pick typeBlacklist={[ShapeType.Lid]}>
+      <BuildResources />
+      <translate by={{ y: 70 }}>
+        <LifeResources />
+      </translate>
+      <translate by={{ y: 140 }}>
+        <FoodResources />
+      </translate>
+    </pick>
   </entity>
 )
 
