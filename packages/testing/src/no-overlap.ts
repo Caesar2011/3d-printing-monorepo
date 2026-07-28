@@ -2,20 +2,22 @@ import { expect, test } from 'vitest'
 import { Shape } from '@jsxcad/core'
 import type { Shape as ShapeType } from '@jsxcad/core'
 
-export function noOverlap(shapes: ShapeType[]) {
-  const pairs = shapes.flatMap((firstShape, firstIndex) =>
-    shapes.slice(firstIndex + 1).map((secondShape) => ({
-      firstShape,
-      secondShape,
-      firstName: firstShape.name,
-      secondName: secondShape.name,
-    })),
-  )
+import { getShapePairs } from './utils.js'
 
-  test.each(pairs)('$firstName / $secondName', ({ firstShape, secondShape }) => {
-    const overlap = Shape.intersect([firstShape, secondShape], firstShape)
+export function noOverlap(shapes: ShapeType[]) {
+  if (shapes.length < 2) {
+    test('has at least 2 shapes', () => {
+      expect(shapes.length, 'noOverlap requires at least 2 shapes').toBeGreaterThanOrEqual(2)
+    })
+    return
+  }
+
+  const pairs = getShapePairs(shapes)
+
+  test.each(pairs)('$firstName / $secondName', ({ first, second }) => {
+    const overlap = Shape.intersect([first, second], first)
     const volume = overlap.volume
 
-    expect(volume, `Shapes ${firstShape.name} and ${secondShape.name} overlap by ${Math.round(volume)} mm³`).toBe(0)
+    expect(volume, `Shapes ${first.name} and ${second.name} overlap by ${Math.round(volume)} mm³`).toBe(0)
   })
 }
