@@ -1,12 +1,18 @@
 import { expect, test } from 'vitest'
 import { Shape } from '@jsxcad/core'
+import type { Shape as ShapeType } from '@jsxcad/core'
 
-import { getShapePairs } from './overlap.js'
+export function noOverlap(shapes: ShapeType[]) {
+  const pairs = shapes.flatMap((firstShape, firstIndex) =>
+    shapes.slice(firstIndex + 1).map((secondShape) => ({
+      firstShape,
+      secondShape,
+      firstName: firstShape.name,
+      secondName: secondShape.name,
+    })),
+  )
 
-export async function noOverlap(node: React.ReactNode) {
-  const shapePairs = await getShapePairs(node)
-
-  test.each(shapePairs)('$firstName / $secondName', ({ firstShape, secondShape }) => {
+  test.each(pairs)('$firstName / $secondName', ({ firstShape, secondShape }) => {
     const overlap = Shape.intersect([firstShape, secondShape], firstShape)
     const volume = overlap.volume
 

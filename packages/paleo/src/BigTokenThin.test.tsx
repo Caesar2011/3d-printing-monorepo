@@ -1,21 +1,15 @@
-import { describe, test } from 'vitest'
+import { describe } from 'vitest'
 import React from 'react'
-import { fitsOnPrinterBed, fitsOnPrinterHeight, noOverlap, PRINTER_CONFIG } from '@jsxcad/testing'
+import { fitsOnPrinterBed, fitsOnPrinterHeight, getShapes, noOverlap, PRINTER_CONFIG } from '@jsxcad/testing'
 
-import { BigTokenThin, getBigTokenThinSize } from './BigTokenThin.js'
+import { BigTokenThin } from './BigTokenThin.js'
 
-const FLOOR = 2
+const shapes = await getShapes(<BigTokenThin />)
 
 describe('BigTokenThin', () => {
-  test('fits on printer bed', () => {
-    fitsOnPrinterBed(getBigTokenThinSize(FLOOR), PRINTER_CONFIG.P1S)
-  })
+  describe('fits on printer bed', () => fitsOnPrinterBed(shapes, PRINTER_CONFIG.P1S))
 
-  test('fits printer build height', () => {
-    fitsOnPrinterHeight(getBigTokenThinSize(FLOOR), PRINTER_CONFIG.P1S)
-  })
+  describe('fits printer build height', () => fitsOnPrinterHeight(shapes, PRINTER_CONFIG.P1S))
 
-  describe('does not overlap', async () => {
-    await noOverlap(<BigTokenThin />)
-  })
+  describe('does not overlap', () => noOverlap(shapes))
 })
