@@ -1,5 +1,7 @@
 import type { Shape } from '../shapes/index.js'
 
+import type { JsonScene } from './serialize-json.js'
+
 export enum RenderMethod {
   All,
   NoContent,
@@ -9,16 +11,15 @@ export enum RenderMethod {
 export type RenderOptions = {
   fileDir: string
   filePath?: string
+  renderTarget: '3mf' | 'json'
   method?: RenderMethod
-  filter?: (s: Shape) => boolean
   dev?: boolean
-  repeat?: number
 }
 export type RenderCallbacks = {
   onStart?: () => void
   onParsedAst?: () => void
-  onRendered?: () => void
+  onRendered?: (shapes: Shape[]) => void
   onChecksDone?: () => void
-  onSerialized?: () => void
+  onSerialized?: (data: JsonScene | ArrayBuffer) => void
   onSaved?: (filePath: string) => void
 }

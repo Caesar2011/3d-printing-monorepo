@@ -13,12 +13,12 @@ const MIDDLE_PILLAR_RADIUS = 4
 const OUTER_PILLAR_RADIUS = 10
 const LID_HEIGHT = 2.6
 
-const TOKEN_ORDER: [(keyof (typeof DIMS)['bigTokens'])[], (keyof (typeof DIMS)['bigTokens'])[]] = [
+const TOKEN_ORDER_ORG: [(keyof (typeof DIMS)['bigTokens'])[], (keyof (typeof DIMS)['bigTokens'])[]] = [
   ['rope', 'shell', 'root', 'shirt', 'bow', 'flute'],
   ['feather', 'hammer', 'decor', 'tent', 'wolf'],
 ]
 
-const TOKEN_ORDER_DEV: [(keyof (typeof DIMS)['bigTokens'])[], (keyof (typeof DIMS)['bigTokens'])[]] = [
+const TOKEN_ORDER: [(keyof (typeof DIMS)['bigTokens'])[], (keyof (typeof DIMS)['bigTokens'])[]] = [
   ['rope', 'shell'],
   ['feather'],
 ]

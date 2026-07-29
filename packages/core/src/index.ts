@@ -2,7 +2,6 @@
 export type { Vec3 } from './Vector3.js'
 export { parseAst } from './render.js'
 export { compile } from './compile/compile.js'
-export { compileToJson } from './compile/compile-ws.js'
 export { serializeToJson } from './compile/serialize-json.js'
 export type { JsonScene, JsonMesh, JsonTriangle, JsonVertex } from './compile/serialize-json.js'
 export { Shape, ShapeType } from './shapes/index.js'

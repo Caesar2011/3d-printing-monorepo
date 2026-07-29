@@ -1,4 +1,4 @@
-import { compile, compileToJson, type RenderOptions } from '@jsxcad/core'
+import { compile, type RenderOptions } from '@jsxcad/core'
 
 import { logger } from '../logger.js'
 
@@ -29,36 +29,25 @@ export async function renderComponent(
 
   const callbacks = createTimingCallbacks(profiler.start.valueOf())
 
-  if (mode === '3mf') {
-    // 3MF mode: write file only, no WebSocket push.
-    // Fire and forget — don't block the caller on heavy IO + serialization.
-    compile(component, {
+  try {
+    await compile(component, {
       fileDir: import.meta.dirname,
       dev: true,
+      renderTarget: mode === '3mf' ? '3mf' : 'json',
       ...renderOpts,
       ...callbacks,
-    }).catch((e) => {
-      logger.error('3MF compilation failed', e)
+      onSerialized: (scene) => {
+        if (scene instanceof ArrayBuffer) return
+        const json = JSON.stringify(scene)
+        publishScene(json)
+        logger.debug(
+          `Published scene via WebSocket (${(json.length / 1024).toFixed(1)} KB, ${scene.meshes.length} meshes)`,
+        )
+        callbacks.onSerialized()
+      },
     })
-  } else {
-    // WebSocket mode: compile to JSON and push to viewers. No file IO.
-    try {
-      await compileToJson(component, {
-        fileDir: import.meta.dirname,
-        dev: true,
-        ...renderOpts,
-        ...callbacks,
-        onScene: (scene) => {
-          const json = JSON.stringify(scene)
-          publishScene(json)
-          logger.debug(
-            `Published scene via WebSocket (${(json.length / 1024).toFixed(1)} KB, ${scene.meshes.length} meshes)`,
-          )
-        },
-      })
-    } catch (e) {
-      logger.error('WebSocket scene compile failed', e)
-    }
+  } catch (e) {
+    logger.error('Scene compile failed', e)
   }
 
   profiler.done()

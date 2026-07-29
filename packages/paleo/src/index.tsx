@@ -1,6 +1,6 @@
 import * as path from 'node:path'
 
-import { DebugAxes, renderComponent } from '@jsxcad/game'
+import { DebugAxes, PrimitiveContextProvider, renderComponent } from '@jsxcad/game'
 import { ShapeType } from '@jsxcad/core'
 
 import { logger } from './logger.js'
@@ -179,13 +179,15 @@ const PaleoDev = () => (
 )
 
 const PaleoExport = () => (
-  <pick typeWhitelist={[ShapeType.Part, ShapeType.Lid]}>
-    <Paleo />
-  </pick>
+  <PrimitiveContextProvider cylinderSegments={64} sphereSegments={64}>
+    <pick typeWhitelist={[ShapeType.Part, ShapeType.Lid]}>
+      {/*<Paleo />*/}
+      <BigTokenThin />
+    </pick>
+  </PrimitiveContextProvider>
 )
 
-renderComponent(<Paleo />, {
+renderComponent(<PaleoExport />, {
   fileDir: path.join(import.meta.dirname, '../../server'),
-  // filter: (s) => s.type !== ShapeType.Lid,
-  repeat: 3,
+  dev: false,
 }).catch(logger.error)
