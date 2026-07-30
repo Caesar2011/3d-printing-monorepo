@@ -603,6 +603,7 @@ __metadata:
   dependencies:
     "@jsxcad/core": "workspace:*"
     "@jsxcad/game": "workspace:*"
+    "@jsxcad/server": "workspace:*"
     "@jsxcad/utils": "workspace:*"
     tsc-watch: "npm:^6.2.1"
     tsx: "npm:^3.12.7"
@@ -627,11 +628,9 @@ __metadata:
   dependencies:
     "@jsxcad/core": "workspace:*"
     "@jsxcad/utils": "workspace:*"
-    "@types/ws": "npm:^8.18.1"
     react: "npm:^19.0.0"
     winston: "npm:^3.17.0"
     winston-console-format: "npm:^1.0.8"
-    ws: "npm:^8.19.0"
   languageName: unknown
   linkType: soft
 
@@ -641,6 +640,7 @@ __metadata:
   dependencies:
     "@jsxcad/core": "workspace:*"
     "@jsxcad/game": "workspace:*"
+    "@jsxcad/server": "workspace:*"
     "@jsxcad/testing": "workspace:*"
     "@jsxcad/utils": "workspace:*"
     tsc-watch: "npm:^6.2.1"
@@ -657,15 +657,31 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@jsxcad/server@workspace:packages/server":
+"@jsxcad/server@workspace:*, @jsxcad/server@workspace:packages/server":
   version: 0.0.0-use.local
   resolution: "@jsxcad/server@workspace:packages/server"
   dependencies:
+    "@jsxcad/core": "workspace:*"
     "@jsxcad/utils": "workspace:*"
     "@types/express": "npm:^4.17.21"
     "@types/ws": "npm:^8.18.1"
     express: "npm:^4.21.2"
+    react: "npm:^19.0.0"
     ws: "npm:^8.19.0"
+  languageName: unknown
+  linkType: soft
+
+"@jsxcad/skull-king@workspace:packages/skull-king":
+  version: 0.0.0-use.local
+  resolution: "@jsxcad/skull-king@workspace:packages/skull-king"
+  dependencies:
+    "@jsxcad/core": "workspace:*"
+    "@jsxcad/game": "workspace:*"
+    "@jsxcad/server": "workspace:*"
+    "@jsxcad/testing": "workspace:*"
+    "@jsxcad/utils": "workspace:*"
+    tsc-watch: "npm:^6.2.1"
+    tsx: "npm:^3.12.7"
   languageName: unknown
   linkType: soft
 

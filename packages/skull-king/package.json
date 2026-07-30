@@ -1,0 +1,23 @@
+{
+  "name": "@jsxcad/skull-king",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "dev": "tsc-watch --onSuccess \"yarn start\" --project tsconfig.json",
+    "start": "node --enable-source-maps dist/index.js"
+  },
+  "dependencies": {
+    "@jsxcad/core": "workspace:*",
+    "@jsxcad/game": "workspace:*",
+    "@jsxcad/server": "workspace:*",
+    "@jsxcad/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@jsxcad/testing": "workspace:*",
+    "tsc-watch": "^6.2.1",
+    "tsx": "^3.12.7"
+  }
+}
