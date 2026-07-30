@@ -53,7 +53,9 @@ app.post('/api/mode', (req, res) => {
   state.renderMode = mode
   logger.debug(`Render mode changed to: ${mode}`)
 
-  broadcastToViewers(JSON.stringify({ type: 'mode', mode }))
+  const message = JSON.stringify({ type: 'mode', mode })
+  broadcastToViewers(message)
+  broadcastToPublishers(message)
 
   res.json({ mode })
 })
@@ -66,6 +68,14 @@ const publishers = new Set<WebSocket>()
 
 function broadcastToViewers(message: string): void {
   for (const client of viewers) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message)
+    }
+  }
+}
+
+function broadcastToPublishers(message: string): void {
+  for (const client of publishers) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message)
     }

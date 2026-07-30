@@ -109,7 +109,7 @@ const TokenContents = () => {
   return (
     <>
       {TOKEN_ORDER[0].map((token, idx) => (
-        <entity type={ShapeType.Content} color={Colors.GREEN_1} name={`token-${token}`} key={token}>
+        <entity type={ShapeType.Content} color={Colors.GREEN_1} name={`token_${token}`} key={token}>
           <translate
             by={{
               x: (EXTRA_SPACE_X + DIMS.bigTokens[token].x) * idx + EXTRA_SPACE_SIDE,
@@ -122,7 +122,7 @@ const TokenContents = () => {
         </entity>
       ))}
       {TOKEN_ORDER[1].map((token, idx) => (
-        <entity type={ShapeType.Content} color={Colors.GREEN_1} name={`token-${token}`} key={token}>
+        <entity type={ShapeType.Content} color={Colors.GREEN_1} name={`token_${token}`} key={token}>
           <translate
             by={{
               x: (EXTRA_SPACE_X + DIMS.bigTokens[token].x) * (idx + 0.5) + EXTRA_SPACE_SIDE,

@@ -6,7 +6,7 @@
     "declarationDir": "dist",
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
-  "references": [{ "path": "../utils" }],
+  "references": [{ "path": "../core" }, { "path": "../utils" }],
   "include": ["src"],
   "exclude": ["dist", "node_modules"]
 }

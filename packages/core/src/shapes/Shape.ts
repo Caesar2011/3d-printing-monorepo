@@ -62,6 +62,9 @@ export class Shape implements Geom3 {
   }
 
   private static mergeProps(oldProps: ShapeProperties, newProps: ShapeProperties): ShapeProperties {
+    if (newProps.name !== undefined && newProps.name.includes('-')) {
+      throw new TypeError(`The specified entity name "${newProps.name}" must not contain "-".`)
+    }
     const name =
       newProps.name !== undefined && newProps.name !== '' && oldProps.name !== undefined && oldProps.name !== ''
         ? { name: `${newProps.name}-${oldProps.name}` }

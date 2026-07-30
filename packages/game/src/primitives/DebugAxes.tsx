@@ -52,7 +52,7 @@ const Axis: FC<{
   }
 
   return (
-    <union name={`debug-axis-${name}`} type={ShapeType.Technical} color={color}>
+    <union name={name} type={ShapeType.Technical} color={color}>
       <translate by={axisTranslation}>
         <cuboid size={axisSize} />
       </translate>

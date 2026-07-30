@@ -12,6 +12,7 @@
   "dependencies": {
     "@jsxcad/core": "workspace:*",
     "@jsxcad/game": "workspace:*",
+    "@jsxcad/server": "workspace:*",
     "@jsxcad/utils": "workspace:*"
   },
   "devDependencies": {

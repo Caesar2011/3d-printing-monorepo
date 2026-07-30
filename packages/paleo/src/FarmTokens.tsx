@@ -49,7 +49,7 @@ export const FarmTokens = () => {
         <translate
           by={{ z: DIMS.farmTokens.millstone.z * 2 + EXTRA_SPACE_TOP / 2 }}
           type={ShapeType.Content}
-          name={'Content_millstone'}
+          name={'Content_base'}
         >
           <Cuboid size={DIMS.farmTokens.base} />
         </translate>

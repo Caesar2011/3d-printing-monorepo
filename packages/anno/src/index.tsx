@@ -8,10 +8,10 @@ import {
   DebugAxes,
   Edge,
   PrimitiveContextProvider,
-  renderComponent,
   RoundedCylinder,
   ShapeContextProvider,
 } from '@jsxcad/game'
+import { renderComponent } from '@jsxcad/server'
 import { CardContainer } from '@jsxcad/game/dist/card-container/CardContainer.js'
 
 import { logger } from './logger.js'

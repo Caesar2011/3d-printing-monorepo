@@ -56,23 +56,25 @@ const ResourceBox = ({ first, second, split }: ResourceBoxProps) => {
     const depth = DIMS.resources.dice.size.y * 2 + GAP
     const translateY = (innerY - depth) / 2
     return (
-      <entity type={ShapeType.Content} name={`Content_dice`}>
-        <translate by={{ x: translateX, y: translateY }}>
-          <layout gap={GAP}>
-            <layoutItem id={'d1'}>
+      <translate by={{ x: translateX, y: translateY }}>
+        <layout gap={GAP}>
+          <layoutItem id={'d1'}>
+            <entity type={ShapeType.Content} name={`Content_dice1`}>
               <Cuboid size={DIMS.resources.dice.size} />
-            </layoutItem>
-            <layoutItem id={'d2'} layout={[{ y: 'd1' }]}>
+            </entity>
+          </layoutItem>
+          <layoutItem id={'d2'} layout={[{ y: 'd1' }]}>
+            <entity type={ShapeType.Content} name={`Content_dice2`}>
               <Cuboid size={DIMS.resources.dice.size} />
-            </layoutItem>
-          </layout>
-        </translate>
-      </entity>
+            </entity>
+          </layoutItem>
+        </layout>
+      </translate>
     )
   }
 
   return (
-    <entity name={`${first}-${second}-resources`}>
+    <entity name={`${first}_${second}`}>
       <ClosedContainer
         size={BOX_SIZE}
         lid={{ type: 'slide' }}

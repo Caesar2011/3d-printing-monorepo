@@ -164,7 +164,7 @@ export const CardContainer: FC<ContainerProps & DividerConfig> = ({ size, ...opt
       {range(layout.slotCount - 1)
         .filter((i) => dividerIndices.includes(i))
         .map((i) => (
-          <entity type={ShapeType.Part} color={Colors.BROWN_5} key={i} name={`divider-${i}`}>
+          <entity type={ShapeType.Part} color={Colors.BROWN_5} key={i} name={`divider_${i}`}>
             <translate
               by={{
                 y: slotYPositions[i] + slideTolerance,
@@ -196,7 +196,7 @@ export const CardContainer: FC<ContainerProps & DividerConfig> = ({ size, ...opt
               : region.startY + (regionDepth - contentSize.y) / 2
 
         return (
-          <entity type={ShapeType.Content} key={`content-${i}`} name={`content-${i}`}>
+          <entity type={ShapeType.Content} key={`Content_${i}`} name={`Content_${i}`}>
             <translate by={{ x: contentX, y: contentY, z: floor }}>
               <cuboid size={contentSize} />
             </translate>

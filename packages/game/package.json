@@ -12,10 +12,6 @@
     "@jsxcad/utils": "workspace:*",
     "react": "^19.0.0",
     "winston": "^3.17.0",
-    "winston-console-format": "^1.0.8",
-    "ws": "^8.19.0"
-  },
-  "devDependencies": {
-    "@types/ws": "^8.18.1"
+    "winston-console-format": "^1.0.8"
   }
 }

@@ -1,7 +1,8 @@
 import * as path from 'node:path'
 
-import { DebugAxes, PrimitiveContextProvider, renderComponent } from '@jsxcad/game'
+import { DebugAxes, PrimitiveContextProvider } from '@jsxcad/game'
 import { ShapeType } from '@jsxcad/core'
+import { renderComponent } from '@jsxcad/server'
 
 import { logger } from './logger.js'
 import { DIMS } from './constants.js'
@@ -12,7 +13,7 @@ import {
   FarmBasePlate,
   GraveyardBasePlate,
   GraveyardHeightPlate,
-  MamoothSkullPlate,
+  MammothSkullPlate,
   ResourcesPlate,
 } from './Plates.js'
 import { House } from './House.js'
@@ -156,7 +157,7 @@ export const Paleo = () => {
           <ResourcesPlate />
         </layoutItem>
         <layoutItem id={'plateMammoth'} layout={[{ z: 'plateRes', gap: 0 }]}>
-          <MamoothSkullPlate />
+          <MammothSkullPlate />
         </layoutItem>
       </layout>
     </entity>
@@ -187,7 +188,7 @@ const PaleoExport = () => (
   </PrimitiveContextProvider>
 )
 
-renderComponent(<PaleoExport />, {
+renderComponent(<Paleo />, {
   fileDir: path.join(import.meta.dirname, '../../server'),
   dev: false,
 }).catch(logger.error)
