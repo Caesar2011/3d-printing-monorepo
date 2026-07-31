@@ -190,19 +190,25 @@ function computeBottomCellCutout(
 ): CutoutPlacement | null {
   const baseInsets = getFaceEdgeInsets('bottom', edges, radius)
   const insets: FaceEdgeInsets = {
-    start: Math.abs(cell.offset.x - wall) < EPSILON ? baseInsets.start : 0,
-    end: Math.abs(cell.offset.x + cell.size.x - (containerSize.x - wall)) < EPSILON ? baseInsets.end : 0,
-    bottom: Math.abs(cell.offset.y - wall) < EPSILON ? baseInsets.bottom : 0,
-    top: Math.abs(cell.offset.y + cell.size.y - (containerSize.y - wall)) < EPSILON ? baseInsets.top : 0,
+    start: Math.abs(cell.offset.x - wall) < EPSILON ? Math.max(border, baseInsets.start) : border,
+    end:
+      Math.abs(cell.offset.x + cell.size.x - (containerSize.x - wall)) < EPSILON
+        ? Math.max(border, baseInsets.end)
+        : border,
+    bottom: Math.abs(cell.offset.y - wall) < EPSILON ? Math.max(border, baseInsets.bottom) : border,
+    top:
+      Math.abs(cell.offset.y + cell.size.y - (containerSize.y - wall)) < EPSILON
+        ? Math.max(border, baseInsets.top)
+        : border,
   }
 
-  const w = cell.size.x - insets.start - insets.end - 2 * border
-  const h = cell.size.y - insets.bottom - insets.top - 2 * border
+  const w = cell.size.x - insets.start - insets.end
+  const h = cell.size.y - insets.bottom - insets.top
   if (w <= 0 || h <= 0) return null
 
   return {
     size: V([w, h, floor]),
-    translation: V([cell.offset.x + insets.start + border, cell.offset.y + insets.bottom + border, 0]),
+    translation: V([cell.offset.x + insets.start, cell.offset.y + insets.bottom, 0]),
     rotation: V(),
     settings,
   }
@@ -226,25 +232,22 @@ function computeSideCellCutout(
   const isAtEnd = desc.isAtEnd(cell, containerSize, wall)
   const isAtBottom = Math.abs(cell.offset.z - floor) < EPSILON
 
-  const startInset = isAtStart ? insets.start : 0
-  const endInset = isAtEnd ? insets.end : 0
-  const bottomInset = isAtBottom ? insets.bottom : 0
+  const startInset = isAtStart ? Math.max(border, insets.start) : border
+  const endInset = isAtEnd ? Math.max(border, insets.end) : border
+  const bottomInset = isAtBottom ? Math.max(border, insets.bottom) : border
   // Only apply top inset if the container actually has a top edge on this face
-  const topInset = insets.top
+  const topInset = Math.max(border, insets.top)
 
   const faceWidth = desc.faceWidth(cell)
   const faceHeight = cell.size.z
 
-  const w = faceWidth - startInset - endInset - 2 * border
-  const h = faceHeight - bottomInset - topInset - 2 * border
+  const w = faceWidth - startInset - endInset
+  const h = faceHeight - bottomInset - topInset
   if (w <= 0 || h <= 0) return null
-
-  const localStart = startInset + border
-  const localBottom = bottomInset + border
 
   return {
     size: desc.buildSize(w, h, wall),
-    translation: desc.translate(cell, containerSize, wall, localStart, localBottom),
+    translation: desc.translate(cell, containerSize, wall, startInset, bottomInset),
     rotation: desc.rotation,
     settings,
   }

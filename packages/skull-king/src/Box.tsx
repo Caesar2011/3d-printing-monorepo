@@ -8,6 +8,7 @@ import { DIMS } from './constants.js'
 const WALL = 3
 const DIVIDER = WALL
 
+const Z_GAP = 0.2
 const GAP = 0.5
 const LID = 2.6
 
@@ -87,7 +88,7 @@ export const Box = () => {
           <Cuboid size={size.s({ xy: WALL * 2 + 30 })} radius={radius - WALL} edges={Edge.SIDE} />
         </translate>
       </subtract>
-      <translate by={{ x: WALL + GAP, y: WALL + GAP, z: floor }}>
+      <translate by={{ x: WALL + GAP, y: WALL + GAP, z: floor + Z_GAP }}>
         <layout gap={GAP}>
           <layoutItem id={'cardsLeft'}>
             <entity type={ShapeType.Content} name="cardsLeft">

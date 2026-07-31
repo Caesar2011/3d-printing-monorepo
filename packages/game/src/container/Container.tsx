@@ -37,8 +37,8 @@ function resolveCutouts(defaults: Required<CutoutSettings>, cutoutProps?: Contai
 
     result[face] = {
       ...defaults,
-      ...(sideDefaults ?? {}),
-      ...(faceSettings ?? {}),
+      ...sideDefaults,
+      ...faceSettings,
     } as ResolvedCutout
   }
 

@@ -50,7 +50,7 @@ export function computeCavityCells(
     embossSrc: division?.embossSrc ?? inheritedProps.embossSrc,
     scoop: division?.scoop ?? inheritedProps.scoop,
   }
-  if (!division || !division.at || division.at.length === 0) {
+  if (!division?.at || division.at.length === 0) {
     if (division?.children?.length === 1 && division.children[0]) {
       const nextAxis = axis === 'x' ? 'y' : 'x'
       return computeCavityCells(innerOrigin, innerSize, wall, division.children[0], nextAxis, inherited)

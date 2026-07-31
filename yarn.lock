@@ -622,6 +622,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@jsxcad/faraway@workspace:packages/faraway":
+  version: 0.0.0-use.local
+  resolution: "@jsxcad/faraway@workspace:packages/faraway"
+  dependencies:
+    "@jsxcad/core": "workspace:*"
+    "@jsxcad/game": "workspace:*"
+    "@jsxcad/server": "workspace:*"
+    "@jsxcad/testing": "workspace:*"
+    "@jsxcad/utils": "workspace:*"
+    tsc-watch: "npm:^6.2.1"
+    tsx: "npm:^3.12.7"
+  languageName: unknown
+  linkType: soft
+
 "@jsxcad/game@workspace:*, @jsxcad/game@workspace:packages/game":
   version: 0.0.0-use.local
   resolution: "@jsxcad/game@workspace:packages/game"
