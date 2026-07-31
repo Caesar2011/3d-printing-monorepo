@@ -1,6 +1,7 @@
 import { ShapeType, V } from '@jsxcad/core'
-import { Cuboid, Edge, Fillet, useShapeContext } from '@jsxcad/game'
+import { Cuboid, Edge, Fillet, useContainerContext, useShapeContext } from '@jsxcad/game'
 import { ClosedContainer } from '@jsxcad/game/dist/closed-container/ClosedContainer.js'
+import { CutoutType } from '@jsxcad/game/dist/container/types.js'
 
 import { DIMS } from './constants.js'
 
@@ -40,6 +41,7 @@ const FilletRounding = ({ contentHeight }: { contentHeight: number }) => {
 
 export const Box = () => {
   const { floor } = useShapeContext()
+  const { radius } = useContainerContext()
   const cardStackHeight = DIMS.cards.z / 2
   const contentHeight = cardStackHeight + DIMS.rulebook.z + DIMS.scoreNotes.z + GAP * 2
   const innerWidth = DIMS.cards.x * 2 + DIVIDER + GAP * 4
@@ -50,12 +52,25 @@ export const Box = () => {
     <entity name="skullKingBox">
       <subtract>
         <pick typeWhitelist={[ShapeType.Part]}>
-          <ClosedContainer size={size} lid={{ type: 'slide' }} wall={WALL} divisions={{ at: [0.5] }} />
+          <ClosedContainer
+            size={size}
+            lid={{ type: 'slide' }}
+            wall={WALL}
+            divisions={{ at: [0.5] }}
+            cutoutEdges={Edge.BOT}
+            cutout={{
+              bottom: {
+                type: CutoutType.EMPTY,
+                border: 10,
+              },
+            }}
+          />
         </pick>
         {/* The lower divider retains separate card bays; its top is cleared for the printed material. */}
         <translate by={{ x: WALL + 10, y: WALL, z: floor + cardStackHeight }}>
           <Cuboid size={{ x: innerWidth - 20, y: innerDepth, z: DIMS.rulebook.z + DIMS.scoreNotes.z + GAP * 2 }} />
         </translate>
+        {/* TODO Remove these as it flexes too much */}
         {/* Finger grab gap */}
         <translate by={{ x: WALL + DIMS.cards.x / 2 - GRAB_WIDTH / 2, z: floor }}>
           <Cuboid size={{ x: GRAB_WIDTH, y: size.y, z: contentHeight }} />
@@ -72,9 +87,14 @@ export const Box = () => {
           </translate>
         </translate>
       </subtract>
-      <pick typeWhitelist={[ShapeType.Lid]}>
-        <ClosedContainer size={size} lid={{ type: 'slide' }} wall={WALL} divisions={{ at: [0.5] }} />
-      </pick>
+      <subtract>
+        <pick typeWhitelist={[ShapeType.Lid]}>
+          <ClosedContainer size={size} lid={{ type: 'slide' }} wall={WALL} divisions={{ at: [0.5] }} />
+        </pick>
+        <translate by={{ xy: WALL + 15 }}>
+          <Cuboid size={size.s({ xy: WALL * 2 + 30 })} radius={radius - WALL} edges={Edge.SIDE} />
+        </translate>
+      </subtract>
       <translate by={{ x: WALL + GAP, y: WALL + GAP, z: floor }}>
         <layout gap={GAP}>
           <layoutItem id={'cardsLeft'}>
