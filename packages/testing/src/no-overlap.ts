@@ -15,7 +15,7 @@ export function noOverlap(shapes: ShapeType[]) {
   const pairs = getShapePairs(shapes)
 
   test.each(pairs)('$firstName / $secondName', ({ first, second }) => {
-    const overlap = Shape.intersect([first, second], first)
+    const overlap = Shape.intersect([first, second], {})
     const volume = overlap.volume
 
     expect(volume, `Shapes ${first.name} and ${second.name} overlap by ${Math.round(volume)} mm³`).toBe(0)

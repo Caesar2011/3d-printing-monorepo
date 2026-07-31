@@ -1,5 +1,5 @@
 import { ShapeType, V } from '@jsxcad/core'
-import { Cuboid, Edge, Fillet, useContainerContext, useShapeContext } from '@jsxcad/game'
+import { Cuboid, Edge, useContainerContext, useShapeContext } from '@jsxcad/game'
 import { ClosedContainer } from '@jsxcad/game/dist/closed-container/ClosedContainer.js'
 import { CutoutType } from '@jsxcad/game/dist/container/types.js'
 
@@ -10,34 +10,6 @@ const DIVIDER = WALL
 
 const GAP = 0.5
 const LID = 2.6
-
-const GRAB_WIDTH = DIMS.cards.x / 2
-
-const FilletRounding = ({ contentHeight }: { contentHeight: number }) => {
-  const { floor } = useShapeContext()
-  return (
-    <union>
-      <translate by={{ x: DIMS.cards.x / 2 }}>
-        <Fillet size={{ xy: WALL / 2, z: contentHeight }} />
-      </translate>
-      <translate by={{ x: -WALL / 2 }}>
-        <rotate by={{ z: Math.PI / 2 }} center={{ xy: WALL / 4 }}>
-          <Fillet size={{ xy: WALL / 2, z: contentHeight }} />
-        </rotate>
-      </translate>
-      <translate by={{ x: -WALL / 2, y: WALL / 2 }}>
-        <rotate by={{ z: Math.PI }} center={{ xy: WALL / 4 }}>
-          <Fillet size={{ xy: WALL / 2, z: contentHeight }} />
-        </rotate>
-      </translate>
-      <translate by={{ x: DIMS.cards.x / 2, y: WALL / 2 }}>
-        <rotate by={{ z: (Math.PI / 2) * 3 }} center={{ xy: WALL / 4 }}>
-          <Fillet size={{ xy: WALL / 2, z: contentHeight }} />
-        </rotate>
-      </translate>
-    </union>
-  )
-}
 
 export const Box = () => {
   const { floor } = useShapeContext()
@@ -69,22 +41,6 @@ export const Box = () => {
         {/* The lower divider retains separate card bays; its top is cleared for the printed material. */}
         <translate by={{ x: WALL + 10, y: WALL, z: floor + cardStackHeight }}>
           <Cuboid size={{ x: innerWidth - 20, y: innerDepth, z: DIMS.rulebook.z + DIMS.scoreNotes.z + GAP * 2 }} />
-        </translate>
-        {/* TODO Remove these as it flexes too much */}
-        {/* Finger grab gap */}
-        <translate by={{ x: WALL + DIMS.cards.x / 2 - GRAB_WIDTH / 2, z: floor }}>
-          <Cuboid size={{ x: GRAB_WIDTH, y: size.y, z: contentHeight }} />
-          <FilletRounding contentHeight={contentHeight} />
-          <translate by={{ y: size.y - WALL }}>
-            <FilletRounding contentHeight={contentHeight} />
-          </translate>
-        </translate>
-        <translate by={{ x: WALL + (DIMS.cards.x / 2) * 3 + DIVIDER + GAP * 2 - GRAB_WIDTH / 2, z: floor }}>
-          <Cuboid size={{ x: GRAB_WIDTH, y: size.y, z: contentHeight }} />
-          <FilletRounding contentHeight={contentHeight} />
-          <translate by={{ y: size.y - WALL }}>
-            <FilletRounding contentHeight={contentHeight} />
-          </translate>
         </translate>
       </subtract>
       <subtract>

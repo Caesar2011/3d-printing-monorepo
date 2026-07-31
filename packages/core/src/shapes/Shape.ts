@@ -62,10 +62,9 @@ export class Shape implements Geom3 {
   }
 
   private static mergeProps(oldProps: ShapeProperties, newProps: ShapeProperties): ShapeProperties {
-    // TODO Make this work with vitest
-    /*if (newProps.name !== undefined && newProps.name.includes('-')) {
+    if (newProps.name?.includes('-') === true) {
       throw new TypeError(`The specified entity name "${newProps.name}" must not contain "-".`)
-    }*/
+    }
     const name =
       newProps.name !== undefined && newProps.name !== '' && oldProps.name !== undefined && oldProps.name !== ''
         ? { name: `${newProps.name}-${oldProps.name}` }
